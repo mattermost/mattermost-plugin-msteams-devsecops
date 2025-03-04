@@ -1,0 +1,31 @@
+{
+    "id": "com.mattermost.plugin-msteams-devsecops",
+    "name": "Mattermost DevSecOps for Microsoft Teams",
+    "description": "Access Mattermost DevSecOps directly within Microsoft Teams, with single sign-on using your Microsoft O365 account.",
+    "homepage_url": "https://github.com/mattermost/mattermost-plugin-msteams-devsecops",
+    "support_url": "https://github.com/mattermost/mattermost-plugin-msteams-devsecops/issues",
+    "icon_path": "assets/devsecops.svg",
+    "min_server_version": "6.2.1",
+    "server": {
+        "executables": {
+            "linux-amd64": "server/dist/plugin-linux-amd64",
+            "linux-arm64": "server/dist/plugin-linux-arm64"
+        }
+    },
+    "webapp": {
+        "bundle_path": "webapp/dist/main.js"
+    },
+    "settings_schema": {
+        "header": "",
+        "footer": "",
+        "settings": [
+            {
+                "key": "appManifestDownload",
+                "display_name": "Download Manifest",
+                "type": "custom",
+                "help_text": "",
+                "default": ""
+            }
+        ]
+    }
+}
