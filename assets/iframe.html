@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mattermost DevSecOps</title>
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+  <script 
+    src="https://res.cdn.office.net/teams-js/2.34.0/js/MicrosoftTeams.min.js"
+    integrity="sha384-brW9AazbKR2dYw2DucGgWCCcmrm2oBFV4HQidyuyZRI/TnAkmOOnTARSTdps3Hwt"
+    crossorigin="anonymous"
+  ></script>
+</head>
+<body>
+    <iframe
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+        src="{{SITE_URL}}" title="Mattermost DevSecOps" onload="notifyAppLoaded()">
+    </iframe>
+    <script>
+      // Initialize the Microsoft Teams SDK
+      microsoftTeams.app.initialize(["{{SITE_URL}}"]);
+  
+      function notifyAppLoaded() {
+        microsoftTeams.app.notifySuccess();
+      }
+    </script>
+  </body>
+</html>
