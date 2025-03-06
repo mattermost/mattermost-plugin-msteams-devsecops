@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/kvstore"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	"github.com/mattermost/mattermost/server/public/pluginapi"
 )
@@ -16,9 +15,6 @@ const (
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
 type Plugin struct {
 	plugin.MattermostPlugin
-
-	// kvstore is the client used to read/write KV records for this plugin.
-	kvstore kvstore.KVStore
 
 	// client is the Mattermost server API client.
 	client *pluginapi.Client
@@ -37,8 +33,6 @@ type Plugin struct {
 // OnActivate is invoked when the plugin is activated. If an error is returned, the plugin will be deactivated.
 func (p *Plugin) OnActivate() error {
 	p.client = pluginapi.NewClient(p.API, p.Driver)
-
-	p.kvstore = kvstore.NewKVStore(p.client)
 
 	p.apiHandler = NewAPI(p)
 
