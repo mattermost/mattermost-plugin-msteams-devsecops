@@ -4,7 +4,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"path/filepath"
 
@@ -28,35 +27,41 @@ func NewAPI(p *Plugin) *API {
 	router.HandleFunc("/iframe-manifest", api.iFrameManifest).Methods("GET")
 
 	// User API
-	router.HandleFunc("/users/login", api.patchUser).Methods("PATCH")
+	router.HandleFunc("/users/setup", api.setupUser).Methods("GET")
 
 	return api
 }
 
-type patchUserRequest struct {
-	TeamsToken string `json:"teams_token"`
-	UserID     string `json:"user_id"`
-}
-
-func (a *API) patchUser(w http.ResponseWriter, r *http.Request) {
-	// Read token from the body payload
-	var req patchUserRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func (a *API) setupUser(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get("Mattermost-User-ID")
+	if userID == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
 		return
 	}
 
-	a.p.API.LogInfo("Patching user", "user_id", req.UserID)
+	userId := r.URL.Query().Get("id")
+	if userId == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
 
-	user, appErr := a.p.API.GetUser(req.UserID)
+	userPrincipalName := r.URL.Query().Get("user_principal_name")
+	if userPrincipalName == "" {
+		http.Error(w, "Not authorized", http.StatusUnauthorized)
+		return
+	}
+
+	a.p.API.LogInfo("Patching user", "user_id", userID)
+
+	user, appErr := a.p.API.GetUser(userID)
 	if appErr != nil {
 		a.p.API.LogError("Failed to get user", "error", appErr.Error())
 		http.Error(w, appErr.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	user.Props["com.mattermost.plugin-msteams-devsecops.teams_token"] = req.TeamsToken
+	user.Props["com.mattermost.plugin-msteams-devsecops.user_principal_name"] = userPrincipalName
+	user.Props["com.mattermost.plugin-msteams-devsecops.user_id"] = userId
 
 	_, appErr = a.p.API.UpdateUser(user)
 	if appErr != nil {
@@ -65,7 +70,8 @@ func (a *API) patchUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	// w.WriteHeader(http.StatusOK)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (a *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
