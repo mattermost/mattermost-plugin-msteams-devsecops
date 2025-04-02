@@ -1,13 +1,22 @@
-const exec = require('child_process').exec;
+// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
 
+const exec = require('child_process').exec;
 const path = require('path');
+
+const webpack = require('webpack');
 
 const PLUGIN_ID = require('../plugin.json').id;
 
 const NPM_TARGET = process.env.npm_lifecycle_event; //eslint-disable-line no-process-env
 const isDev = NPM_TARGET === 'debug' || NPM_TARGET === 'debug:watch';
 
-const plugins = [];
+const plugins = [
+    new webpack.ProvidePlugin({
+        process: 'process/browser', // Provide a polyfill for process
+    }),
+];
+
 if (NPM_TARGET === 'build:watch' || NPM_TARGET === 'debug:watch') {
     plugins.push({
         apply: (compiler) => {
@@ -30,18 +39,12 @@ if (NPM_TARGET === 'build:watch' || NPM_TARGET === 'debug:watch') {
 }
 
 const config = {
-    entry: [
-        './src/index.tsx',
-    ],
+    entry: ['./src/index.tsx'],
     resolve: {
         alias: {
             '@': path.resolve(__dirname, 'src'),
         },
-        modules: [
-            'src',
-            'node_modules',
-            path.resolve(__dirname),
-        ],
+        modules: ['src', 'node_modules', path.resolve(__dirname)],
         extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
     },
     module: {
@@ -53,8 +56,6 @@ const config = {
                     loader: 'babel-loader',
                     options: {
                         cacheDirectory: true,
-
-                        // Babel configuration is in babel.config.js because jest requires it to be there.
                     },
                 },
             },
@@ -92,7 +93,7 @@ const config = {
         publicPath: '/',
         filename: 'main.js',
     },
-    mode: (isDev) ? 'eval-source-map' : 'production',
+    mode: isDev ? 'eval-source-map' : 'production',
     plugins,
 };
 
