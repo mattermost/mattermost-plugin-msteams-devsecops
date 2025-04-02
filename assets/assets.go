@@ -15,3 +15,6 @@ var LogoOutlineData []byte
 
 //go:embed iframe.html
 var IFrameHTML string
+
+//go:embed appmanifest.json
+var AppManifest string

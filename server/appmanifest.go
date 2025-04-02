@@ -6,79 +6,127 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+	"text/template"
 
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
 )
 
 const (
-	AppVersion          = "0.1.0"
-	AppID               = "3dfcc488-f38d-4867-bcba-84dfc8eb007b"
 	PackageName         = "com.mattermost.msteams.devsecops"
-	TabAppID            = "85ffd111-223c-47f8-a9ea-7568f2012f65"
-	TabAppURI           = "api://%s/plugins/" + pluginID + "/iframe/" + TabAppID
 	ManifestName        = "manifest.json"
 	LogoColorFilename   = "mm-logo-color.png"
 	LogoOutlineFilename = "mm-logo-outline.png"
 )
 
-// iFrameManifest returns the Mattermost for MS Teams app manifest as a zip file.
-// This zip file can be imported as a MS Teams app.
-func (a *API) iFrameManifest(w http.ResponseWriter, _ *http.Request) {
+type manifestContext struct {
+	AppVersion     string // the app version
+	AppPackageName string // fully qualified package name for the app (e.g. com.mattermost.msteams.devsecops)
+	AppID          string // the unique app id
+	AppClientID    string // the app's client ID as defined in Azure portal
+	AppName        string // short and full name of the app
+
+	SiteDomain     string // the domain name extracted from this Mattermost server's site url. No protocol or path.
+	SiteDomainPath string // the domain name and path extracted from this Mattermost server's site url. No protocol.
+	PluginID       string // the plugin ID (e.g. com.mattermost.msteams.devsecops)
+}
+
+// makeManifestContext populates a manifestContext with template data
+func (a *API) makeManifestContext() (*manifestContext, error) {
 	config := a.p.API.GetConfig()
 	siteURL := *config.ServiceSettings.SiteURL
 	if siteURL == "" {
-		a.p.API.LogError("SiteURL cannot be empty for MS Teams app manifest")
-		http.Error(w, "SiteURL is empty", http.StatusInternalServerError)
-		return
+		return nil, errors.New("SiteURL cannot be empty")
 	}
 
-	publicHostName, protocol, err := parseDomain(siteURL)
+	_, hostName, path, err := parseURL(siteURL)
 	if err != nil {
-		a.p.API.LogError("SiteURL is invalid for MS Teams app manifest", "error", err.Error())
-		http.Error(w, "SiteURL is invalid: "+err.Error(), http.StatusInternalServerError)
+		return nil, fmt.Errorf("SiteURL is invalid: %w", err)
+	}
+
+	pluginConfig := a.p.getConfiguration()
+	if pluginConfig.AppID == "" {
+		return nil, errors.New("AppID cannot be empty")
+	}
+	if pluginConfig.AppClientID == "" {
+		return nil, errors.New("AppClientID cannot be empty")
+	}
+	if pluginConfig.AppName == "" {
+		return nil, errors.New("AppName cannot be empty")
+	}
+	if pluginConfig.AppVersion == "" {
+		return nil, errors.New("AppVersion cannot be empty")
+	}
+
+	return &manifestContext{
+		AppVersion:     pluginConfig.AppVersion,
+		AppPackageName: PackageName,
+		AppID:          pluginConfig.AppID,
+		AppClientID:    pluginConfig.AppClientID,
+		AppName:        pluginConfig.AppName,
+		SiteDomain:     hostName,
+		SiteDomainPath: strings.Join([]string{hostName, path}, "/"),
+		PluginID:       a.p.API.GetPluginID(),
+	}, nil
+}
+
+// appManifest returns the Mattermost for MS Teams app manifest as a zip file.
+// This zip file can be imported as a MS Teams tab app.
+func (a *API) appManifest(w http.ResponseWriter, _ *http.Request) {
+	tmplContext, err := a.makeManifestContext()
+	if err != nil {
+		a.p.API.LogError("Unable to create app manifest context", "error", err.Error())
+		http.Error(w, "Unable to create app manifest context: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tabURI := fmt.Sprintf(TabAppURI, publicHostName)
 
-	manifest := strings.ReplaceAll(manifestJSON, "{{VERSION}}", AppVersion)
-	manifest = strings.ReplaceAll(manifest, "{{APP_ID}}", AppID)
-	manifest = strings.ReplaceAll(manifest, "{{PACKAGE_NAME}}", PackageName)
-	manifest = strings.ReplaceAll(manifest, "{{PROTOCOL}}", protocol)
-	manifest = strings.ReplaceAll(manifest, "{{PUBLIC_HOSTNAME}}", publicHostName)
-	manifest = strings.ReplaceAll(manifest, "{{TAB_APP_ID}}", TabAppID)
-	manifest = strings.ReplaceAll(manifest, "{{TAB_APP_URI}}", tabURI)
-	manifest = strings.ReplaceAll(manifest, "{{PLUGIN_ID}}", pluginID)
+	tmpl, err := template.New("manifest").Parse(assets.AppManifest)
+	if err != nil {
+		a.p.API.LogError("Unable to parse app manifest template", "error", err.Error())
+		http.Error(w, "Unable to parse app manifest template: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
+	buf := &bytes.Buffer{}
+	if err := tmpl.Execute(buf, tmplContext); err != nil {
+		a.p.API.LogError("Unable to execute app manifest template", "error", err.Error())
+		http.Error(w, "Unable to execute app manifest template: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Create a zip file with the manifest and logo files
 	bufReader, err := createManifestZip(
-		zipFile{name: ManifestName, data: []byte(manifest)},
+		zipFile{name: ManifestName, data: buf.Bytes()},
 		zipFile{name: LogoColorFilename, data: assets.LogoColorData},
 		zipFile{name: LogoOutlineFilename, data: assets.LogoOutlineData},
 	)
 	if err != nil {
-		a.p.API.LogWarn("Error generating app manifest", "error", err.Error())
-		http.Error(w, "Error generating app manifest", http.StatusInternalServerError)
+		a.p.API.LogError("Error generating app manifest", "error", err.Error())
+		http.Error(w, "Error generating app manifest"+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	filename := fmt.Sprintf("%s-%s.zip", PackageName, tmplContext.AppVersion)
+
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", "attachment; filename=com.mattermost.msteamsapp.zip")
+	w.Header().Set("Content-Disposition", "attachment; filename="+filename)
 
 	if _, err := io.Copy(w, bufReader); err != nil {
 		a.p.API.LogWarn("Unable to serve the app manifest", "error", err.Error())
 	}
 }
 
-func parseDomain(uri string) (string, string, error) {
+func parseURL(uri string) (string, string, string, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
-	return u.Host, u.Scheme, nil
+	return u.Scheme, u.Host, u.Path, nil
 }
 
 type zipFile struct {
@@ -104,58 +152,3 @@ func createManifestZip(files ...zipFile) (io.Reader, error) {
 
 	return buf, nil
 }
-
-var manifestJSON = `{
-	"$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.15/MicrosoftTeams.schema.json",
-	"manifestVersion": "1.15",
-	"id": "{{APP_ID}}",
-	"version": "{{VERSION}}",
-	"packageName": "{{PACKAGE_NAME}}",
-	"developer": {
-	  "name": "Mattermost",
-	  "websiteUrl": "https://github.com/mattermost/mattermost-plugin-msteams-devsecops",
-	  "privacyUrl": "https://mattermost.com/privacy-policy/",
-	  "termsOfUseUrl": "https://mattermost.com/terms-of-use/"
-	},
-	"name": {
-	  "short": "Mattermost for MS Teams",
-	  "full": "Mattermost app for Microsoft Teams"
-	},
-	"description": {
-	  "short": "Mattermost for MS Teams",
-	  "full": "Mattermost app for Microsoft Teams"
-	},
-	"icons": {
-	  "outline": "mm-logo-outline.png",
-	  "color": "mm-logo-color.png"
-	},
-	"accentColor": "#FFFFFF",
-	"configurableTabs": [],
-	"staticTabs": [
-	  {
-		"entityId": "f607c5e9-7175-44ee-ba14-10e33a7b4c91",
-		"name": "Mattermost",
-		"contentUrl": "{{PROTOCOL}}://{{PUBLIC_HOSTNAME}}/plugins/{{PLUGIN_ID}}/iframe/mattermostTab?name={loginHint}&tenant={tid}&theme={theme}",
-		"scopes": [
-		  "personal"
-		]
-	  }
-	],
-	"bots": [],
-	"connectors": [],
-	"composeExtensions": [],
-	"permissions": [
-	  "identity",
-	  "messageTeamMembers"
-	],
-	"validDomains": [
-	  "{{PUBLIC_HOSTNAME}}"
-	],
-	"showLoadingIndicator": false,
-	"isFullScreen": true,
-	"webApplicationInfo": {
-	  "id": "{{TAB_APP_ID}}",
-	  "resource": "{{TAB_APP_URI}}"
-	}
-  }
-`
