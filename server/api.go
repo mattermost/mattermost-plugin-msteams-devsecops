@@ -24,7 +24,7 @@ func NewAPI(p *Plugin) *API {
 
 	// iFrame support
 	router.HandleFunc("/iframe/mattermostTab", api.iFrame).Methods("GET")
-	router.HandleFunc("/iframe-manifest", api.iFrameManifest).Methods("GET")
+	router.HandleFunc("/iframe-manifest", api.appManifest).Methods("GET")
 
 	return api
 }

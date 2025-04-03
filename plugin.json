@@ -20,6 +20,34 @@
         "footer": "",
         "settings": [
             {
+                "key": "appVersion",
+                "display_name": "Application version",
+                "type": "text",
+                "help_text": "Increment this for each release to your organization's app store.",
+                "default": "1.0.0"
+            },
+            {
+                "key": "appID",
+                "display_name": "Application ID",
+                "type": "text",
+                "help_text": "A unique identifier for the application. This is used to identify the application in Microsoft 365.",
+                "default": ""
+            },
+            {
+                "key": "appClientID",
+                "display_name": "Application Client ID",
+                "type": "text",
+                "help_text": "The client ID of the application registered in Azure Portal. This is used to authenticate the application with Microsoft 365.",
+                "default": ""
+            },
+            {
+                "key": "appName",
+                "display_name": "Application Name",
+                "type": "text",
+                "help_text": "The name of the application as it will be displayed in your organization's app store.",
+                "default": "Mattermost DevSecOps"
+            },
+            {
                 "key": "appManifestDownload",
                 "display_name": "Download Manifest",
                 "type": "custom",

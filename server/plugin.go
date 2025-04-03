@@ -8,10 +8,6 @@ import (
 	"github.com/mattermost/mattermost/server/public/pluginapi"
 )
 
-const (
-	pluginID = "com.mattermost.plugin-msteams-devsecops"
-)
-
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
 type Plugin struct {
 	plugin.MattermostPlugin
@@ -36,7 +32,8 @@ func (p *Plugin) OnActivate() error {
 
 	p.apiHandler = NewAPI(p)
 
-	return nil
+	// force defaults for the configuration
+	return p.OnConfigurationChange()
 }
 
 // OnDeactivate is invoked when the plugin is deactivated.
