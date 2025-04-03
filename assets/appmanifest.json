@@ -36,6 +36,12 @@
           ]
        },
        {
+         "entityId": "notification_preview",
+         "name": "Notification Preview",
+         "contentUrl": "https://{{.SiteDomainPath}}/plugins/{{.PluginID}}/iframe/mattermostTab?action=notification_preview",
+         "scopes": ["personal"]
+       },       
+       {
           "entityId":"about",
           "scopes":[
              "personal"
