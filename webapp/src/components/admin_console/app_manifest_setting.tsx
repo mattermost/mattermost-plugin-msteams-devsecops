@@ -8,7 +8,7 @@ type Props = {
     disabled: boolean;
 };
 
-export default function MSTeamsAppManifestSetting(props: Props) {
+const MSTeamsAppManifestSetting = (props: Props) => {
     return (
         <div>
             <p>
@@ -16,21 +16,28 @@ export default function MSTeamsAppManifestSetting(props: Props) {
                 {'Clicking the Download button below will generate an application manifest that will embed this instance of Mattermost. '}
             </p>
             <a
-                href='/plugins/com.mattermost.plugin-msteams-devsecops/iframe-manifest'
-                className='btn btn-primary'
+                href={props.disabled ? undefined : '/plugins/com.mattermost.plugin-msteams-devsecops/iframe-manifest'}
+                className={`btn btn-primary ${props.disabled ? 'disabled' : ''}`}
                 rel='noreferrer'
                 target='_self'
                 style={styles.buttonBorder}
-                download={true}
+                download={!props.disabled}
+                onClick={(e) => {
+                    if (props.disabled) {
+                        e.preventDefault();
+                    }
+                }}
             >
                 {props.label}
             </a>
         </div>
     );
-}
+};
 
 const styles = {
     buttonBorder: {
         marginTop: '8px',
     },
 };
+
+export default MSTeamsAppManifestSetting;

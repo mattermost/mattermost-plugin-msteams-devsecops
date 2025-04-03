@@ -34,13 +34,6 @@
                 "default": ""
             },
             {
-                "key": "generateAppID",
-                "display_name": "Generate",
-                "type": "custom",
-                "help_text": "Generates a new unique application ID.",
-                "default": ""
-            },
-            {
                 "key": "appClientID",
                 "display_name": "Application Client ID",
                 "type": "text",

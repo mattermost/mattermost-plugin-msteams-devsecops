@@ -70,7 +70,7 @@ func (a *API) makeManifestContext() (*manifestContext, error) {
 		AppClientID:    pluginConfig.AppClientID,
 		AppName:        pluginConfig.AppName,
 		SiteDomain:     hostName,
-		SiteDomainPath: strings.Join([]string{hostName, path}, "/"),
+		SiteDomainPath: strings.TrimRight(strings.Join([]string{hostName, path}, "/"), "/"),
 		PluginID:       a.p.API.GetPluginID(),
 	}, nil
 }

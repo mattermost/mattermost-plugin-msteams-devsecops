@@ -3,6 +3,7 @@ package main
 import (
 	"reflect"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -74,6 +75,21 @@ func (p *Plugin) setConfiguration(configuration *configuration) {
 
 // OnConfigurationChange is invoked when configuration changes may have been made.
 func (p *Plugin) OnConfigurationChange() error {
+	// Set defaults
+	dirty := false
+	mapCfg := p.API.GetPluginConfig()
+
+	if v, ok := mapCfg["appid"]; !ok || v == "" {
+		mapCfg["appid"] = uuid.New().String()
+		dirty = true
+	}
+	if dirty {
+		// Save the updated configuration back to the Mattermost server.
+		if err := p.API.SavePluginConfig(mapCfg); err != nil {
+			return errors.Wrap(err, "failed to save plugin configuration")
+		}
+	}
+
 	var configuration = new(configuration)
 
 	// Load the public configuration fields from the Mattermost server configuration.
