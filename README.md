@@ -36,6 +36,18 @@ The **Mattermost Mission Collaboration for Microsoft** application extends Enter
 
 This app is designed to work with Microsoft 365, Outlook, and Microsoft Teams.
 
+### Set up
+
+// Need to add instructions here
+
+### FAQ
+
+#### Where can I get support?
+
+You can browse existing open issues or submit a new issue for support in GitHub: https://github.com/mattermost/mattermost-teams-tab/issues
+
+// Add FAQs we anticipate from users
+
 ## Community Mattermost for Microsoft 365 & MS Teams
 
 The *Community Mattermost for Microsoft 365* application provides a showcase and peer-to-peer discussion environment for Mattermost customers, open source users, and system evaluators.
@@ -91,7 +103,9 @@ Once you’ve installed the app, here are some ways to get started:
 
 #### Where can I get support?
 
-You can browse existing open issues or submit a new issue for support in GitHub.
+You can browse existing open issues or submit a new issue for support in GitHub: https://github.com/mattermost/mattermost-teams-tab/issues
 
 #### Do I need a Mattermost account to use this application?
 Yes, you’ll need to create a free account on the Mattermost Community server when you first access it through the app.
+
+// Add more FAQs we anticipate from users
