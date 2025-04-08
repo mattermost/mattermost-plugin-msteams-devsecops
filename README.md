@@ -12,11 +12,9 @@ This repository provides the foundation for multiple Microsoft App offerings tha
 
 ## Mattermost Mission Collaboration for Microsoft 365 & MS Teams
 
-**Mattermost Mission Collaboration for Microsoft**
-
 The **Mattermost Mission Collaboration for Microsoft** application extends Enterprise communications to the Tactical Edge by accessing Mattermost from your Microsoft Office365, Teams, and Outlook user experiences.
 
-![image](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/actions/workflows/ci.yml/badge.svg)
+![image](https://github.com/jasonblais/mattermost-plugin-msteams-devsecops/blob/patch-1/assets/Enterprise-to-Tactical-Edge-with-Mattermost-and-Microsoft.png)
 
 **Benefits & Use Cases:**
 - **Mission Operations at the Tactical Edge**: Real-time command and control for joint operations, mission partner environments, and disconnected/denied environments (DDIL). 
@@ -72,3 +70,28 @@ This app is designed to work with Microsoft 365, Outlook, and Microsoft Teams. A
 **About Mattermost:**  
 Mattermost is a purpose-built platform for technical and operational teams working in organizations vital to national security, public safety, and critical infrastructure. [https://mattermost.com/](https://mattermost.com/)   
 
+### Set up
+
+Any Microsoft 365 user can complete the steps below to access the Mattermost for Microsoft 365 within their Microsoft environment:
+1. Sign in to your Microsoft Teams account [from a web browser](https://teams.microsoft.com/v2/?clientexperience=t2) or the desktop application.
+2. Select the [+] Apps button in the Teams sidebar.
+3. Search for Mattermost for Microsoft 365 and then select Add to install the application.
+4. (Optional) Pin the Mattermost app to your Teams sidebar by right-clicking on it and selecting Pin.
+5. Once the Mattermost app is installed, you’ll be connected to the public Mattermost Community instance.
+
+### Getting started
+
+Once you’ve installed the app, here are some ways to get started:
+
+- **Ask questions**: Use the [~ask-anything](https://community.mattermost.com/core/channels/ask-anything) channel to ask technical questions or get support from the community.
+- **Contribute**: If you’re interested in contributing to Mattermost, join the [~developers](https://community.mattermost.com/core/channels/developers) channel to connect with other contributors.
+- **Share feedback**: Your ideas and feedback are valuable! Share your thoughts in the [~user-feedback](https://community.mattermost.com/core/channels/user-feedback) channel.
+
+### FAQ
+
+#### Where can I get support?
+
+You can browse existing open issues or submit a new issue for support in GitHub.
+
+#### Do I need a Mattermost account to use this application?
+Yes, you’ll need to create a free account on the Mattermost Community server when you first access it through the app.
