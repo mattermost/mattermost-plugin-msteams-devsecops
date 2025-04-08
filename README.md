@@ -12,15 +12,16 @@ This repository provides the foundation for multiple Microsoft App offerings tha
 
 ## Mattermost Mission Collaboration for Microsoft 365 & MS Teams
 
-The **Mattermost Mission Collaboration for Microsoft** application extends Enterprise communications to the Tactical Edge by accessing Mattermost from your Microsoft Office365, Teams, and Outlook user experiences.
+The **Mattermost Mission Collaboration for Microsoft** application extends Enterprise communications with secure external collaboration controlled by IT by accessing Mattermost from your Microsoft Office365, Teams, and Outlook user experiences.
 
-![image](https://github.com/jasonblais/mattermost-plugin-msteams-devsecops/blob/patch-1/assets/Enterprise-to-Tactical-Edge-with-Mattermost-and-Microsoft.png)
+![image](https://github.com/jasonblais/mattermost-plugin-msteams-devsecops/blob/patch-1/assets/External-Collaboration-with-Enterprise-Control-Microsoft.png)
 
 **Benefits & Use Cases:**
-- **Mission Operations at the Tactical Edge**: Real-time command and control for joint operations, mission partner environments, and disconnected/denied environments (DDIL). 
+- **External Collaboration with IT Control**: Replace off-compliant freemium personal apps with a dedicated external collaboration across mobile, web, and desktop fully controlled by IT.
 - **Intelligent, AI-Accelerated Incident Response**: Augment Microsoft Security Suite with AI-powered collaborative workflows, from detection to resolution, within secure environments. 
 - **Sovereign, Cyber-Resilient S4B Replacement for Classified Workflows**: Replace legacy Skype for Business with a self-hosted, fully sovereign solution for classified operations, tightly integrated within Microsoft ecosystems. 
-- **Embedded DevSecOps Collaboration Inside Microsoft Teams**: Maintain a unified user experience while achieving higher operational productivity for DevSecOps and mission teams. 
+- **Embedded DevSecOps Collaboration Inside Microsoft Teams**: Maintain a unified user experience while achieving higher operational productivity for DevSecOps and mission teams.
+- **Mission Operations at the Tactical Edge**: Real-time command and control for joint operations, mission partner environments, and disconnected/denied environments (DDIL). 
 
 **Features:**
 - **Direct Access**: Access Mattermost directly from a tab without switching applications or opening a browser. 
