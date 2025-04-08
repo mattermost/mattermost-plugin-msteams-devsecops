@@ -77,7 +77,7 @@ This project is under development for customers of Mattermost Professional and E
     - Add the `access_as_user` scope by clicking the “Add a scope” button. ([Microsoft documentation](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#to-configure-api-scope))
         - **Scope name**: `access_as_user`
         - **Who can consent?** Admins and users
-        - Give it a display name, description user consent display name and description. These last two are the ones the end users are going to see in the consent screen. For example:
+        - Give it a display name and description, and also specify a user consent display name and description. These last two are the ones the end users are going to see in the consent screen. For example:
             **Display name**: Log in to Mattermost
             **Description**: Used to allow O365 users to log in to the Mattermost application 
             **User consent display name**: Log in to Mattermost
