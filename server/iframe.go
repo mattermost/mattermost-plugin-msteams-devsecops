@@ -29,7 +29,7 @@ func (a *API) iFrame(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 
-	html := strings.ReplaceAll(assets.IFrameHTML, "{{SITE_URL}}", siteURL)
+	html := strings.ReplaceAll(assets.IFrameHTMLTemplate, "{{SITE_URL}}", siteURL)
 
 	w.Header().Set("Content-Type", "text/html")
 

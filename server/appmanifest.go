@@ -85,7 +85,7 @@ func (a *API) appManifest(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	tmpl, err := template.New("manifest").Parse(assets.AppManifest)
+	tmpl, err := template.New("manifest").Parse(assets.AppManifestTemplate)
 	if err != nil {
 		a.p.API.LogError("Unable to parse app manifest template", "error", err.Error())
 		http.Error(w, "Unable to parse app manifest template: "+err.Error(), http.StatusInternalServerError)
