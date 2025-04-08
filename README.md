@@ -39,15 +39,13 @@ This app is designed to work with Microsoft 365, Outlook, and Microsoft Teams.
 
 ### Set up
 
-// Need to add instructions here
+Coming soon..
 
 ### FAQ
 
 #### Where can I get support?
 
 You can browse existing open issues or submit a new issue for support in GitHub: https://github.com/mattermost/mattermost-teams-tab/issues
-
-// Add FAQs we anticipate from users
 
 ## Community Mattermost for Microsoft 365 & MS Teams
 
