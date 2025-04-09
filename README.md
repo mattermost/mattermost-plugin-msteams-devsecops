@@ -157,4 +157,3 @@ You can browse existing open issues or submit a new issue for support in GitHub:
 #### Do I need a Mattermost account to use this application?
 Yes, you’ll need to create a free account on the Mattermost Community server when you first access it through the app.
 
-// Add more FAQs we anticipate from users
