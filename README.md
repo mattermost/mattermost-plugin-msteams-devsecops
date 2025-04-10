@@ -45,7 +45,7 @@ This app is designed to work with Microsoft 365, Outlook, and Microsoft Teams.
 
 2. Go to **App registrations**
 
-3. Create a new app registration by clicking **Add > App registraiton**
+3. Create a new app registration by clicking **Add > App registration**
     - Give it a name
     - Accounts in this organisational directory only (single tenant)
     - No redirect URIs
