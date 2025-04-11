@@ -4,10 +4,12 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 type API struct {
@@ -45,16 +47,32 @@ func (a *API) handleStaticFiles(r *mux.Router) {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(filepath.Join(bundlePath, "assets")))))
 }
 
-/*
-func (a *API) mattermostAuthorizationRequired(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Header.Get("Mattermost-User-ID")
-		if userID == "" {
-			http.Error(w, "Not authorized", http.StatusUnauthorized)
-			return
-		}
+// handleErrorWithCode logs the internal error and sends the public facing error
+// message as JSON in a response with the provided code.
+func handleErrorWithCode(logger logrus.FieldLogger, w http.ResponseWriter, code int, publicErrorMsg string, internalErr error) {
+	if internalErr != nil {
+		logger = logger.WithError(internalErr)
+	}
 
-		next.ServeHTTP(w, r)
-	})
+	if code >= http.StatusInternalServerError {
+		logger.Error(publicErrorMsg)
+	} else {
+		logger.Warn(publicErrorMsg)
+	}
+
+	handleResponseWithCode(w, code, publicErrorMsg)
 }
-*/
+
+// handleResponseWithCode logs the internal error and sends the public facing error
+// message as JSON in a response with the provided code.
+func handleResponseWithCode(w http.ResponseWriter, code int, publicMsg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+
+	responseMsg, _ := json.Marshal(struct {
+		Error string `json:"error"` // A public facing message providing details about the error.
+	}{
+		Error: publicMsg,
+	})
+	_, _ = w.Write(responseMsg)
+}

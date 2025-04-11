@@ -16,5 +16,8 @@ var LogoOutlineData []byte
 //go:embed iframe.html.tmpl
 var IFrameHTMLTemplate string
 
+//go:embed iframe_notification_preview.html.tmpl
+var IFrameNotificationPreviewHTMLTemplate string
+
 //go:embed appmanifest.json.tmpl
 var AppManifestTemplate string

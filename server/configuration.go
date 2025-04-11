@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"reflect"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -19,10 +21,34 @@ import (
 // If you add non-reference types to your configuration struct, be sure to rewrite Clone as a deep
 // copy appropriate for your types.
 type configuration struct {
-	AppVersion  string `json:"appVersion"`
-	AppID       string `json:"appID"`
-	AppClientID string `json:"appClientID"`
-	AppName     string `json:"appName"`
+	AppVersion                      string `json:"appVersion"`
+	AppID                           string `json:"appID"`
+	AppClientID                     string `json:"appClientID"`
+	AppClientSecret                 string `json:"appClientSecret"`
+	AppName                         string `json:"appName"`
+	TenantID                        string `json:"tenantid"`
+	DisableCheckCredentials         bool   `json:"internalDisableCheckCredentials"`
+	EnableUserActivityNotifications bool   `json:"enableUserActivityNotifications"`
+}
+
+func (c *configuration) ProcessConfiguration() {
+	c.TenantID = strings.TrimSpace(c.TenantID)
+	c.AppClientID = strings.TrimSpace(c.AppClientID)
+	c.AppClientSecret = strings.TrimSpace(c.AppClientSecret)
+}
+
+func (p *Plugin) validateConfiguration(configuration *configuration) error {
+	configuration.ProcessConfiguration()
+	if configuration.TenantID == "" {
+		return errors.New("tenant ID should not be empty")
+	}
+	if configuration.AppClientID == "" {
+		return errors.New("client ID should not be empty")
+	}
+	if configuration.AppClientSecret == "" {
+		return errors.New("client secret should not be empty")
+	}
+	return nil
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -30,6 +56,20 @@ type configuration struct {
 func (c *configuration) Clone() *configuration {
 	var clone = *c
 	return &clone
+}
+
+func (c *configuration) ToMap() (map[string]interface{}, error) {
+	var out map[string]interface{}
+	data, err := json.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(data, &out)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 // getConfiguration retrieves the active configuration under lock, making it safe to use
@@ -75,21 +115,6 @@ func (p *Plugin) setConfiguration(configuration *configuration) {
 
 // OnConfigurationChange is invoked when configuration changes may have been made.
 func (p *Plugin) OnConfigurationChange() error {
-	// Set defaults
-	dirty := false
-	mapCfg := p.API.GetPluginConfig()
-
-	if v, ok := mapCfg["appid"]; !ok || v == "" {
-		mapCfg["appid"] = uuid.New().String()
-		dirty = true
-	}
-	if dirty {
-		// Save the updated configuration back to the Mattermost server.
-		if err := p.API.SavePluginConfig(mapCfg); err != nil {
-			return errors.Wrap(err, "failed to save plugin configuration")
-		}
-	}
-
 	var configuration = new(configuration)
 
 	// Load the public configuration fields from the Mattermost server configuration.
@@ -97,7 +122,37 @@ func (p *Plugin) OnConfigurationChange() error {
 		return errors.Wrap(err, "failed to load plugin configuration")
 	}
 
+	if err := p.validateConfiguration(configuration); err != nil {
+		return err
+	}
+
 	p.setConfiguration(configuration)
 
+	// Only restart the application if the OnActivate is already executed
+	if p.pluginStore != nil {
+		go p.restart()
+	}
+
+	return nil
+}
+
+func (p *Plugin) generateConfigDefaults() error {
+	needSaveConfig := false
+	cfg := p.getConfiguration().Clone()
+	if cfg.AppID == "" {
+		cfg.AppID = uuid.New().String()
+		needSaveConfig = true
+	}
+
+	if needSaveConfig {
+		configMap, err := cfg.ToMap()
+		if err != nil {
+			return err
+		}
+		p.setConfiguration(cfg)
+		if appErr := p.API.SavePluginConfig(configMap); appErr != nil {
+			return appErr
+		}
+	}
 	return nil
 }
