@@ -11,7 +11,7 @@ require (
 	github.com/MicahParks/keyfunc/v3 v3.3.10
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/mattermost/mattermost/server/public v0.1.11
-	github.com/mattermost/mattermost/server/v8 v8.0.0-20250409163651-27575d50c27f
+	github.com/mattermost/mattermost/server/v8 v8.0.0-20250411193521-698de055453f
 	github.com/microsoft/kiota-abstractions-go v1.9.2
 	github.com/microsoft/kiota-http-go v1.5.3
 	github.com/microsoftgraph/msgraph-sdk-go v1.68.0

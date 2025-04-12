@@ -377,6 +377,8 @@ github.com/mattermost/mattermost/server/public v0.1.11 h1:qxn36BE1rk5lTiMrHCVjdE
 github.com/mattermost/mattermost/server/public v0.1.11/go.mod h1:h/rage94cF+ZWqDdVRaROXFUEPVyO3Wbq8tfKRPRL0s=
 github.com/mattermost/mattermost/server/v8 v8.0.0-20250409163651-27575d50c27f h1:SBB1byYx9lW//Khqyo/7Gc1iUFTN+lYzJpKZ7pcuijw=
 github.com/mattermost/mattermost/server/v8 v8.0.0-20250409163651-27575d50c27f/go.mod h1:QPFVd8gsuqXRvEabBnJCI2rpyE4ck89uWUIMRxz01Mo=
+github.com/mattermost/mattermost/server/v8 v8.0.0-20250411193521-698de055453f h1:xpqes6/orQZtuzSFN+fYPyMa/k+busmUTKh5N8yApL8=
+github.com/mattermost/mattermost/server/v8 v8.0.0-20250411193521-698de055453f/go.mod h1:QPFVd8gsuqXRvEabBnJCI2rpyE4ck89uWUIMRxz01Mo=
 github.com/mattermost/morph v1.1.0 h1:Q9vrJbeM3s2jfweGheq12EFIzdNp9a/6IovcbvOQ6Cw=
 github.com/mattermost/morph v1.1.0/go.mod h1:gD+EaqX2UMyyuzmF4PFh4r33XneQ8Nzi+0E8nXjMa3A=
 github.com/mattermost/rsc v0.0.0-20160330161541-bbaefb05eaa0 h1:G9tL6JXRBMzjuD1kkBtcnd42kUiT6QDwxfFYu7adM6o=
