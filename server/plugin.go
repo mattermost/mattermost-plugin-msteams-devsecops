@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	pluginID                = "com.mattermost.plugin-msteams-devsecops"
 	checkCredentialsJobName = "check_credentials" //#nosec G101 -- This is a false positive
 )
 
@@ -55,6 +56,13 @@ type Plugin struct {
 
 	// checkCredentialsJob is a job that periodically checks credentials and permissions against the MS Graph API
 	checkCredentialsJob *cluster.Job
+}
+
+func (p *Plugin) GetClientForApp() msteams.Client {
+	p.msteamsAppClientMutex.RLock()
+	defer p.msteamsAppClientMutex.RUnlock()
+
+	return p.msteamsAppClient
 }
 
 // OnActivate is invoked when the plugin is activated. If an error is returned, the plugin will be deactivated.
@@ -97,9 +105,7 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 }
 
 func (p *Plugin) start(isRestart bool) {
-	var err error
-
-	err = p.connectTeamsAppClient()
+	err := p.connectTeamsAppClient()
 	if err != nil {
 		return
 	}

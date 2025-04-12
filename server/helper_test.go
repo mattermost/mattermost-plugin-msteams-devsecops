@@ -17,7 +17,6 @@ import (
 	goPlugin "github.com/hashicorp/go-plugin"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/mocks"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/storemodels"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	pluginapi "github.com/mattermost/mattermost/server/public/pluginapi"
@@ -279,7 +278,7 @@ func (th *testHelper) SetupGuestUser(t *testing.T, team *model.Team) *model.User
 	var err error
 	user = th.SetupUser(t, team)
 
-	user, err = th.p.apiClient.User.UpdateRoles(user.Id, model.SystemGuestRoleId)
+	user, err = th.p.client.User.UpdateRoles(user.Id, model.SystemGuestRoleId)
 	require.NoError(t, err)
 
 	return user
@@ -301,6 +300,7 @@ func (th *testHelper) CreateBot(t *testing.T) *model.Bot {
 	return bot
 }
 
+/*
 func (th *testHelper) ConnectUser(t *testing.T, userID string) {
 	teamID := "t" + userID
 	err := th.p.store.SetUserInfo(userID, teamID, &oauth2.Token{AccessToken: "token", Expiry: time.Now().Add(10 * time.Minute)})
@@ -338,6 +338,7 @@ func (th *testHelper) SetupSysadmin(t *testing.T, team *model.Team) *model.User 
 
 	return user
 }
+*/
 
 func (th *testHelper) SetupClient(t *testing.T, userID string) *model.Client4 {
 	t.Helper()
