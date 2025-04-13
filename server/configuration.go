@@ -39,6 +39,13 @@ func (c *configuration) ProcessConfiguration() {
 
 func (p *Plugin) validateConfiguration(configuration *configuration) error {
 	configuration.ProcessConfiguration()
+
+	if configuration.AppVersion == "" {
+		return errors.New("application version should not be empty")
+	}
+	if configuration.AppID == "" {
+		return errors.New("application ID should not be empty")
+	}
 	if configuration.TenantID == "" {
 		return errors.New("tenant ID should not be empty")
 	}
@@ -47,6 +54,9 @@ func (p *Plugin) validateConfiguration(configuration *configuration) error {
 	}
 	if configuration.AppClientSecret == "" {
 		return errors.New("client secret should not be empty")
+	}
+	if configuration.AppName == "" {
+		return errors.New("app name should not be empty")
 	}
 	return nil
 }
@@ -58,7 +68,7 @@ func (c *configuration) Clone() *configuration {
 	return &clone
 }
 
-func (c *configuration) ToMap() (map[string]interface{}, error) {
+func (c *configuration) ToMap() (map[string]any, error) {
 	var out map[string]interface{}
 	data, err := json.Marshal(c)
 	if err != nil {
@@ -121,6 +131,8 @@ func (p *Plugin) OnConfigurationChange() error {
 	if err := p.API.LoadPluginConfiguration(configuration); err != nil {
 		return errors.Wrap(err, "failed to load plugin configuration")
 	}
+
+	//p.API.LogDebug("Loaded plugin configuration", "configuration", configuration)
 
 	if err := p.validateConfiguration(configuration); err != nil {
 		return err

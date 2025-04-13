@@ -73,11 +73,6 @@ func (p *Plugin) OnActivate() error {
 
 	p.client = pluginapi.NewClient(p.API, p.Driver)
 
-	err := p.generateConfigDefaults()
-	if err != nil {
-		return err
-	}
-
 	logger := logrus.StandardLogger()
 	pluginapi.ConfigureLogrus(logger, p.client)
 
@@ -90,6 +85,11 @@ func (p *Plugin) OnActivate() error {
 	p.apiHandler = NewAPI(p)
 
 	p.pluginStore = pluginstore.NewPluginStore(p.API)
+
+	err := p.generateConfigDefaults()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

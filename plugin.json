@@ -56,7 +56,7 @@
             },
             {
                 "key": "appName",
-                "display_name": "Application Name",
+                "display_name": "Application Display Name",
                 "type": "text",
                 "help_text": "The name of the application as it will be displayed in your organization's app store.",
                 "default": "Mattermost DevSecOps"

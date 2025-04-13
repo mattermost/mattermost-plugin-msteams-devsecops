@@ -50,17 +50,8 @@ func (a *API) makeManifestContext() (*manifestContext, error) {
 	}
 
 	pluginConfig := a.p.getConfiguration()
-	if pluginConfig.AppID == "" {
-		return nil, errors.New("AppID cannot be empty")
-	}
-	if pluginConfig.AppClientID == "" {
-		return nil, errors.New("AppClientID cannot be empty")
-	}
-	if pluginConfig.AppName == "" {
-		return nil, errors.New("AppName cannot be empty")
-	}
-	if pluginConfig.AppVersion == "" {
-		return nil, errors.New("AppVersion cannot be empty")
+	if err := a.p.validateConfiguration(pluginConfig); err != nil {
+		return nil, fmt.Errorf("plugin configuration is invalid: %w", err)
 	}
 
 	return &manifestContext{
