@@ -51,7 +51,7 @@
                 "key": "appManifestDownload",
                 "display_name": "Download Manifest",
                 "type": "custom",
-                "help_text": "",
+                "help_text": "Downloads a M365 app that can be added to your M365 tenant. Make sure any config changes have been saved first.",
                 "default": ""
             }
         ]
