@@ -27,22 +27,8 @@
       console.error('Failed to initialize Microsoft Teams SDK:', error);
     });
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const noRoute = urlParams.has('noroute');
-
-    // Define a map of tenant IDs to their corresponding domain roots
-    const tenantMap = {
-      'd2888234-d303-4c94-8f45-c7348f089048': 'https://msteams-sync-test.test.mattermost.cloud',
-      '7419f71d-0b07-4d0a-89b8-3a4be2ec8627': 'https://hub.mattermost.com',
-      '8bcff170-9979-491e-8683-d8ced0850bad': 'https://servicenow.cloud.mattermost.com',
-    };
-
-    if ('{{.TenantID}}') {
-      // Check if tenantMap already has the configured tenant ID, if not, add it.
-      if (!tenantMap['{{.TenantID}}']) {
-        tenantMap['{{.TenantID}}'] = '{{.SiteURL}}';
-      }
-    }
+    const expectedTenantId = '{{.TenantID}}';
+    const domainRoot = '{{.SiteURL}}';
 
     // Choose the iFrame content based on the tenant.
     microsoftTeams.app.getContext().then((context) => {
@@ -51,11 +37,8 @@
         tenantId = context.user.tenant.id;
       }
 
-      // If there's an explicit match in the tenant map, try to get auth token
-      if (tenantMap[tenantId]) {
-        // if `noroute` param is present, then stay on this server, otherwise redirect based on tenant map.
-        const domainRoot = noRoute ? '{{.SiteURL}}' : tenantMap[tenantId];
-        
+      // If the expected tenant matches the actual tenant then try to get auth token
+      if (tenantId === expectedTenantId) {
         // Build query params to be sent to the iframe.
         const params = new URLSearchParams()
         params.set('app_id', context.app.appId.appIdAsString);
@@ -89,11 +72,14 @@
             iframe.src = domainRoot;
           });
       } else {
-        // No explicit match, just redirect to SITE_URL
+        // Expected tenant does not match actual tenant the user is logged into; just redirect to SITE_URL and the user
+        // will have to log in without SSO
         console.log('No tenant match found, redirecting to default site');
         iframe.src = '{{.SiteURL}}';
       }
     }).catch((error) => {
+      // User appears to not be logged into Microsoft Teams, or the context is not available.
+      // Just redirect to the SITE_URL and the user will have to log in without SSO.
       console.error('Failed to get context:', error);
       iframe.src = '{{.SiteURL}}';
     });
