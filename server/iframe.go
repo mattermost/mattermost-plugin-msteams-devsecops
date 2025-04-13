@@ -335,7 +335,7 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 // This is called in a controller Goroutine in the server side so there's no need to worry about concurrency here.
 func (p *Plugin) MessageHasBeenPosted(c *plugin.Context, post *model.Post) {
 	// Check if user activity notifications are enabled
-	if !p.getConfiguration().EnableUserActivityNotifications {
+	if p.getConfiguration().DisableUserActivityNotifications {
 		return
 	}
 

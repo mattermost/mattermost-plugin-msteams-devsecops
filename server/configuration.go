@@ -21,14 +21,14 @@ import (
 // If you add non-reference types to your configuration struct, be sure to rewrite Clone as a deep
 // copy appropriate for your types.
 type configuration struct {
-	AppVersion                      string `json:"appVersion"`
-	AppID                           string `json:"appID"`
-	AppClientID                     string `json:"appClientID"`
-	AppClientSecret                 string `json:"appClientSecret"`
-	AppName                         string `json:"appName"`
-	TenantID                        string `json:"tenantid"`
-	DisableCheckCredentials         bool   `json:"internalDisableCheckCredentials"`
-	EnableUserActivityNotifications bool   `json:"enableUserActivityNotifications"`
+	AppVersion                       string `json:"appVersion"`
+	AppID                            string `json:"appID"`
+	AppClientID                      string `json:"appClientID"`
+	AppClientSecret                  string `json:"appClientSecret"`
+	AppName                          string `json:"appName"`
+	TenantID                         string `json:"tenantID"`
+	DisableCheckCredentials          bool   `json:"internalDisableCheckCredentials"`
+	DisableUserActivityNotifications bool   `json:"disableUserActivityNotifications"`
 }
 
 func (c *configuration) ProcessConfiguration() {
