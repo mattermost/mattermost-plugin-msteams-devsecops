@@ -10,7 +10,7 @@ require (
 	github.com/MicahParks/jwkset v0.9.5
 	github.com/MicahParks/keyfunc/v3 v3.3.10
 	github.com/golang-jwt/jwt/v5 v5.2.2
-	github.com/mattermost/mattermost/server/public v0.1.11
+	github.com/mattermost/mattermost/server/public v0.1.12-0.20250412152950-02c76784380a
 	github.com/mattermost/mattermost/server/v8 v8.0.0-20250411193521-698de055453f
 	github.com/microsoft/kiota-abstractions-go v1.9.2
 	github.com/microsoft/kiota-http-go v1.5.3
@@ -35,7 +35,6 @@ require (
 	github.com/JalfResi/justext v0.0.0-20221106200834-be571e3e3052 // indirect
 	github.com/Masterminds/semver/v3 v3.3.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/PuerkitoBio/goquery v1.9.2 // indirect
 	github.com/RoaringBitmap/roaring v1.9.4 // indirect
 	github.com/advancedlogic/GoOse v0.0.0-20231203033844-ae6b36caf275 // indirect
@@ -70,7 +69,6 @@ require (
 	github.com/blevesearch/zapx/v16 v16.1.11-0.20250107152255-021e66397612 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/containerd/containerd v1.7.15 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
@@ -103,6 +101,7 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
 	github.com/gorilla/schema v1.4.1 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/h2non/go-is-svg v0.0.0-20160927212452-35e8c4b0612c // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -169,9 +168,7 @@ require (
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible // indirect
 	github.com/russellhaering/goxmldsig v1.4.0 // indirect
 	github.com/segmentio/backo-go v1.1.0 // indirect
-	github.com/shirou/gopsutil/v3 v3.23.12 // indirect
 	github.com/shirou/gopsutil/v4 v4.25.1 // indirect
-	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/splitio/go-client/v6 v6.7.0 // indirect
 	github.com/splitio/go-split-commons/v6 v6.1.0 // indirect
 	github.com/splitio/go-toolkit/v5 v5.4.0 // indirect
