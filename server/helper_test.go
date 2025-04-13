@@ -5,11 +5,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
-	"regexp"
 	"slices"
 	"testing"
 	"time"
@@ -20,8 +18,6 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	pluginapi "github.com/mattermost/mattermost/server/public/pluginapi"
-	dto "github.com/prometheus/client_model/go"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
@@ -32,7 +28,6 @@ type testHelper struct {
 	clientMock               *mocks.Client
 	websocketClients         map[string]*model.WebSocketClient
 	websocketEventsWhitelist map[string][]model.WebsocketEventType
-	metricsSnapshot          []*dto.MetricFamily
 }
 
 func setupTestHelper(t *testing.T) *testHelper {
@@ -48,6 +43,13 @@ func setupTestHelper(t *testing.T) *testHelper {
 	th := &testHelper{
 		p: p,
 	}
+
+	// Set up JWK to validate JWTs from Microsoft Teams.
+	p.cancelKeyFuncLock.Lock()
+	if p.cancelKeyFunc == nil {
+		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet()
+	}
+	p.cancelKeyFuncLock.Unlock()
 
 	// ctx, and specifically cancel, gives us control over the plugin lifecycle
 	ctx, cancel := context.WithCancel(context.Background())
@@ -218,38 +220,6 @@ func (th *testHelper) SetupTeam(t *testing.T) *model.Team {
 	return team
 }
 
-type ChannelOption func(*testing.T, *testHelper, *model.Channel)
-
-func WithMembers(members ...*model.User) ChannelOption {
-	return func(t *testing.T, th *testHelper, channel *model.Channel) {
-		t.Helper()
-
-		for _, user := range members {
-			_, appErr := th.p.API.AddUserToChannel(channel.Id, user.Id, user.Id)
-			require.Nil(t, appErr)
-		}
-	}
-}
-
-func (th *testHelper) SetupPublicChannel(t *testing.T, team *model.Team, opts ...ChannelOption) *model.Channel {
-	t.Helper()
-
-	channelName := model.NewId()
-	channel, appErr := th.p.API.CreateChannel(&model.Channel{
-		Name:        channelName,
-		DisplayName: channelName,
-		Type:        model.ChannelTypeOpen,
-		TeamId:      team.Id,
-	})
-	require.Nil(t, appErr)
-
-	for _, opt := range opts {
-		opt(t, th, channel)
-	}
-
-	return channel
-}
-
 func (th *testHelper) SetupUser(t *testing.T, team *model.Team) *model.User {
 	t.Helper()
 
@@ -270,75 +240,6 @@ func (th *testHelper) SetupUser(t *testing.T, team *model.Team) *model.User {
 
 	return user
 }
-
-func (th *testHelper) SetupGuestUser(t *testing.T, team *model.Team) *model.User {
-	t.Helper()
-
-	var user *model.User
-	var err error
-	user = th.SetupUser(t, team)
-
-	user, err = th.p.client.User.UpdateRoles(user.Id, model.SystemGuestRoleId)
-	require.NoError(t, err)
-
-	return user
-}
-
-func (th *testHelper) CreateBot(t *testing.T) *model.Bot {
-	id := model.NewId()
-
-	bot := &model.Bot{
-		Username:    "bot" + id,
-		DisplayName: "a bot",
-		Description: "bot",
-		OwnerId:     "ownerID",
-	}
-
-	bot, err := th.p.API.CreateBot(bot)
-	require.Nil(t, err)
-
-	return bot
-}
-
-/*
-func (th *testHelper) ConnectUser(t *testing.T, userID string) {
-	teamID := "t" + userID
-	err := th.p.store.SetUserInfo(userID, teamID, &oauth2.Token{AccessToken: "token", Expiry: time.Now().Add(10 * time.Minute)})
-	require.NoError(t, err)
-}
-
-func (th *testHelper) DisconnectUser(t *testing.T, userID string) {
-	teamID := "t" + userID
-	err := th.p.store.SetUserInfo(userID, teamID, nil)
-	require.NoError(t, err)
-}
-
-func (th *testHelper) MarkUserInvited(t *testing.T, userID string) {
-	t.Helper()
-	invitedUser := &storemodels.InvitedUser{ID: userID, InvitePendingSince: time.Now(), InviteLastSentAt: time.Now()}
-	err := th.p.GetStore().StoreInvitedUser(invitedUser)
-	assert.NoError(t, err)
-}
-
-func (th *testHelper) MarkUserWhitelisted(t *testing.T, userID string) {
-	t.Helper()
-	err := th.p.store.StoreUserInWhitelist(userID)
-	assert.NoError(t, err)
-}
-
-func (th *testHelper) SetupSysadmin(t *testing.T, team *model.Team) *model.User {
-	t.Helper()
-
-	var user *model.User
-	var err error
-	user = th.SetupUser(t, team)
-
-	user, err = th.p.client.User.UpdateRoles(user.Id, model.SystemUserRoleId+" "+model.SystemAdminRoleId)
-	require.NoError(t, err)
-
-	return user
-}
-*/
 
 func (th *testHelper) SetupClient(t *testing.T, userID string) *model.Client4 {
 	t.Helper()
@@ -363,220 +264,4 @@ func (th *testHelper) pluginURL(t *testing.T, paths ...string) string {
 	require.NoError(t, err)
 
 	return apiURL
-}
-
-func (th *testHelper) setupWebsocketClient(t *testing.T, client *model.Client4) *model.WebSocketClient {
-	t.Helper()
-
-	websocketURL, err := url.Parse(client.URL)
-	require.NoError(t, err)
-
-	if websocketURL.Scheme == "http" {
-		websocketURL.Scheme = "ws"
-	} else if websocketURL.Scheme == "https" {
-		websocketURL.Scheme = "wss"
-	} else {
-		t.Fatalf("unexpected client scheme: %s", websocketURL.Scheme)
-	}
-
-	websocketClient, err := model.NewWebSocketClient(websocketURL.String(), client.AuthToken)
-	require.NoError(t, err)
-
-	return websocketClient
-}
-
-// SetupWebsocketClientForUser sets up a websocket client for a user.
-//
-// Call this before you emit the event in order to ensure the client is ready to receive it.
-func (th *testHelper) SetupWebsocketClientForUser(t *testing.T, userID string, whitelistedEvents ...model.WebsocketEventType) {
-	t.Helper()
-
-	if th.websocketClients == nil {
-		th.websocketClients = make(map[string]*model.WebSocketClient)
-	}
-
-	if websocketClient := th.websocketClients[userID]; websocketClient == nil {
-		client := th.SetupClient(t, userID)
-		websocketClient = th.setupWebsocketClient(t, client)
-		websocketClient.Listen()
-		t.Cleanup(func() {
-			websocketClient.Close()
-			delete(th.websocketClients, userID)
-		})
-
-		th.websocketClients[userID] = websocketClient
-	}
-
-	if th.websocketEventsWhitelist == nil {
-		th.websocketEventsWhitelist = make(map[string][]model.WebsocketEventType)
-	}
-
-	// Ignore these common events by default.
-	th.websocketEventsWhitelist[userID] = append(th.websocketEventsWhitelist[userID], model.WebsocketEventHello)
-	th.websocketEventsWhitelist[userID] = append(th.websocketEventsWhitelist[userID], model.WebsocketEventStatusChange)
-
-	th.websocketEventsWhitelist[userID] = append(th.websocketEventsWhitelist[userID], whitelistedEvents...)
-}
-
-// GetWebsocketClientForUser returns a websocket client previously setup for a user.
-//
-// It's important to call SetupWebsocketClientForUser first and early in tests, otherwise the
-// websocket won't be setup to listen to the event of interest. To help with this, this method
-// won't create a websocket client on demand.
-func (th *testHelper) GetWebsocketClientForUser(t *testing.T, userID string) *model.WebSocketClient {
-	t.Helper()
-
-	if th.websocketClients == nil {
-		th.websocketClients = make(map[string]*model.WebSocketClient)
-	}
-
-	websocketClient := th.websocketClients[userID]
-	require.NotNil(t, websocketClient, "websocket client must be setup first")
-
-	return websocketClient
-}
-
-func makePluginWebsocketEventName(short string) string {
-	return fmt.Sprintf("custom_%s_%s", manifest.Id, short)
-}
-
-func (th *testHelper) assertWebsocketEvent(t *testing.T, userID, eventType string) {
-	t.Helper()
-
-	websocketClient := th.GetWebsocketClientForUser(t, userID)
-
-	for {
-		select {
-		case event, ok := <-websocketClient.EventChannel:
-			if !ok {
-				t.Fatal("channel closed before getting websocket event")
-			}
-
-			if event.EventType() == model.WebsocketEventType(eventType) {
-				return
-			}
-		case <-time.After(5 * time.Second):
-			t.Fatal("failed to get websocket event " + eventType)
-		}
-	}
-}
-
-func (th *testHelper) assertEphemeralMessage(t *testing.T, userID, channelID, message string) {
-	t.Helper()
-
-	websocketClient := th.GetWebsocketClientForUser(t, userID)
-
-	for {
-		select {
-		case event, ok := <-websocketClient.EventChannel:
-			if !ok {
-				t.Fatal("channel closed before getting websocket event for ephemeral message")
-			}
-
-			if event.EventType() == model.WebsocketEventEphemeralMessage {
-				data := event.GetData()
-				postJSON, ok := data["post"].(string)
-				require.True(t, ok, "failed to find post in ephemeral message websocket event")
-
-				var post model.Post
-				err := json.Unmarshal([]byte(postJSON), &post)
-				require.NoError(t, err)
-
-				assert.Equal(t, channelID, post.ChannelId)
-				assert.Equal(t, message, post.Message)
-
-				// If we get this far, we're good!
-				return
-			}
-		case <-time.After(5 * time.Second):
-			t.Fatal("failed to get websocket event for ephemeral message")
-		}
-	}
-}
-
-func (th *testHelper) retrieveEphemeralPost(t *testing.T, userID, channelID string) *model.Post {
-	t.Helper()
-
-	websocketClient := th.GetWebsocketClientForUser(t, userID)
-
-	for {
-		select {
-		case event, ok := <-websocketClient.EventChannel:
-			if !ok {
-				t.Fatal("channel closed before getting websocket event for ephemeral message")
-			}
-
-			if event.EventType() == model.WebsocketEventEphemeralMessage {
-				data := event.GetData()
-				postJSON, ok := data["post"].(string)
-				require.True(t, ok, "failed to find post in ephemeral message websocket event")
-
-				var post model.Post
-				err := json.Unmarshal([]byte(postJSON), &post)
-				require.NoError(t, err)
-
-				assert.Equal(t, channelID, post.ChannelId)
-				return &post
-			}
-		case <-time.After(5 * time.Second):
-			t.Fatal("failed to get websocket event for ephemeral message")
-		}
-	}
-}
-
-func (th *testHelper) assertDMFromUserRe(t *testing.T, fromUserID, toUserID, expectedMessageRe string) {
-	t.Helper()
-
-	channel, appErr := th.p.API.GetDirectChannel(fromUserID, toUserID)
-	require.Nil(t, appErr)
-
-	assert.EventuallyWithT(t, func(t *assert.CollectT) {
-		postList, appErr := th.p.API.GetPostsSince(channel.Id, model.GetMillisForTime(time.Now().Add(-5*time.Second)))
-		require.Nil(t, appErr)
-
-		for _, post := range postList.Posts {
-			matched, err := regexp.MatchString(expectedMessageRe, post.Message)
-			require.NoError(t, err)
-			if matched {
-				return
-			}
-		}
-		t.Errorf("failed to find post matching expected message re: %s", expectedMessageRe)
-	}, 1*time.Second, 10*time.Millisecond)
-}
-
-func (th *testHelper) assertNoDMFromUser(t *testing.T, fromUserID, toUserID string, checkTime int64) {
-	t.Helper()
-
-	channel, appErr := th.p.API.GetDirectChannel(fromUserID, toUserID)
-	require.Nil(t, appErr)
-
-	assert.Never(t, func() bool {
-		postList, appErr := th.p.API.GetPostsSince(channel.Id, checkTime)
-		require.Nil(t, appErr)
-
-		return len(postList.Posts) > 0
-	}, 1*time.Second, 10*time.Millisecond, "expected no DMs from user")
-}
-
-func (th *testHelper) setPluginConfiguration(t *testing.T, update func(configuration *configuration)) (*configuration, *configuration) {
-	t.Helper()
-
-	c := th.p.getConfiguration().Clone()
-	prev := c.Clone()
-
-	update(c)
-	th.p.setConfiguration(c)
-
-	return c, prev
-}
-
-func (th *testHelper) setPluginConfigurationTemporarily(t *testing.T, update func(configuration *configuration)) {
-	t.Helper()
-
-	_, prev := th.setPluginConfiguration(t, func(config *configuration) { update(config) })
-
-	t.Cleanup(func() {
-		th.p.setConfiguration(prev)
-	})
 }
