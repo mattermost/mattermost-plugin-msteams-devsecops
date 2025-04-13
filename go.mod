@@ -10,7 +10,6 @@ require (
 	github.com/MicahParks/jwkset v0.9.5
 	github.com/MicahParks/keyfunc/v3 v3.3.10
 	github.com/golang-jwt/jwt/v5 v5.2.2
-	github.com/mattermost/mattermost-plugin-msteams v1.15.0
 	github.com/mattermost/mattermost/server/public v0.1.12-0.20250412152950-02c76784380a
 	github.com/mattermost/mattermost/server/v8 v8.0.0-20250411193521-698de055453f
 	github.com/microsoft/kiota-abstractions-go v1.9.2
@@ -46,7 +45,6 @@ require (
 	github.com/aws/aws-sdk-go v1.55.6 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beevik/etree v1.4.1 // indirect
-	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bep/imagemeta v0.10.0 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
 	github.com/bits-and-blooms/bloom/v3 v3.7.0 // indirect
@@ -147,7 +145,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
-	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nwaples/rardecode v1.1.3 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
@@ -158,10 +155,6 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
-	github.com/prometheus/client_golang v1.20.5 // indirect
-	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.62.0 // indirect
-	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/redis/go-redis/v9 v9.7.3 // indirect
 	github.com/redis/rueidis v1.0.53 // indirect
 	github.com/reflog/dateconstraints v0.2.1 // indirect
