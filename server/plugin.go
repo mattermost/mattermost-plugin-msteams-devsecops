@@ -86,11 +86,6 @@ func (p *Plugin) OnActivate() error {
 
 	p.pluginStore = pluginstore.NewPluginStore(p.API)
 
-	err := p.generateConfigDefaults()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

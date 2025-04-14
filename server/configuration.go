@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -132,7 +131,7 @@ func (p *Plugin) OnConfigurationChange() error {
 		return errors.Wrap(err, "failed to load plugin configuration")
 	}
 
-	//p.API.LogDebug("Loaded plugin configuration", "configuration", configuration)
+	// p.API.LogDebug("Loaded plugin configuration", "configuration", configuration)
 
 	if err := p.validateConfiguration(configuration); err != nil {
 		return err
@@ -142,29 +141,8 @@ func (p *Plugin) OnConfigurationChange() error {
 
 	// Only restart the application if the OnActivate is already executed
 	if p.pluginStore != nil {
-		go p.restart()
+		p.restart()
 	}
 
-	return nil
-}
-
-func (p *Plugin) generateConfigDefaults() error {
-	needSaveConfig := false
-	cfg := p.getConfiguration().Clone()
-	if cfg.AppID == "" {
-		cfg.AppID = uuid.New().String()
-		needSaveConfig = true
-	}
-
-	if needSaveConfig {
-		configMap, err := cfg.ToMap()
-		if err != nil {
-			return err
-		}
-		p.setConfiguration(cfg)
-		if appErr := p.API.SavePluginConfig(configMap); appErr != nil {
-			return appErr
-		}
-	}
 	return nil
 }
