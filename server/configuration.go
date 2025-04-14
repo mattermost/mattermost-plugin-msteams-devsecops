@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"reflect"
 	"strings"
 
@@ -67,20 +66,6 @@ func (c *configuration) Clone() *configuration {
 	return &clone
 }
 
-func (c *configuration) ToMap() (map[string]any, error) {
-	var out map[string]interface{}
-	data, err := json.Marshal(c)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(data, &out)
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
-}
-
 // getConfiguration retrieves the active configuration under lock, making it safe to use
 // concurrently. The active configuration may change underneath the client of this method, but
 // the struct returned by this API call is considered immutable.
@@ -131,17 +116,17 @@ func (p *Plugin) OnConfigurationChange() error {
 		return errors.Wrap(err, "failed to load plugin configuration")
 	}
 
-	// p.API.LogDebug("Loaded plugin configuration", "configuration", configuration)
+	p.API.LogDebug("#### Loaded plugin configuration", "configuration", configuration)
+
+	p.setConfiguration(configuration)
 
 	if err := p.validateConfiguration(configuration); err != nil {
 		return err
 	}
 
-	p.setConfiguration(configuration)
-
 	// Only restart the application if the OnActivate is already executed
 	if p.pluginStore != nil {
-		p.restart()
+		go p.restart()
 	}
 
 	return nil

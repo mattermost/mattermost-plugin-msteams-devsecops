@@ -86,6 +86,8 @@ func (p *Plugin) OnActivate() error {
 
 	p.pluginStore = pluginstore.NewPluginStore(p.API)
 
+	go p.start(false)
+
 	return nil
 }
 
@@ -100,6 +102,14 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 }
 
 func (p *Plugin) start(isRestart bool) {
+	// set up JWK for verifying JWTs from Microsoft Teams
+	p.cancelKeyFuncLock.Lock()
+	if !isRestart && p.cancelKeyFunc == nil {
+		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet()
+	}
+	p.cancelKeyFuncLock.Unlock()
+
+	// connect to the Microsoft Teams API
 	err := p.connectTeamsAppClient()
 	if err != nil {
 		return
@@ -121,12 +131,6 @@ func (p *Plugin) start(isRestart bool) {
 		// Run the job above right away so we immediately populate metrics.
 		go p.checkCredentials()
 	}
-
-	p.cancelKeyFuncLock.Lock()
-	if !isRestart && p.cancelKeyFunc == nil {
-		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet()
-	}
-	p.cancelKeyFuncLock.Unlock()
 
 	p.API.LogDebug("plugin started")
 }

@@ -58,7 +58,7 @@ func setupTestHelper(t *testing.T) *testHelper {
 	// to the server and finish the reattachment.
 	reattachConfigCh := make(chan *goPlugin.ReattachConfig)
 
-	// closeCh tells us when the plugin exits and allows for cleanup.
+	// closeCh tells us when the plugin exits and allows for cleanup.``
 	closeCh := make(chan struct{})
 
 	// plugin.ClientMain with options allows for reattachment.
@@ -101,18 +101,18 @@ func setupTestHelper(t *testing.T) *testHelper {
 		PluginSettings: model.PluginSettings{
 			Plugins: map[string]map[string]any{
 				manifest.Id: {
-					"tenantid":                        model.NewId(),
-					"clientid":                        model.NewId(),
-					"clientsecret":                    model.NewId(),
-					"encryptionkey":                   "aaaaaaaaaaaaaaaaaaaaaaaaaaaa_aaa",
-					"webhooksecret":                   "webhooksecret",
-					"syncusers":                       0,
-					"internalDisableCheckCredentials": true,
-					"connectedUsersAllowed":           1000,
+					"appVersion":                       "1.0.0",
+					"appID":                            model.NewId(),
+					"tenantID":                         model.NewId(),
+					"appClientID":                      model.NewId(),
+					"appClientSecret":                  model.NewId(),
+					"appName":                          "test_app",
+					"disableUserActivityNotifications": false,
 				},
 			},
 		},
 	})
+
 	require.NoError(t, err)
 
 	_, err = clientLocal.ReattachPlugin(ctx, &model.PluginReattachRequest{
