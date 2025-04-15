@@ -112,81 +112,22 @@ func (p *Plugin) OnConfigurationChange() error {
 	// Create a new configuration to hold the new settings
 	var newConfig = new(configuration)
 
-	// Log before loading config
-	p.API.LogDebug("Before LoadPluginConfiguration", "config_pointer", newConfig)
-
 	// Load the public configuration fields from the Mattermost server configuration.
 	if err := p.API.LoadPluginConfiguration(newConfig); err != nil {
 		return errors.Wrap(err, "failed to load plugin configuration")
 	}
-
-	// Log after loading config with all field values
-	p.API.LogDebug("Loaded plugin configuration",
-		"AppVersion", newConfig.AppVersion,
-		"AppID", newConfig.AppID,
-		"TenantID", newConfig.TenantID,
-		"AppClientID", newConfig.AppClientID,
-		"AppClientSecret_empty", newConfig.AppClientSecret == "",
-		"AppName", newConfig.AppName,
-	)
-
-	// Get the current configuration
-	currentConfig := p.getConfiguration()
-	if currentConfig != nil {
-		// Handle JSON deserialization issue by implementing a custom merge strategy
-		// If we have a field in the current config but it's missing in the new config,
-		// it's likely due to JSON deserialization issues in Mattermost's plugin API
-		if currentConfig.AppVersion != "" && newConfig.AppVersion == "" {
-			newConfig.AppVersion = currentConfig.AppVersion
-			p.API.LogDebug("Fixed missing AppVersion field", "AppVersion", newConfig.AppVersion)
-		}
-		if currentConfig.AppID != "" && newConfig.AppID == "" {
-			newConfig.AppID = currentConfig.AppID
-			p.API.LogDebug("Fixed missing AppID field", "AppID", newConfig.AppID)
-		}
-		if currentConfig.TenantID != "" && newConfig.TenantID == "" {
-			newConfig.TenantID = currentConfig.TenantID
-			p.API.LogDebug("Fixed missing TenantID field", "TenantID", newConfig.TenantID)
-		}
-		if currentConfig.AppClientID != "" && newConfig.AppClientID == "" {
-			newConfig.AppClientID = currentConfig.AppClientID
-			p.API.LogDebug("Fixed missing AppClientID field", "AppClientID", newConfig.AppClientID)
-		}
-		if currentConfig.AppClientSecret != "" && newConfig.AppClientSecret == "" {
-			newConfig.AppClientSecret = currentConfig.AppClientSecret
-			p.API.LogDebug("Fixed missing AppClientSecret field")
-		}
-		if currentConfig.AppName != "" && newConfig.AppName == "" {
-			newConfig.AppName = currentConfig.AppName
-			p.API.LogDebug("Fixed missing AppName field", "AppName", newConfig.AppName)
-		}
-	}
-
-	// Save a copy of the configuration before setting it
-	configCopy := newConfig.Clone()
-
-	// Apply the new configuration
-	p.setConfiguration(newConfig)
-
-	// Log after setting config to verify no changes occurred
-	p.API.LogDebug("After setConfiguration",
-		"Original_AppVersion", configCopy.AppVersion,
-		"Current_AppVersion", newConfig.AppVersion,
-		"Original_AppID", configCopy.AppID,
-		"Current_AppID", newConfig.AppID,
-		"Original_TenantID", configCopy.TenantID,
-		"Current_TenantID", newConfig.TenantID,
-	)
 
 	// Process and validate the configuration
 	if err := p.validateConfiguration(newConfig); err != nil {
 		return err
 	}
 
+	// Apply the new configuration
+	p.setConfiguration(newConfig)
+
 	// Only restart the application if the OnActivate is already executed
 	if p.pluginStore != nil {
-		// Using a synchronous restart instead of async to avoid potential race conditions
-		p.restart()
+		go p.restart()
 	}
 
 	return nil

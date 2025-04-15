@@ -47,34 +47,6 @@ func describeResourceAccessType(resourceAccess clientmodels.ResourceAccess) stri
 func getExpectedPermissions() []expectedPermission {
 	return []expectedPermission{
 		{
-			Name: "https://graph.microsoft.com/Chat.Read",
-			ResourceAccess: clientmodels.ResourceAccess{
-				ID:   "f501c180-9344-439a-bca0-6cbf209fd270",
-				Type: "Scope",
-			},
-		},
-		{
-			Name: "https://graph.microsoft.com/ChatMessage.Read",
-			ResourceAccess: clientmodels.ResourceAccess{
-				ID:   "cdcdac3a-fd45-410d-83ef-554db620e5c7",
-				Type: "Scope",
-			},
-		},
-		{
-			Name: "https://graph.microsoft.com/Files.Read.All",
-			ResourceAccess: clientmodels.ResourceAccess{
-				ID:   "df85f4d6-205c-4ac5-a5ea-6bf408dba283",
-				Type: "Scope",
-			},
-		},
-		{
-			Name: "https://graph.microsoft.com/offline_access",
-			ResourceAccess: clientmodels.ResourceAccess{
-				ID:   "7427e0e9-2fba-42fe-b0c0-848c9e6a8182",
-				Type: "Scope",
-			},
-		},
-		{
 			Name: "https://graph.microsoft.com/User.Read",
 			ResourceAccess: clientmodels.ResourceAccess{
 				ID:   "e1fe6dd8-ba31-4d61-89e7-88639da4683d",
@@ -82,16 +54,9 @@ func getExpectedPermissions() []expectedPermission {
 			},
 		},
 		{
-			Name: "https://graph.microsoft.com/Chat.Read.All",
+			Name: "https://graph.microsoft.com/TeamsActivity.Send",
 			ResourceAccess: clientmodels.ResourceAccess{
-				ID:   "6b7d71aa-70aa-4810-a8d9-5d9fb2830017",
-				Type: "Role",
-			},
-		},
-		{
-			Name: "https://graph.microsoft.com/Presence.Read.All",
-			ResourceAccess: clientmodels.ResourceAccess{
-				ID:   "a70e0c2d-e793-494c-94c4-118fa0a67f42",
+				ID:   "a267235f-af13-44dc-8385-c1dc93023186",
 				Type: "Role",
 			},
 		},
