@@ -107,7 +107,13 @@ func (p *Plugin) checkCredentials() {
 
 	p.API.LogInfo("Running the check credentials job")
 
-	app, err := p.GetClientForApp().GetApp(p.getConfiguration().AppClientID)
+	client := p.GetClientForApp()
+	if client == nil {
+		p.API.LogWarn("MS Teams client not available, skipping credentials check")
+		return
+	}
+
+	app, err := client.GetApp(p.getConfiguration().AppClientID)
 	if err != nil {
 		p.API.LogWarn("Failed to get app credentials", "error", err.Error())
 		return
