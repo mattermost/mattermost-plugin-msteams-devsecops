@@ -53,7 +53,7 @@
         microsoftTeams.authentication.getAuthToken()
           .then((token) => {
             params.set('token', token);
-            iframe.src = `${domainRoot}/plugins/{{.PluginID}}/iframe/authenticate?${params.toString()}&sub_entity_id=${context.page.subPageId}`;
+            iframe.src = `${domainRoot}/plugins/{{.PluginID}}/iframe/authenticate?${params.toString()}`;
           })
           .catch((error) => {
             console.error('Failed to get auth token:', error);
