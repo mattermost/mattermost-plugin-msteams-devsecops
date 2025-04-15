@@ -131,21 +131,7 @@ func setupTestHelper(t *testing.T) *testHelper {
 }
 
 func (th *testHelper) clearDatabase(t *testing.T) {
-	db, err := th.p.client.Store.GetMasterDB()
-	require.NoError(t, err)
-
-	_, err = db.Exec("DELETE FROM msteamssync_links")
-	require.NoError(t, err)
-	_, err = db.Exec("DELETE FROM msteamssync_invited_users")
-	require.NoError(t, err)
-	_, err = db.Exec("DELETE FROM msteamssync_posts")
-	require.NoError(t, err)
-	_, err = db.Exec("DELETE FROM msteamssync_subscriptions")
-	require.NoError(t, err)
-	_, err = db.Exec("DELETE FROM msteamssync_users")
-	require.NoError(t, err)
-	_, err = db.Exec("DELETE FROM msteamssync_whitelist")
-	require.NoError(t, err)
+	// No-op, there's no database in this plugin
 }
 
 func (th *testHelper) Reset(t *testing.T) *testHelper {

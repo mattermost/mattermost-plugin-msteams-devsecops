@@ -47,10 +47,11 @@ func TestCheckPermissions(t *testing.T) {
 
 		var changedResourceAccess clientmodels.ResourceAccess
 		for i, expectedPermission := range getExpectedPermissions() {
-			if i == 0 {
+			switch i {
+			case 0:
 				// Skip the first permission altogether
 				continue
-			} else if i == 1 {
+			case 1:
 				// Change the type of the second permission
 				changedResourceAccess = expectedPermission.ResourceAccess
 				if changedResourceAccess.Type == ResourceAccessTypeScope {
@@ -59,7 +60,9 @@ func TestCheckPermissions(t *testing.T) {
 					changedResourceAccess.Type = ResourceAccessTypeScope
 				}
 				app.RequiredResources = append(app.RequiredResources, changedResourceAccess)
-			} else {
+
+			default:
+				// Add the permission as is
 				app.RequiredResources = append(app.RequiredResources, expectedPermission.ResourceAccess)
 			}
 		}

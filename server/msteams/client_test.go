@@ -24,7 +24,7 @@ func TestConvertToMessage(t *testing.T) {
 	attachmentContentType := "mockAttachmentContentType"
 	attachmentName := "mockAttachmentName"
 	attachmentURL := "mockAttachmentURL"
-	mentionID := 0
+	mentionID := int32(0)
 	channelID := model.NewId()
 	for _, test := range []struct {
 		Name           string
@@ -58,7 +58,7 @@ func TestConvertToMessage(t *testing.T) {
 				reaction.SetReactionType(&reactionType)
 
 				mention := models.NewChatMessageMention()
-				mentionedID := int32(mentionID)
+				mentionedID := mentionID
 				mention.SetId(&mentionedID)
 
 				identity := models.NewIdentity()
@@ -106,7 +106,7 @@ func TestConvertToMessage(t *testing.T) {
 				},
 				Mentions: []clientmodels.Mention{
 					{
-						ID:            int32(mentionID),
+						ID:            mentionID,
 						UserID:        teamsUserID,
 						MentionedText: teamsUserDisplayName,
 					},
@@ -155,12 +155,12 @@ func TestGetResourceIds(t *testing.T) {
 	for _, test := range []struct {
 		Name           string
 		Resource       string
-		ExpectedResult clientmodels.ActivityIds
+		ExpectedResult clientmodels.ActivityIDs
 	}{
 		{
 			Name:     "GetResourceIds: With prefix chats(",
 			Resource: "chats('19:8ea0e38b-efb3-4757-924a-5f94061cf8c2_97f62344-57dc-409c-88ad-c4af14158ff5@unq.gbl.spaces')/messages('1612289765949')",
-			ExpectedResult: clientmodels.ActivityIds{
+			ExpectedResult: clientmodels.ActivityIDs{
 				ChatID:    "19:8ea0e38b-efb3-4757-924a-5f94061cf8c2_97f62344-57dc-409c-88ad-c4af14158ff5@unq.gbl.spaces",
 				MessageID: "1612289765949",
 			},
@@ -168,7 +168,7 @@ func TestGetResourceIds(t *testing.T) {
 		{
 			Name:     "GetResourceIds: Without prefix chats(",
 			Resource: "teams('fbe2bf47-16c8-47cf-b4a5-4b9b187c508b')/channels('19:4a95f7d8db4c4e7fae857bcebe0623e6@thread.tacv2')/messages('1612293113399')/replies('19:zOtXfpDMWANo7-9CHuzHdM7WPSamQejH0Vydj0U-Yho1')",
-			ExpectedResult: clientmodels.ActivityIds{
+			ExpectedResult: clientmodels.ActivityIDs{
 				TeamID:    "fbe2bf47-16c8-47cf-b4a5-4b9b187c508b",
 				ChannelID: "19:4a95f7d8db4c4e7fae857bcebe0623e6@thread.tacv2",
 				MessageID: "1612293113399",
@@ -178,26 +178,26 @@ func TestGetResourceIds(t *testing.T) {
 		{
 			Name:           "GetResourceIds: Resource with multiple '/'",
 			Resource:       "/////19:4a95f7d8db4c4e7fae857bcebe0623e6@thread.tacv2///",
-			ExpectedResult: clientmodels.ActivityIds{},
+			ExpectedResult: clientmodels.ActivityIDs{},
 		},
 		{
 			Name:           "GetResourceIds: Empty resource",
-			ExpectedResult: clientmodels.ActivityIds{},
+			ExpectedResult: clientmodels.ActivityIDs{},
 		},
 		{
 			Name:           "GetResourceIds: Resource with small length",
 			Resource:       "ID",
-			ExpectedResult: clientmodels.ActivityIds{},
+			ExpectedResult: clientmodels.ActivityIDs{},
 		},
 		{
 			Name:           "GetResourceIds: Resource with large length",
 			Resource:       "very-long-teams-ID-with-very-long-chat-ID",
-			ExpectedResult: clientmodels.ActivityIds{},
+			ExpectedResult: clientmodels.ActivityIDs{},
 		},
 	} {
 		t.Run(test.Name, func(t *testing.T) {
 			assert := assert.New(t)
-			resp := GetResourceIds(test.Resource)
+			resp := GetResourceIDs(test.Resource)
 			assert.Equal(test.ExpectedResult, resp)
 		})
 	}

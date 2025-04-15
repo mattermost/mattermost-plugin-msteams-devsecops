@@ -67,11 +67,11 @@ func TestAuthenticate(t *testing.T) {
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe/authenticate", nil)
-		
+
 		// Create a user
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
-		
+
 		// Set the Mattermost-User-ID header to simulate a logged-in user
 		r.Header.Set("Mattermost-User-ID", user.Id)
 
@@ -90,7 +90,7 @@ func TestAuthenticate(t *testing.T) {
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe/authenticate", nil)
-		
+
 		// No Mattermost-User-ID header to simulate a non-logged-in user
 		// No token in query params
 
@@ -102,7 +102,7 @@ func TestAuthenticate(t *testing.T) {
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-		
+
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Contains(t, string(body), "Invalid token")
@@ -116,7 +116,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe/notification_preview", nil)
-		
+
 		// No Mattermost-User-ID header to simulate a non-logged-in user
 
 		// Execute
@@ -127,7 +127,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-		
+
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Contains(t, string(body), "user not authenticated")
@@ -137,11 +137,11 @@ func TestIframeNotificationPreview(t *testing.T) {
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe/notification_preview", nil)
-		
+
 		// Create a user
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
-		
+
 		// Set the Mattermost-User-ID header to simulate a logged-in user
 		r.Header.Set("Mattermost-User-ID", user.Id)
 
@@ -153,7 +153,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		
+
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Contains(t, string(body), "post_id is required")
@@ -163,7 +163,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 		// Setup
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
-		
+
 		// Create a channel
 		channel, appErr := th.p.API.CreateChannel(&model.Channel{
 			TeamId:      team.Id,
@@ -174,7 +174,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 			Purpose:     "Test Purpose",
 		})
 		require.Nil(t, appErr)
-		
+
 		// Create a post
 		post, appErr := th.p.API.CreatePost(&model.Post{
 			UserId:    user.Id,
@@ -182,7 +182,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 			Message:   "Test message for notification preview",
 		})
 		require.Nil(t, appErr)
-		
+
 		// Setup request with post_id
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe/notification_preview?post_id="+post.Id, nil)
@@ -197,7 +197,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "text/html", resp.Header.Get("Content-Type"))
-		
+
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Contains(t, string(body), "<html")
@@ -221,7 +221,7 @@ func TestAppManifest(t *testing.T) {
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		
+
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Contains(t, string(body), "Unable to create app manifest context")
@@ -259,12 +259,12 @@ func TestAppManifest(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "application/octet-stream", resp.Header.Get("Content-Type"))
 		assert.Contains(t, resp.Header.Get("Content-Disposition"), "attachment; filename=")
-		
+
 		// Verify it's a zip file by checking the first bytes
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.True(t, len(body) > 0)
-		
+
 		// Check for zip file signature (first 4 bytes: 0x50 0x4B 0x03 0x04)
 		assert.Equal(t, []byte{0x50, 0x4B, 0x03, 0x04}, body[:4], "File is not a valid ZIP archive")
 	})

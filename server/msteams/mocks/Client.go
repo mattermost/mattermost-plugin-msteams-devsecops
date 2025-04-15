@@ -374,7 +374,7 @@ func (_m *Client) GetFileSizeAndDownloadURL(weburl string) (int64, string, error
 }
 
 // GetHostedFileContent provides a mock function with given fields: activityIDs
-func (_m *Client) GetHostedFileContent(activityIDs *clientmodels.ActivityIds) ([]byte, error) {
+func (_m *Client) GetHostedFileContent(activityIDs *clientmodels.ActivityIDs) ([]byte, error) {
 	ret := _m.Called(activityIDs)
 
 	if len(ret) == 0 {
@@ -383,10 +383,10 @@ func (_m *Client) GetHostedFileContent(activityIDs *clientmodels.ActivityIds) ([
 
 	var r0 []byte
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*clientmodels.ActivityIds) ([]byte, error)); ok {
+	if rf, ok := ret.Get(0).(func(*clientmodels.ActivityIDs) ([]byte, error)); ok {
 		return rf(activityIDs)
 	}
-	if rf, ok := ret.Get(0).(func(*clientmodels.ActivityIds) []byte); ok {
+	if rf, ok := ret.Get(0).(func(*clientmodels.ActivityIDs) []byte); ok {
 		r0 = rf(activityIDs)
 	} else {
 		if ret.Get(0) != nil {
@@ -394,7 +394,7 @@ func (_m *Client) GetHostedFileContent(activityIDs *clientmodels.ActivityIds) ([
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*clientmodels.ActivityIds) error); ok {
+	if rf, ok := ret.Get(1).(func(*clientmodels.ActivityIDs) error); ok {
 		r1 = rf(activityIDs)
 	} else {
 		r1 = ret.Error(1)

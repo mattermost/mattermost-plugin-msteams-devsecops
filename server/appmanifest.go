@@ -84,7 +84,7 @@ func (a *API) appManifest(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	buf := &bytes.Buffer{}
-	if err := tmpl.Execute(buf, tmplContext); err != nil {
+	if err = tmpl.Execute(buf, tmplContext); err != nil {
 		a.p.API.LogError("Unable to execute app manifest template", "error", err.Error())
 		http.Error(w, "Unable to execute app manifest template: "+err.Error(), http.StatusInternalServerError)
 		return

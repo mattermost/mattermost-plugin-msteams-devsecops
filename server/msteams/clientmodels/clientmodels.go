@@ -92,7 +92,7 @@ type Team struct {
 	Description string
 }
 
-type ActivityIds struct {
+type ActivityIDs struct {
 	ChatID           string
 	TeamID           string
 	ChannelID        string

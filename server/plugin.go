@@ -136,7 +136,6 @@ func (p *Plugin) start(isRestart bool) {
 }
 
 func (p *Plugin) stop(isRestart bool) {
-
 	if p.checkCredentialsJob != nil {
 		if err := p.checkCredentialsJob.Close(); err != nil {
 			p.API.LogError("Failed to close background check credentials job", "error", err)

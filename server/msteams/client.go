@@ -1549,7 +1549,7 @@ func (tc *ClientImpl) GetFileContentStream(downloadURL string, writer *io.PipeWr
 	}
 }
 
-func (tc *ClientImpl) GetHostedFileContent(activityIDs *clientmodels.ActivityIds) (contentData []byte, err error) {
+func (tc *ClientImpl) GetHostedFileContent(activityIDs *clientmodels.ActivityIDs) (contentData []byte, err error) {
 	if activityIDs.ChatID != "" {
 		contentData, err = tc.client.Chats().ByChatId(activityIDs.ChatID).Messages().ByChatMessageId(activityIDs.MessageID).HostedContents().ByChatMessageHostedContentId(activityIDs.HostedContentsID).Content().Get(tc.ctx, nil)
 	} else {
@@ -1576,8 +1576,8 @@ func (tc *ClientImpl) GetCodeSnippet(url string) (string, error) {
 	return string(data), nil
 }
 
-func GetResourceIds(resource string) clientmodels.ActivityIds {
-	result := clientmodels.ActivityIds{}
+func GetResourceIDs(resource string) clientmodels.ActivityIDs {
+	result := clientmodels.ActivityIDs{}
 	data := strings.Split(resource, "/")
 
 	if len(data) <= 1 {

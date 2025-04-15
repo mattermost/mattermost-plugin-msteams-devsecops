@@ -51,7 +51,7 @@ type Client interface {
 	GetFileSizeAndDownloadURL(weburl string) (int64, string, error)
 	GetFileContent(downloadURL string) ([]byte, error)
 	GetFileContentStream(downloadURL string, writer *io.PipeWriter, bufferSize int64)
-	GetHostedFileContent(activityIDs *clientmodels.ActivityIds) ([]byte, error)
+	GetHostedFileContent(activityIDs *clientmodels.ActivityIDs) ([]byte, error)
 	GetCodeSnippet(url string) (string, error)
 	RefreshToken(token *oauth2.Token) (*oauth2.Token, error)
 	ListUsers() ([]clientmodels.User, error)
