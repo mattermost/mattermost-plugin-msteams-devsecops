@@ -13,8 +13,11 @@ var LogoColorData []byte
 //go:embed mm-logo-outline.png
 var LogoOutlineData []byte
 
-//go:embed iframe.html
-var IFrameHTML string
+//go:embed iframe.html.tmpl
+var IFrameHTMLTemplate string
 
-//go:embed appmanifest.json
-var AppManifest string
+//go:embed iframe_notification_preview.html.tmpl
+var IFrameNotificationPreviewHTMLTemplate string
+
+//go:embed appmanifest.json.tmpl
+var AppManifestTemplate string

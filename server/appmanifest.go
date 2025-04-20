@@ -50,17 +50,8 @@ func (a *API) makeManifestContext() (*manifestContext, error) {
 	}
 
 	pluginConfig := a.p.getConfiguration()
-	if pluginConfig.AppID == "" {
-		return nil, errors.New("AppID cannot be empty")
-	}
-	if pluginConfig.AppClientID == "" {
-		return nil, errors.New("AppClientID cannot be empty")
-	}
-	if pluginConfig.AppName == "" {
-		return nil, errors.New("AppName cannot be empty")
-	}
-	if pluginConfig.AppVersion == "" {
-		return nil, errors.New("AppVersion cannot be empty")
+	if err := a.p.validateConfiguration(pluginConfig); err != nil {
+		return nil, fmt.Errorf("plugin configuration is invalid: %w", err)
 	}
 
 	return &manifestContext{
@@ -85,7 +76,7 @@ func (a *API) appManifest(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	tmpl, err := template.New("manifest").Parse(assets.AppManifest)
+	tmpl, err := template.New("manifest").Parse(assets.AppManifestTemplate)
 	if err != nil {
 		a.p.API.LogError("Unable to parse app manifest template", "error", err.Error())
 		http.Error(w, "Unable to parse app manifest template: "+err.Error(), http.StatusInternalServerError)
@@ -93,7 +84,7 @@ func (a *API) appManifest(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	buf := &bytes.Buffer{}
-	if err := tmpl.Execute(buf, tmplContext); err != nil {
+	if err = tmpl.Execute(buf, tmplContext); err != nil {
 		a.p.API.LogError("Unable to execute app manifest template", "error", err.Error())
 		http.Error(w, "Unable to execute app manifest template: "+err.Error(), http.StatusInternalServerError)
 		return
