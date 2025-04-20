@@ -168,7 +168,7 @@ install-go-tools:
 	$(GO) install gotest.tools/gotestsum@v1.7.0
 
 ## Runs eslint and golangci-lint
-.PHONY: check-style 
+.PHONY: check-style install-go-tools
 check-style: manifest-check apply webapp/node_modules install-go-tools
 	@echo Checking for style guide compliance
 
