@@ -128,7 +128,7 @@ func (p *Plugin) start(isRestart bool) {
 		}
 		p.checkCredentialsJob = checkCredentialsJob
 
-		// Run the job above right away so we immediately populate metrics.
+		// Run the job above right away
 		go p.checkCredentials()
 	}
 
