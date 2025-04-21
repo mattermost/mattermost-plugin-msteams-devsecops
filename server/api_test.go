@@ -206,9 +206,9 @@ func TestIframeNotificationPreview(t *testing.T) {
 }
 
 func TestAppManifest(t *testing.T) {
-	th := setupTestHelper(t)
-
 	t.Run("returns error when configuration is missing", func(t *testing.T) {
+		th := setupTestHelper(t)
+
 		// remove site url from server config
 		config := th.p.API.GetConfig()
 		config.ServiceSettings.SiteURL = nil
@@ -234,7 +234,7 @@ func TestAppManifest(t *testing.T) {
 	})
 
 	t.Run("returns zip file with manifest when config is valid", func(t *testing.T) {
-		th.Reset(t)
+		th := setupTestHelper(t)
 
 		// Setup with valid configuration
 		config := th.p.getConfiguration().Clone()
