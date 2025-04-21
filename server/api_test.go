@@ -209,6 +209,14 @@ func TestAppManifest(t *testing.T) {
 	t.Run("returns error when configuration is missing", func(t *testing.T) {
 		th := setupTestHelper(t)
 
+		mmconfig := th.p.getConfiguration().Clone()
+		mmconfig.AppID = "test-app-id"
+		mmconfig.AppClientID = "test-client-id"
+		mmconfig.AppName = "Test App"
+		mmconfig.AppVersion = "1.0.0"
+		mmconfig.TenantID = "test-tenant-id"
+		th.p.setConfiguration(mmconfig)
+
 		// remove site url from server config
 		config := th.p.API.GetConfig()
 		config.ServiceSettings.SiteURL = nil
