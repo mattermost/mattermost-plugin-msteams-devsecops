@@ -14,10 +14,12 @@ import (
 
 	goPlugin "github.com/hashicorp/go-plugin"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams"
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/mocks"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	pluginapi "github.com/mattermost/mattermost/server/public/pluginapi"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
@@ -148,6 +150,9 @@ func (th *testHelper) Reset(t *testing.T) *testHelper {
 
 	th.appClientMock = appClientMock
 	th.clientMock = clientMock
+
+	appClientMock.On("GetApp", mock.AnythingOfType("string")).Return(&clientmodels.App{}, nil).Maybe()
+	clientMock.On("GetApp", mock.AnythingOfType("string")).Return(&clientmodels.App{}, nil).Maybe()
 
 	th.p.msteamsAppClient = appClientMock
 	th.p.clientBuilderWithToken = func(redirectURL, tenantID, clientId, clientSecret string, token *oauth2.Token, apiClient *pluginapi.LogService) msteams.Client {
