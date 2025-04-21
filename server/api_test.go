@@ -209,6 +209,12 @@ func TestAppManifest(t *testing.T) {
 	th := setupTestHelper(t)
 
 	t.Run("returns error when configuration is missing", func(t *testing.T) {
+		// remove site url from server config
+		config := th.p.API.GetConfig()
+		config.ServiceSettings.SiteURL = nil
+		appErr := th.p.API.SaveConfig(config)
+		require.Nil(t, appErr)
+
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe-manifest", nil)
@@ -228,6 +234,8 @@ func TestAppManifest(t *testing.T) {
 	})
 
 	t.Run("returns zip file with manifest when config is valid", func(t *testing.T) {
+		th.Reset(t)
+
 		// Setup with valid configuration
 		config := th.p.getConfiguration().Clone()
 		config.AppID = "test-app-id"
