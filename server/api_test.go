@@ -211,7 +211,7 @@ func TestAppManifest(t *testing.T) {
 
 		// Create a temporary backup of the current plugin configuration
 		originalConfig := th.p.configuration.Clone()
-		
+
 		// Force an invalid configuration in-memory (this is more reliable than modifying through the API)
 		invalidConfig := &configuration{
 			// Leave AppID empty to trigger validation error
@@ -222,14 +222,14 @@ func TestAppManifest(t *testing.T) {
 			AppName:         "test-app",
 		}
 		th.p.setConfiguration(invalidConfig)
-		
+
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe-manifest", nil)
 
 		// Execute
 		th.p.apiHandler.ServeHTTP(w, r)
-		
+
 		// Restore the original configuration after the test
 		th.p.setConfiguration(originalConfig)
 

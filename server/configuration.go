@@ -118,9 +118,9 @@ func (p *Plugin) OnConfigurationChange() error {
 	}
 
 	// Validate the configuration
-	//if err := p.validateConfiguration(newConfig); err != nil {
+	// if err := p.validateConfiguration(newConfig); err != nil {
 	//	return err
-	//}
+	// }
 
 	// Apply the new configuration
 	p.setConfiguration(newConfig)
