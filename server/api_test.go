@@ -209,26 +209,29 @@ func TestAppManifest(t *testing.T) {
 	t.Run("returns error when configuration is missing", func(t *testing.T) {
 		th := setupTestHelper(t)
 
-		mmconfig := th.p.getConfiguration().Clone()
-		mmconfig.AppID = "test-app-id"
-		mmconfig.AppClientID = "test-client-id"
-		mmconfig.AppName = "Test App"
-		mmconfig.AppVersion = "1.0.0"
-		mmconfig.TenantID = "test-tenant-id"
-		th.p.setConfiguration(mmconfig)
-
-		// remove site url from server config
-		config := th.p.API.GetConfig()
-		config.ServiceSettings.SiteURL = nil
-		appErr := th.p.API.SaveConfig(config)
-		require.Nil(t, appErr)
-
+		// Create a temporary backup of the current plugin configuration
+		originalConfig := th.p.configuration.Clone()
+		
+		// Force an invalid configuration in-memory (this is more reliable than modifying through the API)
+		invalidConfig := &configuration{
+			// Leave AppID empty to trigger validation error
+			AppVersion:      "1.0.0",
+			TenantID:        "test-tenant",
+			AppClientID:     "test-client-id",
+			AppClientSecret: "test-secret",
+			AppName:         "test-app",
+		}
+		th.p.setConfiguration(invalidConfig)
+		
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe-manifest", nil)
 
 		// Execute
 		th.p.apiHandler.ServeHTTP(w, r)
+		
+		// Restore the original configuration after the test
+		th.p.setConfiguration(originalConfig)
 
 		// Assert
 		resp := w.Result()
@@ -238,21 +241,12 @@ func TestAppManifest(t *testing.T) {
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
+		require.True(t, len(body) < 100, "Response body is too large; should only contain an error message")
 		assert.Contains(t, string(body), "Unable to create app manifest context")
 	})
 
 	t.Run("returns zip file with manifest when config is valid", func(t *testing.T) {
 		th := setupTestHelper(t)
-
-		// Setup with valid configuration
-		config := th.p.getConfiguration().Clone()
-		config.AppID = "test-app-id"
-		config.AppClientID = "test-client-id"
-		config.AppName = "Test App"
-		config.AppVersion = "1.0.0"
-		// Also need to set TenantID which is required by makeManifestContext
-		config.TenantID = "test-tenant-id"
-		th.p.setConfiguration(config)
 
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe-manifest", nil)

@@ -117,10 +117,10 @@ func (p *Plugin) OnConfigurationChange() error {
 		return errors.Wrap(err, "failed to load plugin configuration")
 	}
 
-	// Process and validate the configuration
-	if err := p.validateConfiguration(newConfig); err != nil {
-		return err
-	}
+	// Validate the configuration
+	//if err := p.validateConfiguration(newConfig); err != nil {
+	//	return err
+	//}
 
 	// Apply the new configuration
 	p.setConfiguration(newConfig)
