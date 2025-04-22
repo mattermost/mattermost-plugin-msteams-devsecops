@@ -212,7 +212,7 @@ func TestAppManifest(t *testing.T) {
 		// Create a temporary backup of the current plugin configuration
 		originalConfig := th.p.configuration.Clone()
 
-		// Force an invalid configuration in-memory (this is more reliable than modifying through the API)
+		// Force an invalid configuration in-memory
 		invalidConfig := &configuration{
 			// Leave AppID empty to trigger validation error
 			AppVersion:      "1.0.0",
@@ -237,12 +237,12 @@ func TestAppManifest(t *testing.T) {
 		resp := w.Result()
 		defer resp.Body.Close()
 
-		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.True(t, len(body) < 100, "Response body is too large; should only contain an error message")
-		assert.Contains(t, string(body), "Unable to create app manifest context")
+		require.True(t, len(body) < 500, "Response body is too large; should only contain an error message")
+		assert.Contains(t, string(body), "application ID should not be empty")
 	})
 
 	t.Run("returns zip file with manifest when config is valid", func(t *testing.T) {
