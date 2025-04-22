@@ -2,8 +2,8 @@ package main
 
 import (
 	"reflect"
+	"strings"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -19,10 +19,44 @@ import (
 // If you add non-reference types to your configuration struct, be sure to rewrite Clone as a deep
 // copy appropriate for your types.
 type configuration struct {
-	AppVersion  string `json:"appVersion"`
-	AppID       string `json:"appID"`
-	AppClientID string `json:"appClientID"`
-	AppName     string `json:"appName"`
+	AppVersion                       string `json:"appVersion"`
+	AppID                            string `json:"appID"`
+	AppClientID                      string `json:"appClientID"`
+	AppClientSecret                  string `json:"appClientSecret"`
+	AppName                          string `json:"appName"`
+	TenantID                         string `json:"tenantID"`
+	DisableCheckCredentials          bool   `json:"internalDisableCheckCredentials"`
+	DisableUserActivityNotifications bool   `json:"disableUserActivityNotifications"`
+}
+
+func (c *configuration) ProcessConfiguration() {
+	c.TenantID = strings.TrimSpace(c.TenantID)
+	c.AppClientID = strings.TrimSpace(c.AppClientID)
+	c.AppClientSecret = strings.TrimSpace(c.AppClientSecret)
+}
+
+func (p *Plugin) validateConfiguration(configuration *configuration) error {
+	configuration.ProcessConfiguration()
+
+	if configuration.AppVersion == "" {
+		return errors.New("application version should not be empty")
+	}
+	if configuration.AppID == "" {
+		return errors.New("application ID should not be empty")
+	}
+	if configuration.TenantID == "" {
+		return errors.New("tenant ID should not be empty")
+	}
+	if configuration.AppClientID == "" {
+		return errors.New("client ID should not be empty")
+	}
+	if configuration.AppClientSecret == "" {
+		return errors.New("client secret should not be empty")
+	}
+	if configuration.AppName == "" {
+		return errors.New("app name should not be empty")
+	}
+	return nil
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -75,29 +109,26 @@ func (p *Plugin) setConfiguration(configuration *configuration) {
 
 // OnConfigurationChange is invoked when configuration changes may have been made.
 func (p *Plugin) OnConfigurationChange() error {
-	// Set defaults
-	dirty := false
-	mapCfg := p.API.GetPluginConfig()
-
-	if v, ok := mapCfg["appid"]; !ok || v == "" {
-		mapCfg["appid"] = uuid.New().String()
-		dirty = true
-	}
-	if dirty {
-		// Save the updated configuration back to the Mattermost server.
-		if err := p.API.SavePluginConfig(mapCfg); err != nil {
-			return errors.Wrap(err, "failed to save plugin configuration")
-		}
-	}
-
-	var configuration = new(configuration)
+	// Create a new configuration to hold the new settings
+	var newConfig = new(configuration)
 
 	// Load the public configuration fields from the Mattermost server configuration.
-	if err := p.API.LoadPluginConfiguration(configuration); err != nil {
+	if err := p.API.LoadPluginConfiguration(newConfig); err != nil {
 		return errors.Wrap(err, "failed to load plugin configuration")
 	}
 
-	p.setConfiguration(configuration)
+	// Validate the configuration
+	if err := p.validateConfiguration(newConfig); err != nil {
+		return err
+	}
+
+	// Apply the new configuration
+	p.setConfiguration(newConfig)
+
+	// Only restart the application if the OnActivate is already executed
+	if p.pluginStore != nil {
+		go p.restart()
+	}
 
 	return nil
 }

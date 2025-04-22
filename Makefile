@@ -168,7 +168,7 @@ install-go-tools:
 	$(GO) install gotest.tools/gotestsum@v1.7.0
 
 ## Runs eslint and golangci-lint
-.PHONY: check-style
+.PHONY: check-style install-go-tools
 check-style: manifest-check apply webapp/node_modules install-go-tools
 	@echo Checking for style guide compliance
 
@@ -395,6 +395,12 @@ logs:
 .PHONY: logs-watch
 logs-watch:
 	./build/bin/pluginctl logs-watch $(PLUGIN_ID)
+
+## Build the generated code
+generate: export PATH := $(GOBIN):$(PATH)
+generate:
+	$(GO) install github.com/vektra/mockery/v2/...@v2.42.2
+	cd server && $(GO) generate ./...
 
 # Help documentation à la https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help:
