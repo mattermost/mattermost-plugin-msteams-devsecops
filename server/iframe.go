@@ -129,7 +129,7 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 	// Format date in this way: "April 4, 2025 • 10:43 AM"
 	iframeCtx.NotificationPreviewContext.PostCreatedAtDisplay = time.Unix(post.CreateAt/1000, 0).Format("January 2, 2006 • 03:04 PM")
 
-	html, appErr := a.formatTemplate(iFrameNotificationPreviewHTML, iframeCtx)
+	html, appErr := a.formatTemplate(assets.IFrameNotificationPreviewHTMLTemplate, iframeCtx)
 	if appErr != nil {
 		a.p.API.LogError("Failed to format iFrame HTML", "error", appErr.Error())
 		http.Error(w, "Failed to format iFrame HTML", http.StatusInternalServerError)
