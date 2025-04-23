@@ -45,7 +45,7 @@ This app is designed to work with Microsoft 365, Outlook, and Microsoft Teams.
 
 2. Go to **App registrations**
 
-3. Create a new registration
+3. Create a new app registration by clicking **Add > App registration**
     - Give it a name
     - Accounts in this organisational directory only (single tenant)
     - No redirect URIs
@@ -76,12 +76,11 @@ This app is designed to work with Microsoft 365, Outlook, and Microsoft Teams.
             **User consent display name**: Log in to Mattermost
             **User consent description**: This permission is required to automatically log you in into Mattermost from Microsoft applications.
         - Add authorised client applications for the scope we just created ([Microsoft documentation](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#to-configure-authorized-client-application))
-            - Click on “_Add a client application_”
+            - Click on “_Add a client application_”. **You need to add a client application per target Microsoft application you want**:
                 - **Authorised scopes**: The one we just created
                 - **Client ID**:
                     - **Teams web**: 5e3ce6c0-2b1f-4285-8d4b-75ee78787346
                     - **Teams app**: 1fec8e78-bce4-4aaf-ab1b-5451cc387264
-                - (You need to add a client application per target Microsoft application you want)
                 - If you want to make your application available in more Microsoft application, you need to keep adding client applications from [the following table](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#to-configure-authorized-client-application:~:text=Select%20one%20of%20the%20following%20client%20IDs%3A).
 8. Go to your **Mattermost server's system console > Plugins > MSTeams DevSecOps**:
     - Enter the values you made note earlier in the appropriate fields:
