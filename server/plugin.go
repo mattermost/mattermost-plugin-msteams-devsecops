@@ -14,7 +14,6 @@ import (
 	"github.com/mattermost/mattermost/server/public/pluginapi"
 	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -32,9 +31,6 @@ type Plugin struct {
 	// msteamsAppClient is the client used to communicate with the Microsoft Teams API.
 	msteamsAppClient      msteams.Client
 	msteamsAppClientMutex sync.RWMutex
-
-	// clientBuilderWithToken is a function that creates a new msteams.Client with the given parameters.
-	clientBuilderWithToken func(string, string, string, string, *oauth2.Token, *pluginapi.LogService) msteams.Client
 
 	// configurationLock synchronizes access to the configuration.
 	configurationLock sync.RWMutex
@@ -67,10 +63,6 @@ func (p *Plugin) GetClientForApp() msteams.Client {
 
 // OnActivate is invoked when the plugin is activated. If an error is returned, the plugin will be deactivated.
 func (p *Plugin) OnActivate() error {
-	if p.clientBuilderWithToken == nil {
-		p.clientBuilderWithToken = msteams.NewTokenClient
-	}
-
 	p.client = pluginapi.NewClient(p.API, p.Driver)
 
 	logger := logrus.StandardLogger()
