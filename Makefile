@@ -196,7 +196,7 @@ endif
 	mkdir -p server/dist;
 ifneq ($(MM_SERVICESETTINGS_ENABLEDEVELOPER),)
 	@echo Building plugin only for $(DEFAULT_GOOS)-$(DEFAULT_GOARCH) because MM_SERVICESETTINGS_ENABLEDEVELOPER is enabled
-	cd server && env CGO_ENABLED=0 $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-$(DEFAULT_GOOS)-$(DEFAULT_GOARCH);
+	cd server && env CGO_ENABLED=0 GOOS=$(DEFAULT_GOOS) GOARCH=$(DEFAULT_GOARCH) $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-$(DEFAULT_GOOS)-$(DEFAULT_GOARCH);
 else
 	cd server && env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-linux-amd64;
 	cd server && env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-linux-arm64;
@@ -227,8 +227,15 @@ bundle:
 	rm -rf dist/
 	mkdir -p dist/$(PLUGIN_ID)
 	./build/bin/manifest dist
+ifneq ($(wildcard LICENSE.txt),)
+	cp -r LICENSE.txt dist/$(PLUGIN_ID)/
+endif
+ifneq ($(wildcard NOTICE.txt),)
+	cp -r NOTICE.txt dist/$(PLUGIN_ID)/
+endif
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
 	cp -r $(ASSETS_DIR) dist/$(PLUGIN_ID)/
+	rm -f dist/$(PLUGIN_ID)/$(ASSETS_DIR)/assets.go
 endif
 ifneq ($(HAS_PUBLIC),)
 	cp -r public dist/$(PLUGIN_ID)/
@@ -241,8 +248,11 @@ ifneq ($(HAS_WEBAPP),)
 	mkdir -p dist/$(PLUGIN_ID)/webapp
 	cp -r webapp/dist dist/$(PLUGIN_ID)/webapp/
 endif
+ifeq ($(shell uname),Darwin)
+	cd dist && tar --disable-copyfile -cvzf $(BUNDLE_NAME) $(PLUGIN_ID)
+else
 	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_ID)
-
+endif
 	@echo plugin built at: dist/$(BUNDLE_NAME)
 
 ## Builds and bundles the plugin.
