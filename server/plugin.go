@@ -52,6 +52,11 @@ type Plugin struct {
 
 	// checkCredentialsJob is a job that periodically checks credentials and permissions against the MS Graph API
 	checkCredentialsJob *cluster.Job
+
+	// clientReconnectCtx and clientReconnectCancel are used to control the client reconnection goroutine
+	clientReconnectCtx    context.Context
+	clientReconnectCancel context.CancelFunc
+	clientReconnectLock   sync.Mutex
 }
 
 func (p *Plugin) GetClientForApp() msteams.Client {
@@ -101,6 +106,13 @@ func (p *Plugin) start(isRestart bool) {
 	}
 	p.cancelKeyFuncLock.Unlock()
 
+	// Initialize context for client reconnection
+	p.clientReconnectLock.Lock()
+	if p.clientReconnectCtx == nil {
+		p.clientReconnectCtx, p.clientReconnectCancel = context.WithCancel(context.Background())
+	}
+	p.clientReconnectLock.Unlock()
+
 	// connect to the Microsoft Teams API
 	err := p.connectTeamsAppClient()
 	if err != nil {
@@ -135,7 +147,16 @@ func (p *Plugin) stop(isRestart bool) {
 		p.checkCredentialsJob = nil
 	}
 
+	// Cancel the client reconnection context if not restarting
 	if !isRestart {
+		p.clientReconnectLock.Lock()
+		if p.clientReconnectCancel != nil {
+			p.clientReconnectCancel()
+			p.clientReconnectCtx = nil
+			p.clientReconnectCancel = nil
+		}
+		p.clientReconnectLock.Unlock()
+
 		p.cancelKeyFuncLock.Lock()
 		if p.cancelKeyFunc != nil {
 			p.cancelKeyFunc()
@@ -172,5 +193,39 @@ func (p *Plugin) connectTeamsAppClient() error {
 		p.API.LogError("Unable to connect to the app client", "error", err)
 		return err
 	}
+
+	// Get a local copy of the context to use in the goroutine
+	p.clientReconnectLock.Lock()
+	ctx := p.clientReconnectCtx
+	p.clientReconnectLock.Unlock()
+
+	// Start a goroutine to periodically reconnect the client to refresh the token
+	go func(ctx context.Context) {
+		p.API.LogDebug("Starting client reconnection goroutine")
+
+		reconnectInterval := 12 * time.Hour
+		ticker := time.NewTicker(reconnectInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				p.API.LogDebug("Client reconnection goroutine stopped")
+				return
+			case <-ticker.C:
+				p.API.LogDebug("Reconnecting MS Teams app client to refresh token")
+				p.msteamsAppClientMutex.Lock()
+				if p.msteamsAppClient != nil {
+					if err := p.msteamsAppClient.Connect(); err != nil {
+						p.API.LogError("Failed to reconnect MS Teams app client", "error", err)
+					} else {
+						p.API.LogDebug("Successfully reconnected MS Teams app client")
+					}
+				}
+				p.msteamsAppClientMutex.Unlock()
+			}
+		}
+	}(ctx)
+
 	return nil
 }
