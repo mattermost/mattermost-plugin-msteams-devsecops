@@ -95,6 +95,11 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Check user has access to the post
+	if !a.p.API.HasPermissionToChannel(userID, post.ChannelId, model.PermissionReadChannel) {
+		http.Error(w, "user does not have access to the post", http.StatusForbidden)
+	}
+
 	author, err := a.p.API.GetUser(post.UserId)
 	if err != nil {
 		a.p.API.LogError("Failed to get author", "user_id", post.UserId, "error", err.Error())
