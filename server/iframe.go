@@ -34,6 +34,22 @@ type iFrameContext struct {
 
 // iFrame returns the iFrame HTML needed to host Mattermost within a MS Teams app.
 func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
+	a.p.API.LogDebug("iFrame", "action", r.URL.Query().Get("action"), "sub_entity_id", r.URL.Query().Get("sub_entity_id"))
+
+	iframeCtx, err := a.makeIFrameContext(iFrameContext{})
+	if err != nil {
+		a.p.API.LogError("Failed to create iFrame context", "error", err.Error())
+		http.Error(w, "Failed to create iFrame context", http.StatusInternalServerError)
+		return
+	}
+
+	html, err := a.formatTemplate(assets.IFrameHTMLTemplate, iframeCtx)
+	if err != nil {
+		a.p.API.LogError("Failed to format iFrame HTML", "error", err.Error())
+		http.Error(w, "Failed to format iFrame HTML", http.StatusInternalServerError)
+		return
+	}
+
 	// Set a minimal CSP for the wrapper page
 	cspDirectives := []string{
 		"style-src 'unsafe-inline'", // Allow inline styles for the iframe positioning
@@ -41,17 +57,11 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Security-Policy", strings.Join(cspDirectives, "; "))
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-
-	a.p.API.LogDebug("iFrame", "action", r.URL.Query().Get("action"), "sub_entity_id", r.URL.Query().Get("sub_entity_id"))
-
-	html, err := a.formatTemplate(assets.IFrameHTMLTemplate, iFrameContext{})
-	if err != nil {
-		a.p.API.LogError("Failed to format iFrame HTML", "error", err.Error())
-		http.Error(w, "Failed to format iFrame HTML", http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "text/html")
+
+	// Set permissions policy for camera and microphone access within the iFrame
+	perms := fmt.Sprintf(`camera=(self "%s"), microphone=(self "%s")`, iframeCtx.SiteURL, iframeCtx.SiteURL)
+	w.Header().Set("Permissions-Policy", perms)
 
 	// set session cookie to indicate Mattermost is hosted in an iFrame, which allows
 	// webapp to bypass "Where do you want to view this" page and set SameSite=none.
@@ -81,8 +91,8 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	post, err := a.p.API.GetPost(postID)
-	if err != nil {
+	post, appErr := a.p.API.GetPost(postID)
+	if appErr != nil {
 		http.Error(w, "failed to get post", http.StatusInternalServerError)
 		return
 	}
@@ -92,9 +102,16 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 		UserID: userID,
 	}
 
-	html, appErr := a.formatTemplate(assets.IFrameNotificationPreviewHTMLTemplate, iframeCtx)
-	if appErr != nil {
-		a.p.API.LogError("Failed to format iFrame HTML", "error", appErr.Error())
+	iframeCtx, err := a.makeIFrameContext(iframeCtx)
+	if err != nil {
+		a.p.API.LogError("Failed to create iFrame context", "error", err.Error())
+		http.Error(w, "Failed to create iFrame context", http.StatusInternalServerError)
+		return
+	}
+
+	html, err := a.formatTemplate(assets.IFrameNotificationPreviewHTMLTemplate, iframeCtx)
+	if err != nil {
+		a.p.API.LogError("Failed to format iFrame HTML", "error", err.Error())
 		http.Error(w, "Failed to format iFrame HTML", http.StatusInternalServerError)
 		return
 	}
@@ -106,29 +123,40 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// formatTemplate formats the iFrame HTML template with the site URL and plugin ID
-func (a *API) formatTemplate(templateBody string, iframeCtx iFrameContext) (string, error) {
-	config := a.p.API.GetConfig()
-	siteURL := *config.ServiceSettings.SiteURL
-	if siteURL == "" {
-		return "", fmt.Errorf("ServiceSettings.SiteURL cannot be empty for MS Teams iFrame")
+// makeIFrameContext creates the iFrame context for the iFrame HTML template.
+// It populates some missing fields (SiteURL, PluginID, TenantID) from specificed context, while
+// preserving the existing values in the context.
+func (a *API) makeIFrameContext(iframeCtx iFrameContext) (iFrameContext, error) {
+	if iframeCtx.SiteURL == "" {
+		config := a.p.API.GetConfig()
+		iframeCtx.SiteURL = *config.ServiceSettings.SiteURL
+		if iframeCtx.SiteURL == "" {
+			return iframeCtx, fmt.Errorf("ServiceSettings.SiteURL cannot be empty for MS Teams iFrame")
+		}
 	}
 
-	tmpl, err := template.New("iFrame").Parse(templateBody)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse iFrame template: %w", err)
+	if iframeCtx.PluginID == "" {
+		iframeCtx.PluginID = url.PathEscape(manifest.Id)
 	}
-
-	iframeCtx.SiteURL = siteURL
-	iframeCtx.PluginID = url.PathEscape(manifest.Id)
-	iframeCtx.TenantID = a.p.getConfiguration().TenantID
+	if iframeCtx.TenantID == "" {
+		iframeCtx.TenantID = a.p.getConfiguration().TenantID
+	}
 
 	if iframeCtx.Post != nil {
 		postJSON, err := json.Marshal(iframeCtx.Post)
 		if err != nil {
-			return "", fmt.Errorf("failed to marshal post: %w", err)
+			return iframeCtx, fmt.Errorf("failed to marshal post: %w", err)
 		}
 		iframeCtx.PostJSON = string(postJSON)
+	}
+	return iframeCtx, nil
+}
+
+// formatTemplate formats the iFrame HTML template with the site URL and plugin ID
+func (a *API) formatTemplate(templateBody string, iframeCtx iFrameContext) (string, error) {
+	tmpl, err := template.New("iFrame").Parse(templateBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse iFrame template: %w", err)
 	}
 
 	var buf bytes.Buffer

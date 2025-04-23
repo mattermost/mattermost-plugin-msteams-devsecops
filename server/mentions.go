@@ -164,6 +164,11 @@ func (p *NotificationsParser) sendUserNotification(un *UserNotification) error {
 		return nil
 	}
 
+	// don't send notifications to bots
+	if un.User.IsBot {
+		return nil
+	}
+
 	channelMembership, err := p.PAPI.GetChannelMember(un.Post.ChannelId, un.User.Id)
 	if err != nil {
 		return err
@@ -187,6 +192,11 @@ func (p *NotificationsParser) sendGroupNotification(un *UserNotification) error 
 	for _, user := range userGroup {
 		// Avoid sending notifications to the user who posted the message even if it's part of the group
 		if user.Id == un.Post.UserId {
+			continue
+		}
+
+		// don't send notifications to bots
+		if user.IsBot {
 			continue
 		}
 
@@ -234,6 +244,11 @@ func (p *NotificationsParser) sendChannelNotification(un *UserNotification, onli
 		user, err := p.PAPI.GetUser(member.UserId)
 		if err != nil {
 			return err
+		}
+
+		// don't send notifications to bots
+		if user.IsBot {
+			continue
 		}
 
 		users = append(users, user)
