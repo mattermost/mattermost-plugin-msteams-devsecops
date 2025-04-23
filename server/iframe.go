@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
@@ -28,8 +29,8 @@ type iFrameContext struct {
 	TenantID string
 	UserID   string
 
-	Post     *model.Post
-	PostJSON string
+	Post                       *model.Post
+	PostJSON                   string
 	NotificationPreviewContext iFrameNotificationPreviewContext
 }
 
