@@ -159,7 +159,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 		assert.Contains(t, string(body), "post_id is required")
 	})
 
-	t.Run("returns HTML preview when post exists", func(t *testing.T) {
+	t.Run("returns error when user does not have read access to post channel", func(t *testing.T) {
 		// Setup
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
@@ -195,7 +195,55 @@ func TestIframeNotificationPreview(t *testing.T) {
 		resp := w.Result()
 		defer resp.Body.Close()
 
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, http.StatusForbidden, resp.StatusCode)
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		assert.Contains(t, string(body), "user does not have access to the post")
+	})
+
+	t.Run("returns HTML preview when post exists", func(t *testing.T) {
+		// Setup
+		team := th.SetupTeam(t)
+		user := th.SetupUser(t, team)
+		user2 := th.SetupUser(t, team)
+
+		// Create a channel
+		channel, appErr := th.p.API.CreateChannel(&model.Channel{
+			TeamId:      team.Id,
+			Type:        model.ChannelTypeOpen,
+			DisplayName: "Test Channel",
+			Name:        "test-channel",
+			Header:      "Test Header",
+			Purpose:     "Test Purpose",
+		})
+		require.Nil(t, appErr)
+
+		// add user to channel
+		_, appErr = th.p.API.AddUserToChannel(channel.Id, user.Id, user2.Id)
+		require.Nil(t, appErr)
+
+		// Create a post
+		post, appErr := th.p.API.CreatePost(&model.Post{
+			UserId:    user.Id,
+			ChannelId: channel.Id,
+			Message:   "Test message for notification preview",
+		})
+		require.Nil(t, appErr)
+
+		// Setup request with post_id
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/iframe/notification_preview?post_id="+post.Id, nil)
+		r.Header.Set("Mattermost-User-ID", user.Id)
+
+		// Execute
+		th.p.apiHandler.ServeHTTP(w, r)
+
+		// Assert
+		resp := w.Result()
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "text/html", resp.Header.Get("Content-Type"))
 
 		body, err := io.ReadAll(resp.Body)
