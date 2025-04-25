@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
@@ -28,15 +29,25 @@ type iFrameContext struct {
 	TenantID string
 	UserID   string
 
-	Post     *model.Post
-	PostJSON string
+	Post                       *model.Post
+	PostJSON                   string
+	NotificationPreviewContext iFrameNotificationPreviewContext
+}
+
+type iFrameNotificationPreviewContext struct {
+	PostAuthor *model.User
+	Channel    *model.Channel
+
+	ChannelNameDisplay   string
+	PostAuthorDisplay    string
+	PostCreatedAtDisplay string
 }
 
 // iFrame returns the iFrame HTML needed to host Mattermost within a MS Teams app.
 func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 	a.p.API.LogDebug("iFrame", "action", r.URL.Query().Get("action"), "sub_entity_id", r.URL.Query().Get("sub_entity_id"))
 
-	iframeCtx, err := a.makeIFrameContext(iFrameContext{})
+	iframeCtx, err := a.createIFrameContext("", nil)
 	if err != nil {
 		a.p.API.LogError("Failed to create iFrame context", "error", err.Error())
 		http.Error(w, "Failed to create iFrame context", http.StatusInternalServerError)
@@ -77,14 +88,12 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 		a.p.API.LogWarn("Unable to serve the iFrame", "error", err.Error())
 	}
 }
-
 func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("Mattermost-User-ID")
 	if userID == "" {
 		http.Error(w, "user not authenticated", http.StatusUnauthorized)
 		return
 	}
-
 	postID := r.URL.Query().Get("post_id")
 	if postID == "" {
 		http.Error(w, "post_id is required", http.StatusBadRequest)
@@ -97,25 +106,24 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	iframeCtx := iFrameContext{
-		Post:   post,
-		UserID: userID,
+	// Check user has access to the post
+	if !a.p.API.HasPermissionToChannel(userID, post.ChannelId, model.PermissionReadChannel) {
+		http.Error(w, "user does not have access to the post", http.StatusForbidden)
 	}
 
-	iframeCtx, err := a.makeIFrameContext(iframeCtx)
+	iFrameCtx, err := a.createIFrameContext(userID, post)
 	if err != nil {
 		a.p.API.LogError("Failed to create iFrame context", "error", err.Error())
 		http.Error(w, "Failed to create iFrame context", http.StatusInternalServerError)
 		return
 	}
 
-	html, err := a.formatTemplate(assets.IFrameNotificationPreviewHTMLTemplate, iframeCtx)
+	html, err := a.formatTemplate(assets.IFrameNotificationPreviewHTMLTemplate, iFrameCtx)
 	if err != nil {
 		a.p.API.LogError("Failed to format iFrame HTML", "error", err.Error())
 		http.Error(w, "Failed to format iFrame HTML", http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte(html)); err != nil {
@@ -123,33 +131,57 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// makeIFrameContext creates the iFrame context for the iFrame HTML template.
-// It populates some missing fields (SiteURL, PluginID, TenantID) from specificed context, while
-// preserving the existing values in the context.
-func (a *API) makeIFrameContext(iframeCtx iFrameContext) (iFrameContext, error) {
-	if iframeCtx.SiteURL == "" {
-		config := a.p.API.GetConfig()
-		iframeCtx.SiteURL = *config.ServiceSettings.SiteURL
-		if iframeCtx.SiteURL == "" {
-			return iframeCtx, fmt.Errorf("ServiceSettings.SiteURL cannot be empty for MS Teams iFrame")
-		}
+// createIFrameContext creates the iFrame context for the iFrame and iFrameNotificationPreview HTML templates.
+func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContext, error) {
+	config := a.p.API.GetConfig()
+	if *config.ServiceSettings.SiteURL == "" {
+		return iFrameContext{}, fmt.Errorf("ServiceSettings.SiteURL cannot be empty for MS Teams iFrame")
 	}
 
-	if iframeCtx.PluginID == "" {
-		iframeCtx.PluginID = url.PathEscape(manifest.Id)
-	}
-	if iframeCtx.TenantID == "" {
-		iframeCtx.TenantID = a.p.getConfiguration().TenantID
+	iFrameCtx := iFrameContext{
+		SiteURL:  *config.ServiceSettings.SiteURL,
+		PluginID: url.PathEscape(manifest.Id),
+		TenantID: a.p.getConfiguration().TenantID,
+		UserID:   userID,
+		Post:     post,
 	}
 
-	if iframeCtx.Post != nil {
-		postJSON, err := json.Marshal(iframeCtx.Post)
-		if err != nil {
-			return iframeCtx, fmt.Errorf("failed to marshal post: %w", err)
-		}
-		iframeCtx.PostJSON = string(postJSON)
+	// If the post is nil, we don't need to do anything else.
+	if post == nil {
+		return iFrameCtx, nil
 	}
-	return iframeCtx, nil
+
+	// create context for notification preview
+	postJSON, err := json.Marshal(post)
+	if err != nil {
+		return iFrameContext{}, fmt.Errorf("failed to marshal post: %w", err)
+	}
+	iFrameCtx.PostJSON = string(postJSON)
+
+	author, appErr := a.p.API.GetUser(post.UserId)
+	if appErr != nil {
+		return iFrameContext{}, fmt.Errorf("failed to get author: %w", appErr)
+	}
+
+	channel, appErr := a.p.API.GetChannel(post.ChannelId)
+	if appErr != nil {
+		return iFrameContext{}, fmt.Errorf("failed to get channel: %w", appErr)
+	}
+
+	channelDisplayName := channel.Name
+	if channel.Type == model.ChannelTypeDirect || channel.Type == model.ChannelTypeGroup {
+		iFrameCtx.NotificationPreviewContext.ChannelNameDisplay = "Direct Message"
+	}
+
+	iFrameCtx.NotificationPreviewContext = iFrameNotificationPreviewContext{
+		PostAuthor:           author,
+		Channel:              channel,
+		ChannelNameDisplay:   channelDisplayName,
+		PostAuthorDisplay:    author.GetDisplayName(model.ShowNicknameFullName),
+		PostCreatedAtDisplay: time.Unix(post.CreateAt/1000, 0).Format("January 2, 2006 • 03:04 PM"), // Format date in this way: "April 4, 2025 • 10:43 AM"
+	}
+
+	return iFrameCtx, nil
 }
 
 // formatTemplate formats the iFrame HTML template with the site URL and plugin ID
