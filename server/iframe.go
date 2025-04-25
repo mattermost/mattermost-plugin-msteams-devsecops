@@ -41,6 +41,7 @@ type iFrameNotificationPreviewContext struct {
 	ChannelNameDisplay   string
 	PostAuthorDisplay    string
 	PostCreatedAtDisplay string
+	Action               string
 }
 
 // iFrame returns the iFrame HTML needed to host Mattermost within a MS Teams app.
@@ -169,8 +170,14 @@ func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContex
 	}
 
 	channelDisplayName := channel.Name
-	if channel.Type == model.ChannelTypeDirect || channel.Type == model.ChannelTypeGroup {
-		iFrameCtx.NotificationPreviewContext.ChannelNameDisplay = "Direct Message"
+	action := "mentioned you"
+	switch channel.Type {
+	case model.ChannelTypeDirect:
+		channelDisplayName = "Direct Message"
+		action = "sent you a direct message"
+	case model.ChannelTypeGroup:
+		channelDisplayName = "Group Message"
+		action = "sent you a group message"
 	}
 
 	iFrameCtx.NotificationPreviewContext = iFrameNotificationPreviewContext{
@@ -179,6 +186,7 @@ func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContex
 		ChannelNameDisplay:   channelDisplayName,
 		PostAuthorDisplay:    author.GetDisplayName(model.ShowNicknameFullName),
 		PostCreatedAtDisplay: time.Unix(post.CreateAt/1000, 0).Format("January 2, 2006 • 03:04 PM"), // Format date in this way: "April 4, 2025 • 10:43 AM"
+		Action:               action,
 	}
 
 	return iFrameCtx, nil
