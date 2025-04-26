@@ -71,8 +71,8 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 	w.Header().Set("Content-Type", "text/html")
 
-	// Set permissions policy for camera and microphone access within the iFrame
-	perms := fmt.Sprintf(`camera=(self "%s"), microphone=(self "%s")`, iframeCtx.SiteURL, iframeCtx.SiteURL)
+	// Set permissions policy for microphone and display-catpure access within the iFrame (for Calls plugin)
+	perms := fmt.Sprintf(`microphone=(self "%s"), display-capture=(self "%s")`, iframeCtx.SiteURL, iframeCtx.SiteURL)
 	w.Header().Set("Permissions-Policy", perms)
 
 	// set session cookie to indicate Mattermost is hosted in an iFrame, which allows
