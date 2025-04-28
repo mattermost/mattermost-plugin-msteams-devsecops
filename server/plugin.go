@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 const (
 	pluginID                = "com.mattermost.plugin-msteams-devsecops"
 	checkCredentialsJobName = "check_credentials" //#nosec G101 -- This is a false positive
+	allowedFrameAncestors   = "*.cloud.microsoft teams.microsoft.com *.teams.microsoft.com *.microsoft365.com *.office.com outlook.office.com outlook.office365.com outlook-sdf.office.com outlook-sdf.office365.com"
 )
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
@@ -51,7 +54,8 @@ type Plugin struct {
 	cancelKeyFuncLock sync.Mutex
 
 	// checkCredentialsJob is a job that periodically checks credentials and permissions against the MS Graph API
-	checkCredentialsJob *cluster.Job
+	checkCredentialsJob     *cluster.Job
+	disableCheckCredentials bool
 
 	// clientReconnectCtx and clientReconnectCancel are used to control the client reconnection goroutine
 	clientReconnectCtx    context.Context
@@ -79,12 +83,92 @@ func (p *Plugin) OnActivate() error {
 		return errors.New("this plugin requires an enterprise license")
 	}
 
+	// Update frame ancestors configuration
+	if err := p.updateFrameAncestors(); err != nil {
+		p.API.LogWarn("Failed to update frame ancestors", "error", err.Error())
+		// Continue activation even if this fails
+	}
+
 	p.apiHandler = NewAPI(p)
 
 	p.pluginStore = pluginstore.NewPluginStore(p.API)
 
 	go p.start(false)
 
+	return nil
+}
+
+// updateFrameAncestors updates the ServiceSettings.FrameAncestors configuration
+// to include domains required by this plugin while preserving existing values.
+func (p *Plugin) updateFrameAncestors() error {
+	p.API.LogDebug("Updating frame ancestors configuration")
+
+	// Get the current Mattermost configuration
+	config := p.client.Configuration.GetConfig()
+	if config == nil {
+		return errors.New("failed to get Mattermost configuration")
+	}
+
+	// Get the current frame ancestors as a space-separated string
+	currentAncestorsStr := ""
+	if config.ServiceSettings.FrameAncestors != nil {
+		currentAncestorsStr = *config.ServiceSettings.FrameAncestors
+	}
+
+	// Split the current ancestors into a slice
+	var currentAncestors []string
+	if currentAncestorsStr != "" {
+		currentAncestors = strings.Fields(currentAncestorsStr)
+	}
+
+	// Parse the allowed frame ancestors from our constant
+	allowedDomains := strings.Fields(allowedFrameAncestors)
+
+	// Create a map to track unique domains and preserve existing ones
+	uniqueDomains := make(map[string]bool)
+
+	// Track if any new domains were added
+	domainsAdded := false
+
+	// Add existing domains to the map
+	for _, domain := range currentAncestors {
+		uniqueDomains[domain] = true
+	}
+
+	// Add our allowed domains to the map, tracking if any new ones were added
+	for _, domain := range allowedDomains {
+		if !uniqueDomains[domain] {
+			domainsAdded = true
+			uniqueDomains[domain] = true
+		}
+	}
+
+	// Only proceed with update if domains were added
+	if !domainsAdded {
+		p.API.LogDebug("No new domains to add to frame ancestors, skipping update")
+		return nil
+	}
+
+	// Convert the map back to a slice
+	newAncestors := make([]string, 0, len(uniqueDomains))
+	for domain := range uniqueDomains {
+		newAncestors = append(newAncestors, domain)
+	}
+
+	// Sort the slice alphabetically
+	sort.Strings(newAncestors)
+
+	// Join the slice into a space-separated string
+	newAncestorsStr := strings.Join(newAncestors, " ")
+
+	// Update the configuration
+	config.ServiceSettings.FrameAncestors = &newAncestorsStr
+
+	// Save the updated configuration
+	err := p.client.Configuration.SaveConfig(config)
+	if err != nil {
+		return errors.New("failed to save updated frame ancestors configuration: " + err.Error())
+	}
 	return nil
 }
 
