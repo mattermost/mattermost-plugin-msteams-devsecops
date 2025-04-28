@@ -38,7 +38,7 @@
             background-color: var(--color-background);
         }
         .notification-container {
-            max-width: 600px;
+            max-width: 1200px;
             margin: 0 auto;
             background-color: var(--color-white);
             border-radius: 4px;
@@ -126,8 +126,7 @@
         }
 
         /* Markdown styles */
-         /* Markdown styles */
-         .message-content h1, .message-content h2, .message-content h3,
+        .message-content h1, .message-content h2, .message-content h3,
         .message-content h4, .message-content h5, .message-content h6 {
             margin-top: 16px;
             margin-bottom: 8px;
@@ -229,7 +228,7 @@
 
     <div class="notification-container">
         <div class="notification-header">
-            {{.NotificationPreviewContext.PostAuthorDisplay}} mentioned you in Mattermost
+            {{.NotificationPreviewContext.PostAuthorDisplay}} {{.NotificationPreviewContext.Action}} in Mattermost
         </div>
         <div class="notification-content">
             <div class="message-header">
