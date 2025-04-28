@@ -25,10 +25,10 @@ func NewAPI(p *Plugin) *API {
 	api.handleStaticFiles(router)
 
 	// iFrame support
-	router.HandleFunc("/iframe/mattermostTab", api.iFrame).Methods("GET")
-	router.HandleFunc("/iframe/authenticate", api.authenticate).Methods("GET")
-	router.HandleFunc("/iframe/notification_preview", api.iframeNotificationPreview).Methods("GET")
-	router.HandleFunc("/iframe-manifest", api.appManifest).Methods("GET")
+	router.HandleFunc("/iframe/mattermostTab", api.iFrame).Methods(http.MethodGet)
+	router.HandleFunc("/iframe/authenticate", api.authenticate).Methods(http.MethodGet)
+	router.HandleFunc("/iframe/notification_preview", api.iframeNotificationPreview).Methods(http.MethodGet)
+	router.HandleFunc("/iframe-manifest", api.appManifest).Methods(http.MethodGet)
 
 	return api
 }
