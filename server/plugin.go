@@ -127,14 +127,26 @@ func (p *Plugin) updateFrameAncestors() error {
 	// Create a map to track unique domains and preserve existing ones
 	uniqueDomains := make(map[string]bool)
 
+	// Track if any new domains were added
+	domainsAdded := false
+
 	// Add existing domains to the map
 	for _, domain := range currentAncestors {
 		uniqueDomains[domain] = true
 	}
 
-	// Add our allowed domains to the map
+	// Add our allowed domains to the map, tracking if any new ones were added
 	for _, domain := range allowedDomains {
-		uniqueDomains[domain] = true
+		if !uniqueDomains[domain] {
+			domainsAdded = true
+			uniqueDomains[domain] = true
+		}
+	}
+
+	// Only proceed with update if domains were added
+	if !domainsAdded {
+		p.API.LogDebug("No new domains to add to frame ancestors, skipping update")
+		return nil
 	}
 
 	// Convert the map back to a slice
@@ -157,8 +169,6 @@ func (p *Plugin) updateFrameAncestors() error {
 	if err != nil {
 		return errors.New("failed to save updated frame ancestors configuration: " + err.Error())
 	}
-
-	p.API.LogInfo("Successfully updated frame ancestors configuration", "ancestors", newAncestorsStr)
 	return nil
 }
 
