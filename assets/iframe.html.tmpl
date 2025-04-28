@@ -12,12 +12,21 @@
   ></script>
 </head>
 <body>
+    <style nonce="{{.Nonce}}">
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
     <iframe
-        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
         title="Mattermost DevSecOps"
         src="about:blank">
     </iframe>
-  <script>
+  <script nonce="{{.Nonce}}">
     (function(microsoftTeams) {
       var iframe = document.querySelector('iframe');
 
