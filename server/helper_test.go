@@ -34,7 +34,8 @@ func setupTestHelper(t *testing.T) *testHelper {
 
 	p := &Plugin{
 		// These mocks are replaced later, but serve the plugin during early initialization
-		msteamsAppClient: &mocks.Client{},
+		msteamsAppClient:        &mocks.Client{},
+		disableCheckCredentials: true,
 	}
 	th := &testHelper{
 		p: p,

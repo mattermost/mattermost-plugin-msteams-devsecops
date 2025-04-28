@@ -64,6 +64,11 @@ func getExpectedPermissions() []expectedPermission {
 }
 
 func (p *Plugin) checkCredentials() {
+	if p.disableCheckCredentials {
+		p.API.LogDebug("Skipping credentials check: check is disabled")
+		return
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			p.API.LogError("Recovering from panic", "panic", r, "stack", string(debug.Stack()))
