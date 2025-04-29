@@ -5,7 +5,9 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -28,6 +30,7 @@ type iFrameContext struct {
 	PluginID string
 	TenantID string
 	UserID   string
+	Nonce    string
 
 	Post                       *model.Post
 	PostJSON                   string
@@ -55,6 +58,15 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate a random nonce for the script/style tag
+	nonceBytes := make([]byte, 16)
+	if _, nonceErr := rand.Read(nonceBytes); nonceErr != nil {
+		a.p.API.LogError("Failed to generate nonce", "error", nonceErr.Error())
+		http.Error(w, "Failed to generate nonce", http.StatusInternalServerError)
+		return
+	}
+	iframeCtx.Nonce = base64.StdEncoding.EncodeToString(nonceBytes)
+
 	html, err := a.formatTemplate(assets.IFrameHTMLTemplate, iframeCtx)
 	if err != nil {
 		a.p.API.LogError("Failed to format iFrame HTML", "error", err.Error())
@@ -62,9 +74,12 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set a minimal CSP for the wrapper page
+	// cspDirectives is a minimal CSP for the wrapper page
+	// style-src: Allow inline styles with nonce
+	// script-src: Allow scripts from Microsoft Teams CDN and inline scripts with nonce
 	cspDirectives := []string{
-		"style-src 'unsafe-inline'", // Allow inline styles for the iframe positioning
+		"style-src 'nonce-" + iframeCtx.Nonce + "'",
+		"script-src https://res.cdn.office.net 'nonce-" + iframeCtx.Nonce + "';",
 	}
 	w.Header().Set("Content-Security-Policy", strings.Join(cspDirectives, "; "))
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -85,6 +100,7 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 		a.p.API.LogWarn("Unable to serve the iFrame", "error", err.Error())
 	}
 }
+
 func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("Mattermost-User-ID")
 	if userID == "" {
