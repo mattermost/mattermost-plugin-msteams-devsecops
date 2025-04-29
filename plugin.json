@@ -8,7 +8,6 @@
     "min_server_version": "6.2.1",
     "server": {
         "executables": {
-            "darwin-arm64": "server/dist/plugin-darwin-arm64",
             "linux-amd64": "server/dist/plugin-linux-amd64",
             "linux-arm64": "server/dist/plugin-linux-arm64"
         }
