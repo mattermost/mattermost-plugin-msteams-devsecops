@@ -60,8 +60,8 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 
 	// Generate a random nonce for the script/style tag
 	nonceBytes := make([]byte, 16)
-	if _, err := rand.Read(nonceBytes); err != nil {
-		a.p.API.LogError("Failed to generate nonce", "error", err.Error())
+	if _, nonceErr := rand.Read(nonceBytes); nonceErr != nil {
+		a.p.API.LogError("Failed to generate nonce", "error", nonceErr.Error())
 		http.Error(w, "Failed to generate nonce", http.StatusInternalServerError)
 		return
 	}
