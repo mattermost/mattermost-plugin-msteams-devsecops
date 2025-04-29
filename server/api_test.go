@@ -34,7 +34,7 @@ func TestIFrame(t *testing.T) {
 
 		// Check for CSP headers
 		assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "style-src 'nonce-")
-		assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "script-src 'self' https://res.cdn.office.net 'nonce-")
+		assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "script-src https://res.cdn.office.net 'nonce-")
 		assert.Equal(t, "nosniff", resp.Header.Get("X-Content-Type-Options"))
 		assert.Equal(t, "strict-origin-when-cross-origin", resp.Header.Get("Referrer-Policy"))
 

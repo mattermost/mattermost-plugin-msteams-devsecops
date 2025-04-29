@@ -74,10 +74,12 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set a minimal CSP for the wrapper page
+	// cspDirectives is a minimal CSP for the wrapper page
+	// style-src: Allow inline styles with nonce
+	// script-src: Allow scripts from Microsoft Teams CDN and inline scripts with nonce
 	cspDirectives := []string{
-		"style-src 'nonce-" + iframeCtx.Nonce + "'",                                     // Allow inline styles with nonce
-		"script-src 'self' https://res.cdn.office.net 'nonce-" + iframeCtx.Nonce + "';", // Allow scripts from Microsoft Teams CDN and inline scripts with nonce
+		"style-src 'nonce-" + iframeCtx.Nonce + "'",
+		"script-src https://res.cdn.office.net 'nonce-" + iframeCtx.Nonce + "';",
 	}
 	w.Header().Set("Content-Security-Policy", strings.Join(cspDirectives, "; "))
 	w.Header().Set("X-Content-Type-Options", "nosniff")
