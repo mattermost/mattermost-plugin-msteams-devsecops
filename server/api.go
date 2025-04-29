@@ -29,6 +29,7 @@ func NewAPI(p *Plugin) *API {
 	router.HandleFunc("/iframe/authenticate", api.authenticate).Methods(http.MethodGet)
 	router.HandleFunc("/iframe/notification_preview", api.iframeNotificationPreview).Methods(http.MethodGet)
 	router.HandleFunc("/iframe-manifest", api.appManifest).Methods(http.MethodGet)
+	router.HandleFunc("/csp-report", api.cspReport).Methods(http.MethodPost)
 
 	return api
 }
