@@ -75,7 +75,7 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// cspDirectives is a minimal CSP for the wrapper page
+	// cspDirectives is a CSP for the wrapper page
 	// default-src: Block all resources by default
 	// style-src: Allow inline styles with nonce
 	// script-src: Allow scripts from Microsoft Teams CDN and inline scripts with nonce
