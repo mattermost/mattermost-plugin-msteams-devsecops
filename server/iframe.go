@@ -147,12 +147,47 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Generate a random nonce for the script/style tag
+	nonceBytes := make([]byte, 16)
+	if _, nonceErr := rand.Read(nonceBytes); nonceErr != nil {
+		a.p.API.LogError("Failed to generate nonce", "error", nonceErr.Error())
+		http.Error(w, "Failed to generate nonce", http.StatusInternalServerError)
+		return
+	}
+	iFrameCtx.Nonce = base64.StdEncoding.EncodeToString(nonceBytes)
+
 	html, err := a.formatTemplate(assets.IFrameNotificationPreviewHTMLTemplate, iFrameCtx)
 	if err != nil {
 		a.p.API.LogError("Failed to format iFrame HTML", "error", err.Error())
 		http.Error(w, "Failed to format iFrame HTML", http.StatusInternalServerError)
 		return
 	}
+
+	// cspDirectives is a CSP for the notification preview page
+	// default-src: Block all resources by default
+	// style-src: Allow inline styles with nonce
+	// script-src: Allow scripts from Microsoft Teams CDN and jsdelivr with nonce
+	// script-src-attr: Allow inline event handlers with nonce
+	// connect-src: Allow connections to Microsoft and Teams domains
+	// img-src: Allow images from the same origin
+	// report-to: Send CSP violation reports to our endpoint
+	cspDirectives := []string{
+		"default-src 'none'",
+		"style-src 'nonce-" + iFrameCtx.Nonce + "'",
+		"script-src https://res.cdn.office.net https://cdn.jsdelivr.net 'nonce-" + iFrameCtx.Nonce + "'",
+		"script-src-attr 'nonce-" + iFrameCtx.Nonce + "'",
+		"connect-src https://*.microsoft.com https://*.teams.microsoft.com https://*.cdn.office.net",
+		"img-src 'self'",
+		"report-to csp-endpoint",
+	}
+
+	// Set the Report-To header to define the reporting endpoint group
+	reportToJSON := `{"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"/plugins/` + iFrameCtx.PluginID + `/csp-report"}]}`
+	w.Header().Set("Report-To", reportToJSON)
+
+	w.Header().Set("Content-Security-Policy", strings.Join(cspDirectives, "; "))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte(html)); err != nil {
