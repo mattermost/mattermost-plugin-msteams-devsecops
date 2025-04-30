@@ -18,7 +18,6 @@ import (
 
 const (
 	TeamsPropertyObjectID    = "oid"
-	TeamsPropertyAppID       = "app_id"
 	TeamsPropertySSOUsername = "sso_username"
 )
 
@@ -36,13 +35,15 @@ type NotificationsParser struct {
 	pluginStore      *pluginstore.PluginStore
 	Notifications    []*UserNotification
 	msteamsAppClient msteams.Client
+	configuration    *configuration
 }
 
-func NewNotificationsParser(api plugin.API, pluginStore *pluginstore.PluginStore, msteamsAppClient msteams.Client) *NotificationsParser {
+func NewNotificationsParser(api plugin.API, pluginStore *pluginstore.PluginStore, msteamsAppClient msteams.Client, configuration *configuration) *NotificationsParser {
 	return &NotificationsParser{
 		PAPI:             api,
 		pluginStore:      pluginStore,
 		msteamsAppClient: msteamsAppClient,
+		configuration:    configuration,
 	}
 }
 
@@ -259,6 +260,10 @@ func (p *NotificationsParser) sendChannelNotification(un *UserNotification, onli
 }
 
 func (p *NotificationsParser) sendUserActivity(userActivity *UserActivity) error {
+	if p.configuration.TeamsAppID == "" {
+		return fmt.Errorf("Can't send user activity if TeamsAppID is not set in the configuration")
+	}
+
 	sender, appErr := p.PAPI.GetUser(userActivity.UserNotification.Post.UserId)
 	if appErr != nil {
 		p.PAPI.LogError("Failed to get sender", "error", appErr.Error())
@@ -284,12 +289,6 @@ func (p *NotificationsParser) sendUserActivity(userActivity *UserActivity) error
 	urlParams := url.Values{}
 	urlParams.Set("context", string(jsonContext))
 
-	appID, err := p.pluginStore.GetAppID()
-	if err != nil {
-		p.PAPI.LogError("Failed to get app ID", "error", err.Error())
-		return fmt.Errorf("failed to get app ID: %w", err)
-	}
-
 	msteamsUserIDs := []string{}
 	for _, user := range userActivity.Users {
 		storedUser, err := p.pluginStore.GetUser(user.Id)
@@ -304,7 +303,7 @@ func (p *NotificationsParser) sendUserActivity(userActivity *UserActivity) error
 	if err := p.msteamsAppClient.SendUserActivity(msteamsUserIDs, "mattermost_mention_with_name", message, url.URL{
 		Scheme:   "https",
 		Host:     "teams.microsoft.com",
-		Path:     "/l/entity/" + appID + "/notification_preview",
+		Path:     "/l/entity/" + p.configuration.TeamsAppID + "/notification_preview",
 		RawQuery: urlParams.Encode(),
 	}, map[string]string{
 		"post_author": sender.GetDisplayName(model.ShowNicknameFullName),

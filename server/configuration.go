@@ -21,6 +21,7 @@ import (
 type configuration struct {
 	AppVersion                       string `json:"appVersion"`
 	AppID                            string `json:"appID"`
+	TeamsAppID                       string `json:"teamsAppID"`
 	AppClientID                      string `json:"appClientID"`
 	AppClientSecret                  string `json:"appClientSecret"`
 	AppName                          string `json:"appName"`
@@ -33,6 +34,7 @@ func (c *configuration) ProcessConfiguration() {
 	c.TenantID = strings.TrimSpace(c.TenantID)
 	c.AppClientID = strings.TrimSpace(c.AppClientID)
 	c.AppClientSecret = strings.TrimSpace(c.AppClientSecret)
+	c.TeamsAppID = strings.TrimSpace(c.TeamsAppID)
 }
 
 func (p *Plugin) validateConfiguration(configuration *configuration) error {
@@ -43,6 +45,9 @@ func (p *Plugin) validateConfiguration(configuration *configuration) error {
 	}
 	if configuration.AppID == "" {
 		return errors.New("application ID should not be empty")
+	}
+	if configuration.TeamsAppID == "" {
+		return errors.New("teams app ID should not be empty")
 	}
 	if configuration.TenantID == "" {
 		return errors.New("tenant ID should not be empty")
@@ -55,6 +60,9 @@ func (p *Plugin) validateConfiguration(configuration *configuration) error {
 	}
 	if configuration.AppName == "" {
 		return errors.New("app name should not be empty")
+	}
+	if !configuration.DisableUserActivityNotifications && configuration.TeamsAppID == "" {
+		return errors.New("teams app ID should not be empty if user activity notifications are enabled")
 	}
 	return nil
 }

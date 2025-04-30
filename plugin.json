@@ -35,6 +35,13 @@
                 "default": ""
             },
             {
+                "key": "teamsAppID",
+                "display_name": "Teams App ID",
+                "type": "text",
+                "help_text": "A unique identifier for the Teams application, this can be found in the [teams administration](https://admin.teams.microsoft.com/policies/manage-apps). This is used to identify the Teams application installation in Microsoft 365.",
+                "default": ""
+            },
+            {
                 "key": "tenantID",
                 "display_name": "Tenant ID",
                 "type": "text",

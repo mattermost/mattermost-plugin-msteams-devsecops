@@ -51,8 +51,7 @@
         if (tenantId === expectedTenantId) {
           // Build query params to be sent to the iframe.
           const params = new URLSearchParams()
-          params.set('app_id', context.app.appId.appIdAsString);
-    
+
           // Extract the subPageId (subEntityId coming from the Microsoft Teams SDK User Activity notification)
           // and send it to the iframe to redirect the user to what triggered the notification.
           if (context && context.page && context.page.subPageId) {

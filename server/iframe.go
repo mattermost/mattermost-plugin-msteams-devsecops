@@ -26,11 +26,12 @@ import (
 )
 
 type iFrameContext struct {
-	SiteURL  string
-	PluginID string
-	TenantID string
-	UserID   string
-	Nonce    string
+	SiteURL    string
+	PluginID   string
+	TenantID   string
+	UserID     string
+	Nonce      string
+	TeamsAppID string
 
 	Post                       *model.Post
 	PostJSON                   string
@@ -154,11 +155,12 @@ func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContex
 	}
 
 	iFrameCtx := iFrameContext{
-		SiteURL:  *config.ServiceSettings.SiteURL,
-		PluginID: url.PathEscape(manifest.Id),
-		TenantID: a.p.getConfiguration().TenantID,
-		UserID:   userID,
-		Post:     post,
+		SiteURL:    *config.ServiceSettings.SiteURL,
+		PluginID:   url.PathEscape(manifest.Id),
+		TenantID:   a.p.getConfiguration().TenantID,
+		UserID:     userID,
+		Post:       post,
+		TeamsAppID: a.p.getConfiguration().TeamsAppID,
 	}
 
 	// If the post is nil, we don't need to do anything else.
@@ -334,18 +336,6 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appID := r.URL.Query().Get("app_id")
-	if appID == "" {
-		logger.Error("App ID was not sent with the authentication request")
-	}
-
-	err = a.p.pluginStore.StoreAppID(appID)
-	if err != nil {
-		logger.WithError(err).Error("Failed to store app ID")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
 	// This is effectively copied from https://github.com/mattermost/mattermost/blob/a184e5677d28433495b0cde764bfd99700838740/server/channels/app/login.go#L287
 	secure := true
 	maxAgeSeconds := *config.ServiceSettings.SessionLengthWebInHours * 60 * 60
@@ -421,7 +411,7 @@ func (p *Plugin) MessageHasBeenPosted(c *plugin.Context, post *model.Post) {
 		return
 	}
 
-	parser := NewNotificationsParser(p.API, p.pluginStore, p.msteamsAppClient)
+	parser := NewNotificationsParser(p.API, p.pluginStore, p.msteamsAppClient, p.configuration)
 	if err := parser.ProcessPost(post); err != nil {
 		p.API.LogError("Failed to process mentions", "error", err.Error())
 		return

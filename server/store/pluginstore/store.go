@@ -27,8 +27,6 @@ func NewUser(mattermostUserID, teamsObjectID, teamsSSOUsername string) *User {
 type Store interface {
 	StoreUser(user *User) error
 	GetUser(mattermostUserID string) (*User, error)
-	StoreAppID(appID string) error
-	GetAppID() (string, error)
 }
 
 type PluginStore struct {
@@ -69,28 +67,6 @@ func (s *PluginStore) GetUser(mattermostUserID string) (*User, error) {
 		return nil, fmt.Errorf("failed to unmarshal user %s: %w", mattermostUserID, err)
 	}
 	return &user, nil
-}
-
-func (s *PluginStore) StoreAppID(appID string) error {
-	appErr := s.API.KVSet(getAppIDKey(), []byte(appID))
-	if appErr != nil {
-		return fmt.Errorf("failed to store app ID: %w", appErr)
-	}
-
-	return nil
-}
-
-func (s *PluginStore) GetAppID() (string, error) {
-	appIDBytes, appErr := s.API.KVGet(getAppIDKey())
-	if appErr != nil {
-		return "", fmt.Errorf("failed to get app ID: %w", appErr)
-	}
-
-	if appIDBytes == nil {
-		return "", fmt.Errorf("app ID not found")
-	}
-
-	return string(appIDBytes), nil
 }
 
 func getUserKey(mattermostUserID string) string {
