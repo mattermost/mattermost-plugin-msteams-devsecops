@@ -72,7 +72,3 @@ func (s *PluginStore) GetUser(mattermostUserID string) (*User, error) {
 func getUserKey(mattermostUserID string) string {
 	return fmt.Sprintf("user:%s", mattermostUserID)
 }
-
-func getAppIDKey() string {
-	return "appID"
-}

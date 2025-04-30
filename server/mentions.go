@@ -261,7 +261,7 @@ func (p *NotificationsParser) sendChannelNotification(un *UserNotification, onli
 
 func (p *NotificationsParser) sendUserActivity(userActivity *UserActivity) error {
 	if p.configuration.TeamsAppID == "" {
-		return fmt.Errorf("Can't send user activity if TeamsAppID is not set in the configuration")
+		return fmt.Errorf("can't send user activity if TeamsAppID is not set in the configuration")
 	}
 
 	sender, appErr := p.PAPI.GetUser(userActivity.UserNotification.Post.UserId)
