@@ -517,7 +517,7 @@ func (p *Plugin) getRedirectPathFromUser(logger logrus.FieldLogger, user *model.
 				}
 			}
 
-			return fmt.Sprintf("/%s/pl/%s", team.Name, post.Id)
+			return fmt.Sprintf("/%s/pl/%s", url.PathEscape(team.Name), url.PathEscape(post.Id))
 		}
 	}
 
