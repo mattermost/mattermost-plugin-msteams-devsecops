@@ -14,7 +14,7 @@ This repository provides the foundation for multiple Microsoft App offerings tha
 
 The **Mattermost Mission Collaboration for Microsoft** application extends Enterprise communications with secure external collaboration controlled by IT by accessing Mattermost from your Microsoft Office365, Teams, and Outlook user experiences.
 
-![image](https://github.com/jasonblais/mattermost-plugin-msteams-devsecops/blob/patch-1/assets/External-Collaboration-with-Enterprise-Control-Microsoft.png)
+![image](https://github.com/jasonblais/mattermost-plugin-msteams-devsecops/blob/patch-1/docs/Enterprise-to-Tactical-Edge-with-Mattermost-and-Microsoft.png)
 
 **Benefits & Use Cases:**
 - **External Collaboration with IT Control**: Replace off-compliant freemium personal apps with a dedicated external collaboration across mobile, web, and desktop fully controlled by IT.
@@ -38,6 +38,8 @@ The **Mattermost Mission Collaboration for Microsoft** application extends Enter
 This app is designed to work with Microsoft 365, Outlook, and Microsoft Teams.
 
 ### Set up
+
+For detailed setup instructions, please see the [Setup Guide](docs/admin_setup.md) which provides step-by-step instructions for creating and configuring a Teams application in Azure.
 
 #### Create and set up a Teams application in Azure
 
