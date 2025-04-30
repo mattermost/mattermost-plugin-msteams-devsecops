@@ -46,9 +46,7 @@ func (p *Plugin) validateConfiguration(configuration *configuration) error {
 	if configuration.AppID == "" {
 		return errors.New("application ID should not be empty")
 	}
-	if configuration.TeamsAppID == "" {
-		return errors.New("teams app ID should not be empty")
-	}
+// Removed redundant unconditional validation for TeamsAppID.
 	if configuration.TenantID == "" {
 		return errors.New("tenant ID should not be empty")
 	}
