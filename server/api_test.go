@@ -247,6 +247,20 @@ func TestIframeNotificationPreview(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "text/html", resp.Header.Get("Content-Type"))
 
+		// Check for CSP headers
+		assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "style-src 'nonce-")
+		assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "script-src https://res.cdn.office.net https://cdn.jsdelivr.net 'nonce-")
+		assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "script-src-attr 'nonce-")
+		assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "connect-src https://*.microsoft.com https://*.teams.microsoft.com https://*.cdn.office.net")
+		assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "img-src 'self'")
+		assert.Contains(t, resp.Header.Get("Content-Security-Policy"), "report-to csp-endpoint")
+		assert.Equal(t, "nosniff", resp.Header.Get("X-Content-Type-Options"))
+		assert.Equal(t, "strict-origin-when-cross-origin", resp.Header.Get("Referrer-Policy"))
+
+		// Check for Report-To header
+		require.Contains(t, resp.Header.Get("Report-To"), `{"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"/plugins/`+manifest.Id+`/csp-report"}]}`)
+
+		// Check response body contains expected HTML
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Contains(t, string(body), "<html")
