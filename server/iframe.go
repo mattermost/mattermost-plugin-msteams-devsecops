@@ -526,11 +526,20 @@ func (p *Plugin) getRedirectPathFromUser(logger logrus.FieldLogger, user *model.
 
 // cspReport handles Content Security Policy violation reports
 func (a *API) cspReport(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to 32KB
+	const maxBodySize = 32 * 1024 // 32KB
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+
 	// Read the request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		a.p.API.LogError("Failed to read CSP report body", "error", err.Error())
-		http.Error(w, "Failed to read report", http.StatusBadRequest)
+		if err.Error() == "http: request body too large" {
+			a.p.API.LogError("CSP report request body too large", "max_size", maxBodySize)
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		a.p.API.LogError("Failed to read CSP report request body", "error", err.Error())
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
 	}
 
