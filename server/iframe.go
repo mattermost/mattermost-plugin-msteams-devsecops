@@ -444,44 +444,47 @@ func getCookieDomain(config *model.Config) string {
 // getRedirectPathFromUser generates a redirect path for the user based on the subEntityID.
 // This is used to redirect the user to the correct URL when they click on a notification in Microsoft Teams.
 func (p *Plugin) getRedirectPathFromUser(logger logrus.FieldLogger, user *model.User, subEntityID string) string {
-	if subEntityID != "" {
-		if strings.HasPrefix(subEntityID, "post_preview_") {
-			postID := strings.TrimPrefix(subEntityID, "post_preview_")
-			return fmt.Sprintf("/plugins/%s/iframe/notification_preview?post_id=%s", url.PathEscape(manifest.Id), url.QueryEscape(postID))
-		} else if strings.HasPrefix(subEntityID, "post_") {
-			var team *model.Team
-			postID := strings.TrimPrefix(subEntityID, "post_")
-			post, appErr := p.API.GetPost(postID)
-			if appErr != nil {
-				logger.WithError(appErr).Error("Failed to get post to generate redirect path from subEntityId")
-				return "/"
-			}
+	if subEntityID == "" {
+		return "/"
+	}
 
-			channel, appErr := p.API.GetChannel(post.ChannelId)
-			if appErr != nil {
-				logger.WithError(appErr).Error("Failed to get channel to generate redirect path from subEntityId")
-				return "/"
-			}
+	if strings.HasPrefix(subEntityID, "post_preview_") {
+		postID := strings.TrimPrefix(subEntityID, "post_preview_")
+		return fmt.Sprintf("/plugins/%s/iframe/notification_preview?post_id=%s", url.PathEscape(manifest.Id), url.QueryEscape(postID))
+	}
 
-			if channel.TeamId == "" {
-				var teams []*model.Team
-				teams, appErr = p.API.GetTeamsForUser(user.Id)
-				if appErr != nil || len(teams) == 0 {
-					logger.WithError(appErr).Error("Failed to get teams for user to generate redirect path from subEntityId")
-					return "/"
-				}
-				team = teams[0]
-			} else {
-				team, appErr = p.API.GetTeam(channel.TeamId)
-				if appErr != nil {
-					logger.WithError(appErr).Error("Failed to get team to generate redirect path from subEntityId")
-					return "/"
-				}
-			}
+	if !strings.HasPrefix(subEntityID, "post_") {
+		return "/"
+	}
 
-			return fmt.Sprintf("/%s/pl/%s", team.Name, post.Id)
+	postID := strings.TrimPrefix(subEntityID, "post_")
+	post, appErr := p.API.GetPost(postID)
+	if appErr != nil {
+		logger.WithError(appErr).Error("Failed to get post to generate redirect path from subEntityId")
+		return "/"
+	}
+
+	channel, appErr := p.API.GetChannel(post.ChannelId)
+	if appErr != nil {
+		logger.WithError(appErr).Error("Failed to get channel to generate redirect path from subEntityId")
+		return "/"
+	}
+
+	var team *model.Team
+	if channel.TeamId == "" {
+		teams, appErr := p.API.GetTeamsForUser(user.Id)
+		if appErr != nil || len(teams) == 0 {
+			logger.WithError(appErr).Error("Failed to get teams for user to generate redirect path from subEntityId")
+			return "/"
+		}
+		team = teams[0]
+	} else {
+		team, appErr = p.API.GetTeam(channel.TeamId)
+		if appErr != nil {
+			logger.WithError(appErr).Error("Failed to get team to generate redirect path from subEntityId")
+			return "/"
 		}
 	}
 
-	return "/"
+	return fmt.Sprintf("/%s/pl/%s", url.PathEscape(team.Name), url.PathEscape(post.Id))
 }
