@@ -59,15 +59,6 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate a random nonce for the script/style tag
-	nonceBytes := make([]byte, 16)
-	if _, nonceErr := rand.Read(nonceBytes); nonceErr != nil {
-		a.p.API.LogError("Failed to generate nonce", "error", nonceErr.Error())
-		http.Error(w, "Failed to generate nonce", http.StatusInternalServerError)
-		return
-	}
-	iframeCtx.Nonce = base64.StdEncoding.EncodeToString(nonceBytes)
-
 	html, err := a.formatTemplate(assets.IFrameHTMLTemplate, iframeCtx)
 	if err != nil {
 		a.p.API.LogError("Failed to format iFrame HTML", "error", err.Error())
@@ -147,15 +138,6 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Generate a random nonce for the script/style tag
-	nonceBytes := make([]byte, 16)
-	if _, nonceErr := rand.Read(nonceBytes); nonceErr != nil {
-		a.p.API.LogError("Failed to generate nonce", "error", nonceErr.Error())
-		http.Error(w, "Failed to generate nonce", http.StatusInternalServerError)
-		return
-	}
-	iFrameCtx.Nonce = base64.StdEncoding.EncodeToString(nonceBytes)
-
 	html, err := a.formatTemplate(assets.IFrameNotificationPreviewHTMLTemplate, iFrameCtx)
 	if err != nil {
 		a.p.API.LogError("Failed to format iFrame HTML", "error", err.Error())
@@ -209,6 +191,13 @@ func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContex
 		UserID:   userID,
 		Post:     post,
 	}
+
+	// Generate a random nonce for the script/style tags
+	nonceBytes := make([]byte, 16)
+	if _, nonceErr := rand.Read(nonceBytes); nonceErr != nil {
+		return iFrameContext{}, fmt.Errorf("failed to generate nonce: %w", nonceErr)
+	}
+	iFrameCtx.Nonce = base64.StdEncoding.EncodeToString(nonceBytes)
 
 	// If the post is nil, we don't need to do anything else.
 	if post == nil {
