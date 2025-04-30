@@ -27,6 +27,30 @@
         src="about:blank">
     </iframe>
   <script nonce="{{.Nonce}}">
+    function getAuthTokenWithRetries(maxRetries = 3) {
+      return new Promise((resolve, reject) => {
+        let retries = 0;
+
+        const getToken = () => {
+          console.log("Trying to get token, attempt ", retries + 1);
+          microsoftTeams.authentication.getAuthToken().then((token) => {
+            resolve(token);
+          }).catch((error) => {
+            console.error("Failed to get token:", error);
+            if (retries < maxRetries) {
+              console.log("Retrying...");
+              retries++;
+              setTimeout(getToken, 250);
+            } else {
+              reject(error);
+            }
+          });
+        };
+
+        getToken();
+      });
+    }
+
     (function(microsoftTeams) {
       var iframe = document.querySelector('iframe');
 
@@ -52,14 +76,14 @@
           // Build query params to be sent to the iframe.
           const params = new URLSearchParams()
           params.set('app_id', context.app.appId.appIdAsString);
-    
+
           // Extract the subPageId (subEntityId coming from the Microsoft Teams SDK User Activity notification)
           // and send it to the iframe to redirect the user to what triggered the notification.
           if (context && context.page && context.page.subPageId) {
             params.set('sub_entity_id', context.page.subPageId);
           }
 
-          microsoftTeams.authentication.getAuthToken()
+          getAuthTokenWithRetries(3)
             .then((token) => {
               params.set('token', token);
               iframe.src = `${domainRoot}/plugins/{{.PluginID}}/iframe/authenticate?${params.toString()}`;
