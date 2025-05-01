@@ -13,7 +13,7 @@ This repository provides the foundation for multiple Microsoft App offerings tha
 
 The **Mattermost Mission Collaboration for Microsoft** application extends Enterprise communications with secure external collaboration controlled by IT by accessing Mattermost from your Microsoft Office365, Teams, and Outlook user experiences.
 
-![image](./docs/Enterprise-to-Tactical-Edge-with-Mattermost-and-Microsoft.png)
+![image](./docs/External-Collaboration-with-Enterprise-Control-Microsoft.png)
 
 **Benefits & Use Cases:**
 - **External Collaboration with IT Control**: Replace off-compliant freemium personal apps with a dedicated external collaboration across mobile, web, and desktop fully controlled by IT.
