@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -58,15 +59,6 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate a random nonce for the script/style tag
-	nonceBytes := make([]byte, 16)
-	if _, nonceErr := rand.Read(nonceBytes); nonceErr != nil {
-		a.p.API.LogError("Failed to generate nonce", "error", nonceErr.Error())
-		http.Error(w, "Failed to generate nonce", http.StatusInternalServerError)
-		return
-	}
-	iframeCtx.Nonce = base64.StdEncoding.EncodeToString(nonceBytes)
-
 	html, err := a.formatTemplate(assets.IFrameHTMLTemplate, iframeCtx)
 	if err != nil {
 		a.p.API.LogError("Failed to format iFrame HTML", "error", err.Error())
@@ -74,13 +66,26 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// cspDirectives is a minimal CSP for the wrapper page
+	// cspDirectives is a CSP for the wrapper page
+	// default-src: Block all resources by default
 	// style-src: Allow inline styles with nonce
 	// script-src: Allow scripts from Microsoft Teams CDN and inline scripts with nonce
+	// connect-src: Allow connections to Microsoft and Teams domains
+	// frame-src: Allow frames from the same origin
+	// report-to: Send CSP violation reports to our endpoint
 	cspDirectives := []string{
+		"default-src 'none'",
 		"style-src 'nonce-" + iframeCtx.Nonce + "'",
 		"script-src https://res.cdn.office.net 'nonce-" + iframeCtx.Nonce + "';",
+		"connect-src https://*.microsoft.com https://*.teams.microsoft.com https://*.cdn.office.net",
+		"frame-src 'self'",
+		"report-to csp-endpoint",
 	}
+
+	// Set the Report-To header to define the reporting endpoint group
+	reportToJSON := `{"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"/plugins/` + iframeCtx.PluginID + `/csp-report"}]}`
+	w.Header().Set("Report-To", reportToJSON)
+
 	w.Header().Set("Content-Security-Policy", strings.Join(cspDirectives, "; "))
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -139,6 +144,32 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Failed to format iFrame HTML", http.StatusInternalServerError)
 		return
 	}
+
+	// cspDirectives is a CSP for the notification preview page
+	// default-src: Block all resources by default
+	// style-src: Allow inline styles with nonce
+	// script-src: Allow scripts from Microsoft Teams CDN and jsdelivr with nonce
+	// script-src-attr: Allow inline event handlers with nonce
+	// connect-src: Allow connections to Microsoft and Teams domains
+	// img-src: Allow images from the same origin
+	// report-to: Send CSP violation reports to our endpoint
+	cspDirectives := []string{
+		"default-src 'none'",
+		"style-src 'nonce-" + iFrameCtx.Nonce + "'",
+		"script-src https://res.cdn.office.net https://cdn.jsdelivr.net 'nonce-" + iFrameCtx.Nonce + "'",
+		"script-src-attr 'nonce-" + iFrameCtx.Nonce + "'",
+		"connect-src https://*.microsoft.com https://*.teams.microsoft.com https://*.cdn.office.net",
+		"img-src 'self'",
+		"report-to csp-endpoint",
+	}
+
+	// Set the Report-To header to define the reporting endpoint group
+	reportToJSON := `{"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"/plugins/` + iFrameCtx.PluginID + `/csp-report"}]}`
+	w.Header().Set("Report-To", reportToJSON)
+
+	w.Header().Set("Content-Security-Policy", strings.Join(cspDirectives, "; "))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte(html)); err != nil {
@@ -160,6 +191,13 @@ func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContex
 		UserID:   userID,
 		Post:     post,
 	}
+
+	// Generate a random nonce for the script/style tags
+	nonceBytes := make([]byte, 16)
+	if _, nonceErr := rand.Read(nonceBytes); nonceErr != nil {
+		return iFrameContext{}, fmt.Errorf("failed to generate nonce: %w", nonceErr)
+	}
+	iFrameCtx.Nonce = base64.StdEncoding.EncodeToString(nonceBytes)
 
 	// If the post is nil, we don't need to do anything else.
 	if post == nil {
@@ -479,9 +517,104 @@ func (p *Plugin) getRedirectPathFromUser(logger logrus.FieldLogger, user *model.
 				}
 			}
 
-			return fmt.Sprintf("/%s/pl/%s", team.Name, post.Id)
+			return fmt.Sprintf("/%s/pl/%s", url.PathEscape(team.Name), url.PathEscape(post.Id))
 		}
 	}
 
 	return "/"
+}
+
+// cspReport handles Content Security Policy violation reports
+func (a *API) cspReport(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to 32KB
+	const maxBodySize = 32 * 1024 // 32KB
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+
+	// Read the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		if err.Error() == "http: request body too large" {
+			a.p.API.LogError("CSP report request body too large", "max_size", maxBodySize)
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		a.p.API.LogError("Failed to read CSP report request body", "error", err.Error())
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	// Parse the report-to format (as an array)
+	var reportArray []struct {
+		Age  int `json:"age"`
+		Body struct {
+			BlockedURL         *string `json:"blockedURL"`
+			ColumnNumber       *int    `json:"columnNumber"`
+			Disposition        *string `json:"disposition"`
+			DocumentURL        *string `json:"documentURL"`
+			EffectiveDirective *string `json:"effectiveDirective"`
+			LineNumber         *int    `json:"lineNumber"`
+			OriginalPolicy     *string `json:"originalPolicy"`
+			Referrer           *string `json:"referrer"`
+			ScriptSample       *string `json:"scriptSample"`
+			SourceFile         *string `json:"sourceFile"`
+			ViolatedDirective  *string `json:"violatedDirective"`
+		} `json:"body"`
+	}
+
+	// Parse the report
+	if err := json.Unmarshal(body, &reportArray); err != nil {
+		a.p.API.LogError("Failed to parse CSP report", "error", err.Error(), "body", string(body))
+		http.Error(w, "Failed to parse report", http.StatusBadRequest)
+		return
+	}
+
+	// Process each report in the array
+	for i, report := range reportArray {
+		// Create a map to store the fields that are not null
+		fields := map[string]interface{}{
+			"index": i,
+			"age":   report.Age,
+		}
+
+		// Add non-null fields to the map
+		if report.Body.BlockedURL != nil {
+			fields["blocked-url"] = *report.Body.BlockedURL
+		}
+		if report.Body.ColumnNumber != nil {
+			fields["column-number"] = *report.Body.ColumnNumber
+		}
+		if report.Body.Disposition != nil {
+			fields["disposition"] = *report.Body.Disposition
+		}
+		if report.Body.DocumentURL != nil {
+			fields["document-url"] = *report.Body.DocumentURL
+		}
+		if report.Body.EffectiveDirective != nil {
+			fields["effective-directive"] = *report.Body.EffectiveDirective
+		}
+		if report.Body.LineNumber != nil {
+			fields["line-number"] = *report.Body.LineNumber
+		}
+		if report.Body.OriginalPolicy != nil {
+			fields["original-policy"] = *report.Body.OriginalPolicy
+		}
+		if report.Body.Referrer != nil {
+			fields["referrer"] = *report.Body.Referrer
+		}
+		if report.Body.ScriptSample != nil {
+			fields["script-sample"] = *report.Body.ScriptSample
+		}
+		if report.Body.SourceFile != nil {
+			fields["source-file"] = *report.Body.SourceFile
+		}
+		if report.Body.ViolatedDirective != nil {
+			fields["violated-directive"] = *report.Body.ViolatedDirective
+		}
+
+		// Log the CSP violation with only the non-null fields
+		a.p.API.LogError("CSP violation detected", fields)
+	}
+
+	// Return a success response
+	w.WriteHeader(http.StatusOK)
 }
