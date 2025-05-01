@@ -53,15 +53,33 @@
 
 3. Go to your **Mattermost server's system console > Plugins > MSTeams DevSecOps**
 
-4. Generate an Application ID in version 4 UUID format and enter it in the Application ID field. [UUID Generator](https://www.uuidgenerator.net/) will create a random ID in the correct format.
+4. Enter an Application Version. You can start with "1.0.0".
 
-5. Enter the values you made note of earlier in the appropriate fields:
+5. Generate an Application ID in version 4 UUID format and enter it in the Application ID field. [UUID Generator](https://www.uuidgenerator.net/) will create a random ID in the correct format.
+
+6. Enter the values you made note of earlier in the appropriate fields:
     ![System Console Configuration](./tenant-client-secret-sysconsole.png)
 
     - **Directory (tenant) ID**: The Directory (tenant) ID you noted from step 4
     - **Application (client) ID**: The Application (client) ID you noted from step 4
     - **Client Secret**: The secret value you generated in step 5
 
+7. Enter an Application Display Name. This can be whatever you choose, and will be how your application is named in the MS Teams app store.
+
 6. Save the changes and enable the plugin.
 
+7. Click the "Download Manifest" button. This will generate the MS Teams application as a ZIP file, containing the app manifest. Save this file as it will be used in the next steps.
 
+## Install the application in MS Teams
+
+1. Go to the [Microsoft Teams admin center](https://admin.teams.microsoft.com/dashboard).
+
+2. Go to **Teams apps > Manage apps**.
+
+![System Console Configuration](./select-manage-apps.png)
+
+3. Go to **Actions > Upload new app** (upper right corner of the Manage apps page).
+
+4. Click **Upload** and select the ZIP file saved previously.
+
+5 **Done!** 🎉 Your application is now available to users.
