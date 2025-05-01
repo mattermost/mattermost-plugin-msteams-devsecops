@@ -109,17 +109,20 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("Mattermost-User-ID")
 	if userID == "" {
+		a.p.API.LogError("User not authenticated", "user_id", userID)
 		http.Error(w, "user not authenticated", http.StatusUnauthorized)
 		return
 	}
 	postID := r.URL.Query().Get("post_id")
 	if postID == "" {
+		a.p.API.LogError("Request missing post_id", "user_id", userID)
 		http.Error(w, "post_id is required", http.StatusBadRequest)
 		return
 	}
 
 	post, appErr := a.p.API.GetPost(postID)
 	if appErr != nil {
+		a.p.API.LogError("Failed to get post", "user_id", userID, "post_id", postID, "error", appErr.Error())
 		http.Error(w, "failed to get post", http.StatusInternalServerError)
 		return
 	}
