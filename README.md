@@ -85,7 +85,7 @@ Mattermost is a purpose-built platform for technical and operational teams in or
 
 ### End-user Setup
 
-Any Microsoft 365 user can complete the steps below to access Mattermost for Microsoft 365 within their Microsoft environment:
+Any Microsoft 365 user can complete the steps below to access Mattermost for Microsoft 365 within their Microsoft environment, provided their organization allows users to install apps from the App Store:
 1. Sign in to your Microsoft Teams account [from a web browser](https://teams.microsoft.com/v2/?clientexperience=t2) or the desktop application.
 2. Select the [+] Apps button in the Teams sidebar.
 3. Search for Mattermost for Microsoft 365 and then select Add to install the application.
