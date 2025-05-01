@@ -1,4 +1,4 @@
-# Set up
+# Aministrator Set-up
 
 ## Create and set up a Teams application in Azure
 
@@ -15,11 +15,12 @@
     - Make note of these values as we'll need those later:
         - Application (client) ID → _Required in the plugin configuration_
         - Directory (tenant) ID → _Required for the plugin configuration_
-        - Object ID → _Required in the plugin configuration_
+        ![System Console Configuration](./remember-tenant-client.png)    
 
 5. Go to **Certificates and secrets**
     - Generate a new Client secret
     - Make note of the secret value. → _Required in the plugin configuration_
+    ![System Console Configuration](./remember-client-secret.png)    
 
 6. Go to **API Permissions**
     - Ensure `User.Read` **delegated** permission is added ([Microsoft documentation](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#enable-sso-in-microsoft-entra-id))
@@ -43,10 +44,24 @@
                     - **Teams web**: 5e3ce6c0-2b1f-4285-8d4b-75ee78787346
                     - **Teams app**: 1fec8e78-bce4-4aaf-ab1b-5451cc387264
                 - If you want to make your application available in more Microsoft application, you need to keep adding client applications from [the following table](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#to-configure-authorized-client-application:~:text=Select%20one%20of%20the%20following%20client%20IDs%3A).
-8. Go to your **Mattermost server's system console > Plugins > MSTeams DevSecOps**:
-    - Enter the values you made note earlier in the appropriate fields:
-        - **Application (client) ID**: The Application (client) ID you noted from step 4
-        - **Directory (tenant) ID**: The Directory (tenant) ID you noted from step 4
-        - **Object ID**: The Object ID you noted from step 4
-        - **Client Secret**: The secret value you generated in step 5
-    - Save the changes and enable the plugin.
+
+## Set up the plugin in Mattermost
+
+1. Download the latest release of the plugin from [here](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/releases).
+
+2. Install the plugin by following the normal plugin installation process. For detailed instructions, refer to steps 1 through 5 of [this guide](./install_plugin.md).
+
+3. Go to your **Mattermost server's system console > Plugins > MSTeams DevSecOps**
+
+4. Generate an Application ID in version 4 UUID format and enter it in the Application ID field. [UUID Generator](https://www.uuidgenerator.net/) will create a random ID in the correct format.
+
+5. Enter the values you made note of earlier in the appropriate fields:
+    ![System Console Configuration](./tenant-client-secret-sysconsole.png)
+
+    - **Directory (tenant) ID**: The Directory (tenant) ID you noted from step 4
+    - **Application (client) ID**: The Application (client) ID you noted from step 4
+    - **Client Secret**: The secret value you generated in step 5
+
+6. Save the changes and enable the plugin.
+
+
