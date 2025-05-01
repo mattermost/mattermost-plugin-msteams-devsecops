@@ -1,4 +1,4 @@
-# Aministrator Set-up
+# Administrator Set-up
 
 ## Create and set up a Teams application in Azure
 
@@ -8,31 +8,32 @@
 
 3. Create a new app registration by clicking **Add > App registration**
     - Give it a name
-    - Accounts in this organisational directory only (single tenant)
+    - Accounts in this organizational directory only (single tenant)
     - No redirect URIs
 
 4. Go to your newly created application
-    - Make note of these values as we'll need those later:
+    - Make note of these values as you'll need those later:
         - Application (client) ID → _Required in the plugin configuration_
         - Directory (tenant) ID → _Required for the plugin configuration_
         ![System Console Configuration](./remember-tenant-client.png)    
 
 5. Go to **Certificates and secrets**
     - Generate a new Client secret
-    - Make note of the secret value. → _Required in the plugin configuration_
+    - Make note of the secret value → _Required in the plugin configuration_
     ![System Console Configuration](./remember-client-secret.png)    
 
 6. Go to **API Permissions**
     - Ensure `User.Read` **delegated** permission is added ([Microsoft documentation](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#enable-sso-in-microsoft-entra-id))
     - Add `TeamsActivity.Send` **application** permission (optional, for notifications) ([Microsoft documentation](https://learn.microsoft.com/en-us/graph/teams-send-activityfeednotifications?tabs=desktop%2Chttp))
-    - Grant admin consent for the default directory to prevent users from getting the consent prompt.
+    - Grant admin consent for the default directory to prevent users from seeing the consent prompt.
 
 7. Go to **Expose an API**
     - Edit the "_Application ID URI_" as such: `api://{{Mattermost Site URL Hostname}}/{{Application (client) ID}}`
     - Add the `access_as_user` scope by clicking the "Add a scope" button. ([Microsoft documentation](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#to-configure-api-scope))
         - **Scope name**: `access_as_user`
         - **Who can consent?** Admins and users
-        - Give it a display name and description, and also specify a user consent display name and description. These last two are the ones the end users are going to see in the consent screen. For example:
+        - Provide a display name and description, as well as a user consent display name and description. These will be shown to end users on the consent screen.
+            For example:
             **Display name**: Log in to Mattermost
             **Description**: Used to allow O365 users to log in to the Mattermost application 
             **User consent display name**: Log in to Mattermost
@@ -57,18 +58,18 @@
 
 5. Generate an Application ID in version 4 UUID format and enter it in the Application ID field. [UUID Generator](https://www.uuidgenerator.net/) will create a random ID in the correct format.
 
-6. Enter the values you made note of earlier in the appropriate fields:
+6. Enter the values you noted earlier in the appropriate fields:
     ![System Console Configuration](./tenant-client-secret-sysconsole.png)
 
     - **Directory (tenant) ID**: The Directory (tenant) ID you noted from step 4
     - **Application (client) ID**: The Application (client) ID you noted from step 4
     - **Client Secret**: The secret value you generated in step 5
 
-7. Enter an Application Display Name. This can be whatever you choose, and will be how your application is named in the MS Teams app store.
+7. Enter an Application Display Name. This can be any name you choose, and will be how your application is named in the MS Teams app store.
 
-6. Save the changes and enable the plugin.
+8. Save the changes and enable the plugin.
 
-7. Click the "Download Manifest" button. This will generate the MS Teams application as a ZIP file, containing the app manifest. Save this file as it will be used in the next steps.
+9. Click the "Download Manifest" button. This will generate the MS Teams application as a ZIP file, containing the app manifest. Save this file as it will be used in the next steps.
 
 ## Install the application in MS Teams
 
@@ -76,10 +77,10 @@
 
 2. Go to **Teams apps > Manage apps**.
 
-![System Console Configuration](./select-manage-apps.png)
+![Manage Apps in Microsoft Teams](./select-manage-apps.png)
 
 3. Go to **Actions > Upload new app** (upper right corner of the Manage apps page).
 
 4. Click **Upload** and select the ZIP file saved previously.
 
-5 **Done!** 🎉 Your application is now available to users.
+5. **Done!** 🎉 Your application is now available to users.
