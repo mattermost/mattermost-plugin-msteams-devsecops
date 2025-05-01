@@ -27,83 +27,83 @@
         src="about:blank">
     </iframe>
   <script nonce="{{.Nonce}}">
-      (function (microsoftTeams) {
-        function getAuthTokenWithRetries(maxRetries = 3) {
-          return new Promise((resolve, reject) => {
-            let retries = 0;
+    (function (microsoftTeams) {
+      function getAuthTokenWithRetries(maxRetries = 3) {
+        return new Promise((resolve, reject) => {
+          let retries = 0;
 
-            const getToken = () => {
-              console.log("Trying to get token, attempt ", retries + 1);
-              microsoftTeams.authentication.getAuthToken().then((token) => {
-                resolve(token);
-              }).catch((error) => {
-                console.error("Failed to get token:", error);
-                if (retries < maxRetries) {
-                  console.log("Retrying...");
-                  retries++;
-                  setTimeout(getToken, 250);
-                } else {
-                  reject(error);
-                }
-              });
-            };
-            getToken();
-          });
+          const getToken = () => {
+            console.log("Trying to get token, attempt ", retries + 1);
+            microsoftTeams.authentication.getAuthToken().then((token) => {
+              resolve(token);
+            }).catch((error) => {
+              console.error("Failed to get token:", error);
+              if (retries < maxRetries) {
+                console.log("Retrying...");
+                retries++;
+                setTimeout(getToken, 250);
+              } else {
+                reject(error);
+              }
+            });
+          };
+          getToken();
+        });
+      }
+
+      var iframe = document.querySelector('iframe');
+
+      // Initialize the Microsoft Teams SDK
+      microsoftTeams.app.initialize(['{{.SiteURL}}']).then(() => {
+        microsoftTeams.app.notifySuccess();
+      }).catch((error) => {
+        console.error('Failed to initialize Microsoft Teams SDK:', error);
+      });
+
+      const expectedTenantId = '{{.TenantID}}';
+      const domainRoot = '{{.SiteURL}}';
+
+      // Choose the iFrame content based on the tenant.
+      microsoftTeams.app.getContext().then((context) => {
+        let tenantId;
+        if (context && context.user && context.user.tenant && context.user.tenant.id) {
+          tenantId = context.user.tenant.id;
         }
 
-        var iframe = document.querySelector('iframe');
+        // If the expected tenant matches the actual tenant then try to get auth token
+        if (tenantId === expectedTenantId) {
+          // Build query params to be sent to the iframe.
+          const params = new URLSearchParams()
+          params.set('app_id', context.app.appId.appIdAsString);
 
-        // Initialize the Microsoft Teams SDK
-        microsoftTeams.app.initialize(['{{.SiteURL}}']).then(() => {
-          microsoftTeams.app.notifySuccess();
-        }).catch((error) => {
-          console.error('Failed to initialize Microsoft Teams SDK:', error);
-        });
-
-        const expectedTenantId = '{{.TenantID}}';
-        const domainRoot = '{{.SiteURL}}';
-
-        // Choose the iFrame content based on the tenant.
-        microsoftTeams.app.getContext().then((context) => {
-          let tenantId;
-          if (context && context.user && context.user.tenant && context.user.tenant.id) {
-            tenantId = context.user.tenant.id;
+          // Extract the subPageId (subEntityId coming from the Microsoft Teams SDK User Activity notification)
+          // and send it to the iframe to redirect the user to what triggered the notification.
+          if (context && context.page && context.page.subPageId) {
+            params.set('sub_entity_id', context.page.subPageId);
           }
 
-          // If the expected tenant matches the actual tenant then try to get auth token
-          if (tenantId === expectedTenantId) {
-            // Build query params to be sent to the iframe.
-            const params = new URLSearchParams()
-            params.set('app_id', context.app.appId.appIdAsString);
-
-            // Extract the subPageId (subEntityId coming from the Microsoft Teams SDK User Activity notification)
-            // and send it to the iframe to redirect the user to what triggered the notification.
-            if (context && context.page && context.page.subPageId) {
-              params.set('sub_entity_id', context.page.subPageId);
-            }
-
-            getAuthTokenWithRetries(3)
-              .then((token) => {
-                params.set('token', token);
-                iframe.src = `${domainRoot}/plugins/{{.PluginID}}/iframe/authenticate?${params.toString()}`;
-              })
-              .catch((error) => {
-                console.error('Failed to get auth token:', error);
-                iframe.src = domainRoot;
-              });
-          } else {
-            // Expected tenant does not match actual tenant the user is logged into; just redirect to SITE_URL and the user
-            // will have to log in without SSO
-            console.log('No tenant match found, redirecting to default site');
-            iframe.src = '{{.SiteURL}}';
-          }
-        }).catch((error) => {
-          // User appears to not be logged into Microsoft Teams, or the context is not available.
-          // Just redirect to the SITE_URL and the user will have to log in without SSO.
-          console.error('Failed to get context:', error);
+          getAuthTokenWithRetries(3)
+            .then((token) => {
+              params.set('token', token);
+              iframe.src = `${domainRoot}/plugins/{{.PluginID}}/iframe/authenticate?${params.toString()}`;
+            })
+            .catch((error) => {
+              console.error('Failed to get auth token:', error);
+              iframe.src = domainRoot;
+            });
+        } else {
+          // Expected tenant does not match actual tenant the user is logged into; just redirect to SITE_URL and the user
+          // will have to log in without SSO
+          console.log('No tenant match found, redirecting to default site');
           iframe.src = '{{.SiteURL}}';
-        });
-      })(microsoftTeams);
+        }
+      }).catch((error) => {
+        // User appears to not be logged into Microsoft Teams, or the context is not available.
+        // Just redirect to the SITE_URL and the user will have to log in without SSO.
+        console.error('Failed to get context:', error);
+        iframe.src = '{{.SiteURL}}';
+      });
+    })(microsoftTeams);
   </script>
 </body>
 </html>
