@@ -39,7 +39,7 @@ The **Mattermost Mission Collaboration for Microsoft** application extends Enter
 
 This app is designed to work with Microsoft 365, Outlook, and Microsoft Teams.
 
-### Admin Set up
+### Admin Setup
 
 For detailed setup instructions, see the [Setup Guide](./docs/admin_setup.md), which provides step-by-step instructions for creating and configuring a Microsoft Teams application in Azure.
 
@@ -83,7 +83,7 @@ This app is designed to work with Microsoft 365, Outlook, and Microsoft Teams. A
 **About Mattermost:**  
 Mattermost is a purpose-built platform for technical and operational teams in organizations vital to national security, public safety, and critical infrastructure. [https://mattermost.com/](https://mattermost.com/)   
 
-### Set up
+### Setup
 
 Any Microsoft 365 user can complete the steps below to access Mattermost for Microsoft 365 within their Microsoft environment:
 1. Sign in to your Microsoft Teams account [from a web browser](https://teams.microsoft.com/v2/?clientexperience=t2) or the desktop application.
