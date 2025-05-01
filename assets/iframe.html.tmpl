@@ -27,31 +27,30 @@
         src="about:blank">
     </iframe>
   <script nonce="{{.Nonce}}">
-    function getAuthTokenWithRetries(maxRetries = 3) {
-      return new Promise((resolve, reject) => {
-        let retries = 0;
-
-        const getToken = () => {
-          console.log("Trying to get token, attempt ", retries + 1);
-          microsoftTeams.authentication.getAuthToken().then((token) => {
-            resolve(token);
-          }).catch((error) => {
-            console.error("Failed to get token:", error);
-            if (retries < maxRetries) {
-              console.log("Retrying...");
-              retries++;
-              setTimeout(getToken, 250);
-            } else {
-              reject(error);
-            }
-          });
-        };
-
-        getToken();
-      });
-    }
-
     (function(microsoftTeams) {
+        function getAuthTokenWithRetries(maxRetries = 3) {
+          return new Promise((resolve, reject) => {
+          let retries = 0;
+
+          const getToken = () => {
+            console.log("Trying to get token, attempt ", retries + 1);
+            microsoftTeams.authentication.getAuthToken().then((token) => {
+              resolve(token);
+            }).catch((error) => {
+              console.error("Failed to get token:", error);
+              if (retries < maxRetries) {
+                console.log("Retrying...");
+                retries++;
+                setTimeout(getToken, 250);
+              } else {
+                reject(error);
+              }
+            });
+          };
+          getToken();
+        });
+      }
+
       var iframe = document.querySelector('iframe');
 
       // Initialize the Microsoft Teams SDK
