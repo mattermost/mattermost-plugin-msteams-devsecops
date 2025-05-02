@@ -147,7 +147,9 @@ func (th *testHelper) Reset(t *testing.T) *testHelper {
 	th.clientMock = clientMock
 
 	appClientMock.On("GetApp", mock.AnythingOfType("string")).Return(&clientmodels.App{}, nil).Maybe()
+	appClientMock.On("GetTenantID").Return("test-tenant-id").Maybe()
 	clientMock.On("GetApp", mock.AnythingOfType("string")).Return(&clientmodels.App{}, nil).Maybe()
+	clientMock.On("GetTenantID").Return("test-tenant-id").Maybe()
 
 	th.p.msteamsAppClient = appClientMock
 
@@ -237,6 +239,17 @@ func (th *testHelper) SetupClient(t *testing.T, userID string) *model.Client4 {
 	require.NoError(t, err)
 
 	return client
+}
+
+func (th *testHelper) SetupDirectMessageChannel(t *testing.T, userID1, userID2 string) *model.Channel {
+	t.Helper()
+
+	require.NotEmpty(t, userID1)
+	require.NotEmpty(t, userID2)
+
+	channel, appErr := th.p.API.GetDirectChannel(userID1, userID2)
+	require.Nil(t, appErr)
+	return channel
 }
 
 func (th *testHelper) pluginURL(t *testing.T, paths ...string) string {
