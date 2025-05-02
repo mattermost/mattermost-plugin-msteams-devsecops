@@ -118,9 +118,15 @@ func (p *Plugin) OnConfigurationChange() error {
 	}
 
 	// Validate the configuration
-	if err := p.validateConfiguration(newConfig); err != nil {
-		return err
-	}
+	/*
+		Skip validation for now, as it is prpreventing the plugin from being installed
+		since the configuration is not set yet.  OnConfigurationChange is called before
+		OnActivate.
+
+		if err := p.validateConfiguration(newConfig); err != nil {
+			return err
+		}
+	*/
 
 	// Apply the new configuration
 	p.setConfiguration(newConfig)
