@@ -162,25 +162,25 @@ func TestGetRedirectPathFromUser(t *testing.T) {
 	t.Run("post subEntityID with valid post and channel with team", func(t *testing.T) {
 		// Setup real data using testHelper
 		team := th.SetupTeam(t)
-		user := th.SetupUser(t, team)
+		user1 := th.SetupUser(t, team)
 		channel, appErr := th.p.API.CreateChannel(&model.Channel{
 			TeamId:      team.Id,
 			Type:        model.ChannelTypeOpen,
 			DisplayName: "Test Channel",
 			Name:        "test-channel",
-			CreatorId:   user.Id,
+			CreatorId:   user1.Id,
 		})
 		require.Nil(t, appErr)
 
 		post, appErr := th.p.API.CreatePost(&model.Post{
-			UserId:    user.Id,
+			UserId:    user1.Id,
 			ChannelId: channel.Id,
 			Message:   "Test post",
 		})
 		require.Nil(t, appErr)
 
 		// Test
-		path := th.p.getRedirectPathFromUser(logger, user, "post_"+post.Id)
+		path := th.p.getRedirectPathFromUser(logger, user1, "post_"+post.Id)
 		assert.Equal(t, "/"+team.Name+"/pl/"+post.Id, path)
 	})
 
@@ -260,7 +260,7 @@ func TestGetRedirectPathFromUser(t *testing.T) {
 	t.Run("post subEntityID with channel having no team and user having no teams", func(t *testing.T) {
 		// For this test, we'll create a direct message channel which has no team ID
 		// and test with a user that has no teams
-		
+
 		// Create two users, one with no teams
 		randomUsername := model.NewId()
 		userWithNoTeam, appErr := th.p.API.CreateUser(&model.User{
