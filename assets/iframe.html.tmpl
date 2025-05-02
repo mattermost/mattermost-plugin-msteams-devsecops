@@ -72,10 +72,8 @@
 
         // If the expected tenant matches the actual tenant then try to get auth token
         if (tenantId === expectedTenantId) {
+          var params = new URLSearchParams();
           // Build query params to be sent to the iframe.
-          const params = new URLSearchParams()
-          params.set('app_id', context.app.appId.appIdAsString);
-
           // Extract the subPageId (subEntityId coming from the Microsoft Teams SDK User Activity notification)
           // and send it to the iframe to redirect the user to what triggered the notification.
           if (context && context.page && context.page.subPageId) {

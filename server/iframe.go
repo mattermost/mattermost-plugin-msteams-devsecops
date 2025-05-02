@@ -372,18 +372,6 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appID := r.URL.Query().Get("app_id")
-	if appID == "" {
-		logger.Error("App ID was not sent with the authentication request")
-	}
-
-	err = a.p.pluginStore.StoreAppID(appID)
-	if err != nil {
-		logger.WithError(err).Error("Failed to store app ID")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
 	// This is effectively copied from https://github.com/mattermost/mattermost/blob/a184e5677d28433495b0cde764bfd99700838740/server/channels/app/login.go#L287
 	secure := true
 	maxAgeSeconds := *config.ServiceSettings.SessionLengthWebInHours * 60 * 60

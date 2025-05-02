@@ -278,6 +278,21 @@ func (p *Plugin) connectTeamsAppClient() error {
 		return err
 	}
 
+	// Retrieve the Teams application ID by external ID (using AppClientID)
+	if p.getConfiguration().AppClientID != "" {
+		appID, err := p.msteamsAppClient.GetTeamsAppIDByExternalID(p.getConfiguration().AppID)
+		if err != nil {
+			p.API.LogError("Unable to retrieve Teams application ID", "error", err)
+			// Continue even if we couldn't retrieve the app ID, it's not essential for all operations
+		} else {
+			if err := p.pluginStore.StoreAppID(appID); err != nil {
+				p.API.LogError("Unable to store Teams application ID", "error", err)
+			} else {
+				p.API.LogDebug("Retrieved Teams application ID", "appID", appID)
+			}
+		}
+	}
+
 	// Get a local copy of the context to use in the goroutine
 	p.clientReconnectLock.Lock()
 	ctx := p.clientReconnectCtx

@@ -521,6 +521,34 @@ func (_m *Client) GetPresencesForUsers(userIDs []string) (map[string]clientmodel
 	return r0, r1
 }
 
+// GetTeamsAppIDByExternalID provides a mock function with given fields: externalID
+func (_m *Client) GetTeamsAppIDByExternalID(externalID string) (string, error) {
+	ret := _m.Called(externalID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTeamsAppIDByExternalID")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
+		return rf(externalID)
+	}
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(externalID)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(externalID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetReply provides a mock function with given fields: teamID, channelID, messageID, replyID
 func (_m *Client) GetReply(teamID string, channelID string, messageID string, replyID string) (*clientmodels.Message, error) {
 	ret := _m.Called(teamID, channelID, messageID, replyID)
