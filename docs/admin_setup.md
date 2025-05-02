@@ -25,6 +25,7 @@
 6. Go to **API Permissions**
     - Ensure `User.Read` **delegated** permission is added ([Microsoft documentation](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#enable-sso-in-microsoft-entra-id))
     - Add `TeamsActivity.Send` **application** permission (optional, for notifications) ([Microsoft documentation](https://learn.microsoft.com/en-us/graph/teams-send-activityfeednotifications?tabs=desktop%2Chttp))
+    - Add `AppCatalog.Read.All` **application** permission. (optional, for notifications) ([Microsoft documentation](https://learn.microsoft.com/en-us/graph/api/appcatalogs-list-teamsapps?view=graph-rest-1.0&tabs=http))
     - Grant admin consent for the default directory to prevent users from seeing the consent prompt.
 
 7. Go to **Expose an API**

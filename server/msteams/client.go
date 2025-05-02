@@ -31,6 +31,7 @@ import (
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	msgraphcore "github.com/microsoftgraph/msgraph-sdk-go-core"
 	a "github.com/microsoftgraph/msgraph-sdk-go-core/authentication"
+	"github.com/microsoftgraph/msgraph-sdk-go/appcatalogs"
 	"github.com/microsoftgraph/msgraph-sdk-go/chats"
 	"github.com/microsoftgraph/msgraph-sdk-go/communications"
 	"github.com/microsoftgraph/msgraph-sdk-go/drives"
@@ -2231,6 +2232,41 @@ func checkGroupChat(c models.Chatable, userIDs []string) *clientmodels.Chat {
 
 	return nil
 }
+
+func (tc *ClientImpl) GetTeamsAppIDByExternalID(externalID string) (string, error) {
+	// Create filter query to find apps with matching externalId
+	filterQuery := fmt.Sprintf("externalId eq '%s'", externalID)
+
+	requestParameters := &appcatalogs.TeamsAppsRequestBuilderGetQueryParameters{
+		Filter: &filterQuery,
+		Select: []string{"id", "externalId"},
+	}
+
+	requestConfiguration := appcatalogs.TeamsAppsRequestBuilderGetRequestConfiguration{
+		QueryParameters: requestParameters,
+	}
+
+	// Get teams apps with the specified filter
+	response, err := tc.client.AppCatalogs().TeamsApps().Get(tc.ctx, &requestConfiguration)
+	if err != nil {
+		return "", NormalizeGraphAPIError(err)
+	}
+
+	// Check if we got any matching apps
+	apps := response.GetValue()
+	if len(apps) == 0 {
+		return "", fmt.Errorf("no Teams application found with externalId: %s", externalID)
+	}
+
+	// Return the ID of the first matching app
+	// We expect only one app to match the external ID
+	if apps[0].GetId() == nil {
+		return "", errors.New("found Teams application with matching externalId but ID is nil")
+	}
+
+	return *apps[0].GetId(), nil
+}
+
 func (tc *ClientImpl) SendUserActivity(userIDs []string, activityType, message string, webURL url.URL, params map[string]string) error {
 	keyValuePairs := []models.KeyValuePairable{}
 	for k, v := range params {
