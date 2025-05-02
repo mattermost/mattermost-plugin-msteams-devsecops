@@ -453,7 +453,7 @@ func (p *Plugin) MessageHasBeenPosted(c *plugin.Context, post *model.Post) {
 		return
 	}
 
-	if err := parser.SendNotifications(); err != nil {
+	if err := parser.SendNotifications(p.configuration.TenantID); err != nil {
 		p.API.LogError("Failed to send notifications", "error", err.Error())
 	}
 }

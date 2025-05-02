@@ -71,8 +71,8 @@ func (s *PluginStore) GetUser(mattermostUserID string) (*User, error) {
 	return &user, nil
 }
 
-func (s *PluginStore) StoreAppID(appID string) error {
-	appErr := s.API.KVSet(getAppIDKey(), []byte(appID))
+func (s *PluginStore) StoreAppID(tenantID, appID string) error {
+	appErr := s.API.KVSet(getAppIDKey(tenantID), []byte(appID))
 	if appErr != nil {
 		return fmt.Errorf("failed to store app ID: %w", appErr)
 	}
@@ -80,8 +80,8 @@ func (s *PluginStore) StoreAppID(appID string) error {
 	return nil
 }
 
-func (s *PluginStore) GetAppID() (string, error) {
-	appIDBytes, appErr := s.API.KVGet(getAppIDKey())
+func (s *PluginStore) GetAppID(tenantID string) (string, error) {
+	appIDBytes, appErr := s.API.KVGet(getAppIDKey(tenantID))
 	if appErr != nil {
 		return "", fmt.Errorf("failed to get app ID: %w", appErr)
 	}
@@ -97,6 +97,6 @@ func getUserKey(mattermostUserID string) string {
 	return fmt.Sprintf("user:%s", mattermostUserID)
 }
 
-func getAppIDKey() string {
-	return "appID"
+func getAppIDKey(tenantID string) string {
+	return "appid_" + tenantID
 }

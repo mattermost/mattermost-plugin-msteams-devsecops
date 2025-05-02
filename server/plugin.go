@@ -285,7 +285,7 @@ func (p *Plugin) connectTeamsAppClient() error {
 			p.API.LogError("Unable to retrieve Teams application ID", "error", err)
 			// Continue even if we couldn't retrieve the app ID, it's not essential for all operations
 		} else {
-			if err := p.pluginStore.StoreAppID(appID); err != nil {
+			if err := p.pluginStore.StoreAppID(p.configuration.TenantID, appID); err != nil {
 				p.API.LogError("Unable to store Teams application ID", "error", err)
 			} else {
 				p.API.LogDebug("Retrieved Teams application ID", "appID", appID)
