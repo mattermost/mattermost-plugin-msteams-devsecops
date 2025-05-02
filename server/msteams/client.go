@@ -2313,3 +2313,7 @@ func (tc *ClientImpl) SendUserActivity(userIDs []string, activityType, message s
 
 	return nil
 }
+
+func (tc *ClientImpl) GetTenantID() string {
+	return tc.tenantID
+}

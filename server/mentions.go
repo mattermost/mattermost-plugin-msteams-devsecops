@@ -36,6 +36,7 @@ type NotificationsParser struct {
 	pluginStore      *pluginstore.PluginStore
 	Notifications    []*UserNotification
 	msteamsAppClient msteams.Client
+	tenantID         string
 }
 
 func NewNotificationsParser(api plugin.API, pluginStore *pluginstore.PluginStore, msteamsAppClient msteams.Client) *NotificationsParser {
@@ -43,6 +44,7 @@ func NewNotificationsParser(api plugin.API, pluginStore *pluginstore.PluginStore
 		PAPI:             api,
 		pluginStore:      pluginStore,
 		msteamsAppClient: msteamsAppClient,
+		tenantID:         msteamsAppClient.GetTenantID(),
 	}
 }
 
@@ -126,39 +128,39 @@ func (p *NotificationsParser) isGroupMention(mention string) *model.Group {
 	return group
 }
 
-func (p *NotificationsParser) SendNotifications(tenantID string) error {
+func (p *NotificationsParser) SendNotifications() error {
 	for _, userNotification := range p.Notifications {
-		if err := p.SendNotification(userNotification, tenantID); err != nil {
+		if err := p.SendNotification(userNotification); err != nil {
 			p.PAPI.LogError("Failed to send notification", "error", err.Error())
 		}
 	}
 	return nil
 }
 
-func (p *NotificationsParser) SendNotification(notification *UserNotification, tenantID string) error {
+func (p *NotificationsParser) SendNotification(notification *UserNotification) error {
 	// Send notifications for direct and group messages
 	if notification.Channel.Type == model.ChannelTypeDirect || notification.Channel.Type == model.ChannelTypeGroup {
-		return p.sendChannelNotification(tenantID, notification, false)
+		return p.sendChannelNotification(notification, false)
 	}
 
 	if notification.User != nil {
-		return p.sendUserNotification(tenantID, notification)
+		return p.sendUserNotification(notification)
 	}
 
 	if notification.Group != nil {
-		return p.sendGroupNotification(tenantID, notification)
+		return p.sendGroupNotification(notification)
 	}
 
 	switch notification.Trigger {
 	case "@here":
-		return p.sendChannelNotification(tenantID, notification, true)
+		return p.sendChannelNotification(notification, true)
 	case "@all", "@channel":
-		return p.sendChannelNotification(tenantID, notification, false)
+		return p.sendChannelNotification(notification, false)
 	}
 	return nil
 }
 
-func (p *NotificationsParser) sendUserNotification(tenantID string, un *UserNotification) error {
+func (p *NotificationsParser) sendUserNotification(un *UserNotification) error {
 	// Do not mention yourself
 	if un.Post.UserId == un.User.Id {
 		return nil
@@ -177,12 +179,12 @@ func (p *NotificationsParser) sendUserNotification(tenantID string, un *UserNoti
 		return nil
 	}
 
-	userActivity := NewUserActivity(un, []*model.User{un.User}, tenantID)
+	userActivity := NewUserActivity(un, []*model.User{un.User})
 
 	return p.sendUserActivity(userActivity)
 }
 
-func (p *NotificationsParser) sendGroupNotification(tenantID string, un *UserNotification) error {
+func (p *NotificationsParser) sendGroupNotification(un *UserNotification) error {
 	userGroup, err := p.PAPI.GetGroupMemberUsers(un.Group.Id, 0, 1000)
 	if err != nil {
 		return err
@@ -212,11 +214,11 @@ func (p *NotificationsParser) sendGroupNotification(tenantID string, un *UserNot
 		users = append(users, user)
 	}
 
-	userActivity := NewUserActivity(un, users, tenantID)
+	userActivity := NewUserActivity(un, users)
 	return p.sendUserActivity(userActivity)
 }
 
-func (p *NotificationsParser) sendChannelNotification(tenantID string, un *UserNotification, onlineOnly bool) error {
+func (p *NotificationsParser) sendChannelNotification(un *UserNotification, onlineOnly bool) error {
 	channelMembers, err := p.PAPI.GetChannelMembers(un.Post.ChannelId, 0, 1000)
 	if err != nil {
 		return err
@@ -254,7 +256,7 @@ func (p *NotificationsParser) sendChannelNotification(tenantID string, un *UserN
 		users = append(users, user)
 	}
 
-	userActivity := NewUserActivity(un, users, tenantID)
+	userActivity := NewUserActivity(un, users)
 	return p.sendUserActivity(userActivity)
 }
 
@@ -284,7 +286,7 @@ func (p *NotificationsParser) sendUserActivity(userActivity *UserActivity) error
 	urlParams := url.Values{}
 	urlParams.Set("context", string(jsonContext))
 
-	appID, err := p.pluginStore.GetAppID(userActivity.TenantID)
+	appID, err := p.pluginStore.GetAppID(p.tenantID)
 	if err != nil {
 		p.PAPI.LogError("Failed to get app ID", "error", err.Error())
 		return fmt.Errorf("failed to get app ID: %w", err)
@@ -318,13 +320,11 @@ func (p *NotificationsParser) sendUserActivity(userActivity *UserActivity) error
 type UserActivity struct {
 	UserNotification *UserNotification
 	Users            []*model.User
-	TenantID         string
 }
 
-func NewUserActivity(mention *UserNotification, users []*model.User, tenantID string) *UserActivity {
+func NewUserActivity(mention *UserNotification, users []*model.User) *UserActivity {
 	return &UserActivity{
 		UserNotification: mention,
 		Users:            users,
-		TenantID:         tenantID,
 	}
 }
