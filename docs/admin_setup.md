@@ -1,6 +1,6 @@
-# Administrator Set-up
+# Administrator Setup
 
-## Create and set up a Teams application in Azure
+## Create and setup a Teams application in Azure
 
 1. Go to your **Azure Portal > Microsoft Entra ID**
 
@@ -46,7 +46,7 @@
                     - **Teams app**: 1fec8e78-bce4-4aaf-ab1b-5451cc387264
                 - If you want to make your application available in more Microsoft application, you need to keep adding client applications from [the following table](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#to-configure-authorized-client-application:~:text=Select%20one%20of%20the%20following%20client%20IDs%3A).
 
-## Set up the plugin in Mattermost
+## Setup the plugin in Mattermost
 
 1. Download the latest release of the plugin from [here](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/releases).
 
