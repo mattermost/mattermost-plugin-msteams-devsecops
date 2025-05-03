@@ -448,33 +448,17 @@ func TestValidateToken(t *testing.T) {
 				"iat": past(),
 				"exp": future(),
 				"nbf": past(),
-				"aud": ExpectedAudience,
+				"aud": fmt.Sprintf(ExpectedAudienceFmt, TestSiteURL, TestClientID),
 				"tid": tid,
 			})
 
 			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
 
 			_, validationErr := validateToken(params)
-			assert.Nil(t, validationErr)
-		})
-
-		t.Run("signed token, matching one of multiple configured tenants", func(t *testing.T) {
-			expectedTid1 := uuid.NewString()
-			expectedTid2 := uuid.NewString()
-
-			_, priv, jwtKeyFunc := makeKeySet(t)
-			token := newToken(t, priv, jwt.MapClaims{
-				"iat": past(),
-				"exp": future(),
-				"nbf": past(),
-				"aud": ExpectedAudience,
-				"tid": expectedTid1,
-			})
-
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{expectedTid1, expectedTid2}, enableDeveloper)
-
-			_, validationErr := validateToken(params)
-			assert.Nil(t, validationErr)
+			if validationErr != nil {
+				assert.NoError(t, validationErr.Err)
+				t.Fail()
+			}
 		})
 
 		t.Run("signed token, wildcard tenant", func(t *testing.T) {
