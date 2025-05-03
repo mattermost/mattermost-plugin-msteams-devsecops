@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
@@ -443,12 +444,16 @@ func TestValidateToken(t *testing.T) {
 		t.Run("signed token, matching single configured tenant", func(t *testing.T) {
 			tid := uuid.NewString()
 
+			// Parse the TestSiteURL to get just the host for the audience
+			siteURL, err := url.Parse(TestSiteURL)
+			require.NoError(t, err)
+
 			_, priv, jwtKeyFunc := makeKeySet(t)
 			token := newToken(t, priv, jwt.MapClaims{
 				"iat": past(),
 				"exp": future(),
 				"nbf": past(),
-				"aud": fmt.Sprintf(ExpectedAudienceFmt, TestSiteURL, TestClientID),
+				"aud": fmt.Sprintf(ExpectedAudienceFmt, siteURL.Host, TestClientID),
 				"tid": tid,
 			})
 
