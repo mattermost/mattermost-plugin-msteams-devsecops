@@ -40,7 +40,6 @@ type validateTokenParams struct {
 	enableDeveloper   bool
 	siteURL           string
 	clientID          string
-	disableRouting    bool
 }
 
 func setupJWKSet() (keyfunc.Keyfunc, context.CancelFunc) {
@@ -105,15 +104,11 @@ func validateToken(params *validateTokenParams) (jwt.MapClaims, *validationError
 	}
 
 	// Verify that this token was signed for the expected app, unless developer mode is enabled.
-	// If routing is disabled, then use this server's domain and client to verify the audience,
-	// otherwise use Community's domain and client, as it will route to the correct server.
 	switch {
 	case params.enableDeveloper:
 		logrus.Warn("Skipping aud claim check for token since developer mode enabled")
-	case params.disableRouting:
-		options = append(options, jwt.WithAudience(fmt.Sprintf(ExpectedAudienceFmt, mmServerURL.Host, params.clientID)))
 	default:
-		options = append(options, jwt.WithAudience(ExpectedAudience))
+		options = append(options, jwt.WithAudience(fmt.Sprintf(ExpectedAudienceFmt, mmServerURL.Host, params.clientID)))
 	}
 
 	parsed, err := jwt.Parse(
