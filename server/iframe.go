@@ -377,7 +377,6 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 
 	// This is effectively copied from https://github.com/mattermost/mattermost/blob/a184e5677d28433495b0cde764bfd99700838740/server/channels/app/login.go#L287
 	secure := true
-	maxAgeSeconds := *config.ServiceSettings.SessionLengthWebInHours * 60 * 60
 	domain := getCookieDomain(config)
 	subpath, _ := utils.GetSubpathFromConfig(config)
 
@@ -387,7 +386,17 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	expiresAt := jwtExpiresAt.Time
+
+	// check if the expiration time is in the past
+	if jwtExpiresAt.Time.Before(time.Now()) {
+		logger.Error("Expiration time claim is in the past")
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	// Session expiration is based on the Mattermost server config for web sessions.
+	maxAgeSeconds := *config.ServiceSettings.SessionLengthWebInHours * 60 * 60
+	expiresAt := time.Now().Add(time.Duration(maxAgeSeconds) * time.Second)
 
 	session, err := a.p.client.Session.Create(&model.Session{
 		UserId:    mmUser.Id,
