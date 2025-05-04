@@ -288,8 +288,6 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 
 	config := a.p.client.Configuration.GetConfig()
 
-	enableDeveloper := config.ServiceSettings.EnableDeveloper
-
 	// Ideally we'd accept the token via an Authorization header, but for now get it from the query string.
 	// token := r.Header.Get("Authorization")
 	token := r.URL.Query().Get("token")
@@ -297,12 +295,12 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	// Validate the token in the request, handling all errors if invalid.
 	expectedTenantIDs := []string{a.p.getConfiguration().TenantID}
 	params := &validateTokenParams{
-		jwtKeyFunc:        a.p.tabAppJWTKeyFunc,
-		token:             token,
-		expectedTenantIDs: expectedTenantIDs,
-		enableDeveloper:   enableDeveloper != nil && *enableDeveloper,
-		siteURL:           *config.ServiceSettings.SiteURL,
-		clientID:          a.p.configuration.AppClientID,
+		jwtKeyFunc:          a.p.tabAppJWTKeyFunc,
+		token:               token,
+		expectedTenantIDs:   expectedTenantIDs,
+		skipTokenValidation: shouldSkipTokenValidation(),
+		siteURL:             *config.ServiceSettings.SiteURL,
+		clientID:            a.p.configuration.AppClientID,
 	}
 
 	claims, validationErr := validateToken(params)
