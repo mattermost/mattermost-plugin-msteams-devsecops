@@ -59,11 +59,10 @@ func validateToken(params *validateTokenParams) (jwt.MapClaims, *validationError
 		if params.skipTokenValidation {
 			logrus.Warn("Skipping token validation check for empty token since skip token validation mode enabled")
 			return nil, nil
-		} else {
-			return nil, &validationError{
-				StatusCode: http.StatusUnauthorized,
-				Message:    "Missing token",
-			}
+		}
+		return nil, &validationError{
+			StatusCode: http.StatusUnauthorized,
+			Message:    "Missing token",
 		}
 	}
 
