@@ -9,8 +9,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -72,6 +74,16 @@ func TestAuthenticate(t *testing.T) {
 		// Create a user
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
+
+		// Mock the UserExists call in pluginStore
+		// This mocks the existence check in the authenticate function 
+		// which was added in the recent commit
+		th.clientMock.On("User", mock.Anything).Return(user).Maybe()
+		th.clientMock.On("Get", user.Id).Return(user, nil).Maybe()
+		
+		// Store user in the plugin store
+		err := th.p.pluginStore.StoreUser(pluginstore.NewUser(user.Id, "test-oid", user.Email))
+		require.NoError(t, err)
 
 		// Set the Mattermost-User-ID header to simulate a logged-in user
 		r.Header.Set("Mattermost-User-ID", user.Id)
