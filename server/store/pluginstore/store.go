@@ -1,3 +1,5 @@
+//go:generate mockery --name=Store
+
 // Copyright (c) 2023-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
@@ -27,8 +29,9 @@ func NewUser(mattermostUserID, teamsObjectID, teamsSSOUsername string) *User {
 type Store interface {
 	StoreUser(user *User) error
 	GetUser(mattermostUserID string) (*User, error)
-	StoreAppID(appID string) error
-	GetAppID() (string, error)
+	StoreAppID(tenantID, appID string) error
+	GetAppID(tenantID string) (string, error)
+	UserExists(mattermostUserID string) (bool, error)
 }
 
 type PluginStore struct {
