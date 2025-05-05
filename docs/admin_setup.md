@@ -24,8 +24,8 @@
 
 6. Go to **API Permissions**
     - Ensure `User.Read` **delegated** permission is added ([Microsoft documentation](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#enable-sso-in-microsoft-entra-id))
-    - Add `TeamsActivity.Send` **application** permission (optional, for notifications) ([Microsoft documentation](https://learn.microsoft.com/en-us/graph/teams-send-activityfeednotifications?tabs=desktop%2Chttp))
-    - Add `AppCatalog.Read.All` **application** permission. (optional, for notifications) ([Microsoft documentation](https://learn.microsoft.com/en-us/graph/api/appcatalogs-list-teamsapps?view=graph-rest-1.0&tabs=http))
+    - Add `TeamsActivity.Send` **application** permission for notifications ([Microsoft documentation](https://learn.microsoft.com/en-us/graph/teams-send-activityfeednotifications?tabs=desktop%2Chttp))
+    - Add `AppCatalog.Read.All` **application** permission for notifications ([Microsoft documentation](https://learn.microsoft.com/en-us/graph/api/appcatalogs-list-teamsapps?view=graph-rest-1.0&tabs=http))
     - Grant admin consent for the default directory to prevent users from seeing the consent prompt.
 
 7. Go to **Expose an API**
@@ -43,8 +43,10 @@
             - Click on "_Add a client application_". **You need to add a client application per target Microsoft application you want**:
                 - **Authorised scopes**: The one we just created
                 - **Client ID**:
-                    - **Teams web**: 5e3ce6c0-2b1f-4285-8d4b-75ee78787346
-                    - **Teams app**: 1fec8e78-bce4-4aaf-ab1b-5451cc387264
+                    - **Teams web**       : 5e3ce6c0-2b1f-4285-8d4b-75ee78787346
+                    - **Teams app**       : 1fec8e78-bce4-4aaf-ab1b-5451cc387264
+                    - **Outlook desktop** : d3590ed6-52b3-4102-aeff-aad2292ab01c
+                    - **Outlook web**     : bc59ab01-8403-45c6-8796-ac3ef710b3e3
                 - If you want to make your application available in more Microsoft application, you need to keep adding client applications from [the following table](https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad#to-configure-authorized-client-application:~:text=Select%20one%20of%20the%20following%20client%20IDs%3A).
 
 ## Setup the plugin in Mattermost
