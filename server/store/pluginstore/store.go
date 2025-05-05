@@ -71,6 +71,20 @@ func (s *PluginStore) GetUser(mattermostUserID string) (*User, error) {
 	return &user, nil
 }
 
+// UserExists checks if a user exists in the plugin store.
+func (s *PluginStore) UserExists(mattermostUserID string) (bool, error) {
+	userBytes, appErr := s.API.KVGet(getUserKey(mattermostUserID))
+	if appErr != nil {
+		return false, fmt.Errorf("failed to check user existence %s: %w", mattermostUserID, appErr)
+	}
+
+	if len(userBytes) == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (s *PluginStore) StoreAppID(tenantID, appID string) error {
 	appErr := s.API.KVSet(getAppIDKey(tenantID), []byte(appID))
 	if appErr != nil {

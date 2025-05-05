@@ -268,22 +268,34 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	var logger logrus.FieldLogger
 	logger = logrus.StandardLogger()
 
-	// If the user is already logged in, redirect to the home page.
-	// TODO: Refactor the user properties setup to a function and call it from here if the user is already logged in
-	// just in case the user logs in from a tabApp in a browser.
+	// Check if the user is already logged in *and* if we already have the teams data stored in the kvstore.
+	// If we don't have the stored teams data, we allow the flow to continue so we parse the auth token and retrieve the
+	// fields we need.
+	// If we already have the user in the kvstore, we skip the authentication flow and just redirect the user.
+	// If the store retrieval fails, we continue with the logic. If there's an underlying problem with the kvstore it will fail
+	// later on.
 	if r.Header.Get("Mattermost-User-ID") != "" {
-		logger = logger.WithField("user_id", r.Header.Get("Mattermost-User-ID"))
-		logger.Info("Skipping authentication, user already logged in")
-
-		user, err := a.p.client.User.Get(r.Header.Get("Mattermost-User-ID"))
+		userID := r.Header.Get("Mattermost-User-ID")
+		exist, err := a.p.pluginStore.UserExists(userID)
 		if err != nil {
-			logger.WithError(err).Error("Failed to get user")
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
+			logger.WithError(err).Error("Failed to check if user exists")
+			// Continuing with the logic since exists=false
 		}
 
-		http.Redirect(w, r, a.p.getRedirectPathFromUser(logger, user, r.URL.Query().Get("sub_entity_id")), http.StatusSeeOther)
-		return
+		if exist {
+			logger = logger.WithField("user_id", userID)
+			logger.Info("Skipping authentication, user already logged in")
+
+			user, err := a.p.client.User.Get(r.Header.Get("Mattermost-User-ID"))
+			if err != nil {
+				logger.WithError(err).Error("Failed to get user")
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+
+			http.Redirect(w, r, a.p.getRedirectPathFromUser(logger, user, r.URL.Query().Get("sub_entity_id")), http.StatusSeeOther)
+			return
+		}
 	}
 
 	// check if the `noroute` query param is set, which will skip the routing.
@@ -372,6 +384,13 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.WithError(err).Error("Failed to store user")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// If the user was already authenticated we already stored the data we required in the kvstore, so we can safely redirect
+	// to the appropriate path without messing with the session and the cookies.
+	if r.Header.Get("Mattermost-User-ID") != "" {
+		http.Redirect(w, r, a.p.getRedirectPathFromUser(logger, mmUser, r.URL.Query().Get("sub_entity_id")), http.StatusSeeOther)
 		return
 	}
 
