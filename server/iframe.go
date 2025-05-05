@@ -286,10 +286,6 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check if the `noroute` query param is set, which will skip the routing.
-	noroute := false
-	_, noroute = r.URL.Query()["noroute"]
-
 	config := a.p.client.Configuration.GetConfig()
 
 	enableDeveloper := config.ServiceSettings.EnableDeveloper
@@ -307,7 +303,6 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 		enableDeveloper:   enableDeveloper != nil && *enableDeveloper,
 		siteURL:           *config.ServiceSettings.SiteURL,
 		clientID:          a.p.configuration.AppClientID,
-		disableRouting:    noroute,
 	}
 
 	claims, validationErr := validateToken(params)
