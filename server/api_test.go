@@ -76,11 +76,11 @@ func TestAuthenticate(t *testing.T) {
 		user := th.SetupUser(t, team)
 
 		// Mock the UserExists call in pluginStore
-		// This mocks the existence check in the authenticate function 
+		// This mocks the existence check in the authenticate function
 		// which was added in the recent commit
 		th.clientMock.On("User", mock.Anything).Return(user).Maybe()
 		th.clientMock.On("Get", user.Id).Return(user, nil).Maybe()
-		
+
 		// Store user in the plugin store
 		err := th.p.pluginStore.StoreUser(pluginstore.NewUser(user.Id, "test-oid", user.Email))
 		require.NoError(t, err)
@@ -123,9 +123,8 @@ func TestAuthenticate(t *testing.T) {
 }
 
 func TestIframeNotificationPreview(t *testing.T) {
-	th := setupTestHelper(t)
-
 	t.Run("returns error when user is not authenticated", func(t *testing.T) {
+		th := setupTestHelper(t)
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe/notification_preview", nil)
@@ -147,6 +146,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 	})
 
 	t.Run("returns error when post_id is missing", func(t *testing.T) {
+		th := setupTestHelper(t)
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe/notification_preview", nil)
@@ -173,6 +173,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 	})
 
 	t.Run("returns error when user does not have read access to post channel", func(t *testing.T) {
+		th := setupTestHelper(t)
 		// Setup
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
@@ -216,6 +217,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 	})
 
 	t.Run("returns HTML preview when post exists", func(t *testing.T) {
+		th := setupTestHelper(t)
 		// Setup
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
