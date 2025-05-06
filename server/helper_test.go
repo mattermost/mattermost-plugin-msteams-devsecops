@@ -15,6 +15,7 @@ import (
 	goPlugin "github.com/hashicorp/go-plugin"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/mocks"
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	"github.com/stretchr/testify/mock"
@@ -36,6 +37,7 @@ func setupTestHelper(t *testing.T) *testHelper {
 		// These mocks are replaced later, but serve the plugin during early initialization
 		msteamsAppClient:        &mocks.Client{},
 		disableCheckCredentials: true,
+		pluginStore:             &pluginstore.MockStore{},
 	}
 	th := &testHelper{
 		p: p,

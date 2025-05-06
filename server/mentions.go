@@ -33,12 +33,12 @@ type UserNotification struct {
 
 type NotificationsParser struct {
 	PAPI             plugin.API
-	pluginStore      *pluginstore.PluginStore
+	pluginStore      pluginstore.Store
 	Notifications    []*UserNotification
 	msteamsAppClient msteams.Client
 }
 
-func NewNotificationsParser(api plugin.API, pluginStore *pluginstore.PluginStore, msteamsAppClient msteams.Client) *NotificationsParser {
+func NewNotificationsParser(api plugin.API, pluginStore pluginstore.Store, msteamsAppClient msteams.Client) *NotificationsParser {
 	return &NotificationsParser{
 		PAPI:             api,
 		pluginStore:      pluginStore,

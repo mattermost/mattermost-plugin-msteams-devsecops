@@ -46,7 +46,7 @@ type Plugin struct {
 	apiHandler *API
 
 	// plugin KV store
-	pluginStore *pluginstore.PluginStore
+	pluginStore pluginstore.Store
 
 	// tabAppJWTKeyFunc is the keyfunc.Keyfunc used to verify JWTs from Microsoft Teams
 	tabAppJWTKeyFunc  keyfunc.Keyfunc
