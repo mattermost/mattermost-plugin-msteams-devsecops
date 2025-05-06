@@ -392,6 +392,7 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	session, err := a.p.client.Session.Create(&model.Session{
 		UserId:    mmUser.Id,
 		ExpiresAt: model.GetMillisForTime(expiresAt),
+		Roles:     mmUser.GetRawRoles(),
 	})
 	if err != nil {
 		logger.WithError(err).Error("Failed to create session for Mattermost user")
