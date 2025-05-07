@@ -298,13 +298,7 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// check if the `noroute` query param is set, which will skip the routing.
-	noroute := false
-	_, noroute = r.URL.Query()["noroute"]
-
 	config := a.p.client.Configuration.GetConfig()
-
-	enableDeveloper := config.ServiceSettings.EnableDeveloper
 
 	// Ideally we'd accept the token via an Authorization header, but for now get it from the query string.
 	// token := r.Header.Get("Authorization")
@@ -313,13 +307,12 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	// Validate the token in the request, handling all errors if invalid.
 	expectedTenantIDs := []string{a.p.getConfiguration().TenantID}
 	params := &validateTokenParams{
-		jwtKeyFunc:        a.p.tabAppJWTKeyFunc,
-		token:             token,
-		expectedTenantIDs: expectedTenantIDs,
-		enableDeveloper:   enableDeveloper != nil && *enableDeveloper,
-		siteURL:           *config.ServiceSettings.SiteURL,
-		clientID:          a.p.configuration.AppClientID,
-		disableRouting:    noroute,
+		jwtKeyFunc:          a.p.tabAppJWTKeyFunc,
+		token:               token,
+		expectedTenantIDs:   expectedTenantIDs,
+		skipTokenValidation: shouldSkipTokenValidation(),
+		siteURL:             *config.ServiceSettings.SiteURL,
+		clientID:            a.p.configuration.AppClientID,
 	}
 
 	claims, validationErr := validateToken(params)
@@ -396,7 +389,6 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 
 	// This is effectively copied from https://github.com/mattermost/mattermost/blob/a184e5677d28433495b0cde764bfd99700838740/server/channels/app/login.go#L287
 	secure := true
-	maxAgeSeconds := *config.ServiceSettings.SessionLengthWebInHours * 60 * 60
 	domain := getCookieDomain(config)
 	subpath, _ := utils.GetSubpathFromConfig(config)
 
@@ -406,11 +398,22 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	expiresAt := jwtExpiresAt.Time
+
+	// check if the expiration time is in the past
+	if jwtExpiresAt.Time.Before(time.Now()) {
+		logger.Error("Token is already expired")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Session expiration is based on the Mattermost server config for web sessions.
+	maxAgeSeconds := *config.ServiceSettings.SessionLengthWebInHours * 60 * 60
+	expiresAt := time.Now().Add(time.Duration(maxAgeSeconds) * time.Second)
 
 	session, err := a.p.client.Session.Create(&model.Session{
 		UserId:    mmUser.Id,
 		ExpiresAt: model.GetMillisForTime(expiresAt),
+		Roles:     mmUser.GetRawRoles(),
 	})
 	if err != nil {
 		logger.WithError(err).Error("Failed to create session for Mattermost user")

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"reflect"
 	"strings"
 
@@ -137,4 +138,16 @@ func (p *Plugin) OnConfigurationChange() error {
 	}
 
 	return nil
+}
+
+// shouldSkipTokenValidation returns true if the token validation should be skipped based on
+// the MM_DEVSECOPS_SKIP_TOKEN_VALIDATION environment var is set to true.
+func shouldSkipTokenValidation() bool {
+	if skipTokenValidation, ok := os.LookupEnv("MM_DEVSECOPS_SKIP_TOKEN_VALIDATION"); ok {
+		switch strings.ToLower(skipTokenValidation) {
+		case "1", "true", "yes":
+			return true
+		}
+	}
+	return false
 }

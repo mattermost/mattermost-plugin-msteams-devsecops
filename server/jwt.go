@@ -19,7 +19,6 @@ import (
 
 const (
 	MicrosoftOnlineJWKSURL = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
-	ExpectedAudience       = "api://community.mattermost.com/4ef56ea2-4a2f-4817-a6e0-a7cd760e2034"
 	ExpectedAudienceFmt    = "api://%s/%s"
 )
 
@@ -34,13 +33,12 @@ func (ve validationError) Error() string {
 }
 
 type validateTokenParams struct {
-	jwtKeyFunc        keyfunc.Keyfunc
-	token             string
-	expectedTenantIDs []string
-	enableDeveloper   bool
-	siteURL           string
-	clientID          string
-	disableRouting    bool
+	jwtKeyFunc          keyfunc.Keyfunc
+	token               string
+	expectedTenantIDs   []string
+	skipTokenValidation bool
+	siteURL             string
+	clientID            string
 }
 
 func setupJWKSet() (keyfunc.Keyfunc, context.CancelFunc) {
@@ -57,9 +55,15 @@ func setupJWKSet() (keyfunc.Keyfunc, context.CancelFunc) {
 }
 
 func validateToken(params *validateTokenParams) (jwt.MapClaims, *validationError) {
-	if params.token == "" && params.enableDeveloper {
-		logrus.Warn("Skipping token validation check for empty token since developer mode enabled")
-		return nil, nil
+	if params.token == "" {
+		if params.skipTokenValidation {
+			logrus.Warn("Skipping token validation check for empty token since skip token validation mode enabled")
+			return nil, nil
+		}
+		return nil, &validationError{
+			StatusCode: http.StatusUnauthorized,
+			Message:    "Missing token",
+		}
 	}
 
 	if params.jwtKeyFunc == nil {
@@ -104,16 +108,12 @@ func validateToken(params *validateTokenParams) (jwt.MapClaims, *validationError
 		}
 	}
 
-	// Verify that this token was signed for the expected app, unless developer mode is enabled.
-	// If routing is disabled, then use this server's domain and client to verify the audience,
-	// otherwise use Community's domain and client, as it will route to the correct server.
+	// Verify that this token was signed for the expected app, unless skip token validation mode is enabled.
 	switch {
-	case params.enableDeveloper:
-		logrus.Warn("Skipping aud claim check for token since developer mode enabled")
-	case params.disableRouting:
-		options = append(options, jwt.WithAudience(fmt.Sprintf(ExpectedAudienceFmt, mmServerURL.Host, params.clientID)))
+	case params.skipTokenValidation:
+		logrus.Warn("Skipping aud claim check for token since skip token validation mode enabled")
 	default:
-		options = append(options, jwt.WithAudience(ExpectedAudience))
+		options = append(options, jwt.WithAudience(fmt.Sprintf(ExpectedAudienceFmt, mmServerURL.Host, params.clientID)))
 	}
 
 	parsed, err := jwt.Parse(
@@ -189,8 +189,8 @@ func validateToken(params *validateTokenParams) (jwt.MapClaims, *validationError
 		if claims["tid"] == expectedTenantID {
 			logger.Info("Validated token, and authorized request from matching tenant")
 			return claims, nil
-		} else if params.enableDeveloper && expectedTenantID == "*" {
-			logger.Warn("Validated token, but authorized request from wildcard tenant since developer mode enabled")
+		} else if params.skipTokenValidation && expectedTenantID == "*" {
+			logger.Warn("Validated token, but authorized request from wildcard tenant since skip token validation mode enabled")
 			return claims, nil
 		}
 	}

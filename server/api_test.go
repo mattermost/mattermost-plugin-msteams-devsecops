@@ -118,7 +118,7 @@ func TestAuthenticate(t *testing.T) {
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		assert.Contains(t, string(body), "Invalid token")
+		assert.Contains(t, string(body), "Missing token")
 	})
 }
 
