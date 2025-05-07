@@ -112,29 +112,29 @@ func TestValidateToken(t *testing.T) {
 		TestClientID = "app-id"
 	)
 
-	makeValidateTokenParams := func(jwtKeyFunc keyfunc.Keyfunc, token string, expectedTenantIDs []string, enableDeveloper bool) *validateTokenParams {
+	makeValidateTokenParams := func(jwtKeyFunc keyfunc.Keyfunc, token string, expectedTenantIDs []string, skipTokenValidation bool) *validateTokenParams {
 		return &validateTokenParams{
-			jwtKeyFunc:        jwtKeyFunc,
-			token:             token,
-			expectedTenantIDs: expectedTenantIDs,
-			enableDeveloper:   enableDeveloper,
-			siteURL:           TestSiteURL,
-			clientID:          TestClientID,
+			jwtKeyFunc:          jwtKeyFunc,
+			token:               token,
+			expectedTenantIDs:   expectedTenantIDs,
+			skipTokenValidation: skipTokenValidation,
+			siteURL:             TestSiteURL,
+			clientID:            TestClientID,
 		}
 	}
 
 	type permutations struct {
-		EnableDeveloper bool
+		SkipTokenValidation bool
 	}
 
 	runPermutations(t, permutations{}, func(t *testing.T, permutation permutations) {
-		enableDeveloper := permutation.EnableDeveloper
+		skipTokenValidation := permutation.SkipTokenValidation
 		t.Run("empty authorization header", func(t *testing.T) {
 			_, _, jwtKeyFunc := makeKeySet(t)
-			params := makeValidateTokenParams(jwtKeyFunc, "", []string{}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, "", []string{}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
-			if enableDeveloper {
+			if skipTokenValidation {
 				assert.Nil(t, validationErr)
 			} else {
 				require.NotNil(t, validationErr)
@@ -143,7 +143,7 @@ func TestValidateToken(t *testing.T) {
 		})
 
 		t.Run("nil keyfunc", func(t *testing.T) {
-			params := makeValidateTokenParams(nil, "invalid", []string{}, enableDeveloper)
+			params := makeValidateTokenParams(nil, "invalid", []string{}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -152,7 +152,7 @@ func TestValidateToken(t *testing.T) {
 
 		t.Run("failed to parse authorization header", func(t *testing.T) {
 			_, _, jwtKeyFunc := makeKeySet(t)
-			params := makeValidateTokenParams(jwtKeyFunc, "invalid", []string{}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, "invalid", []string{}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -161,7 +161,7 @@ func TestValidateToken(t *testing.T) {
 
 		t.Run("signed token, missing claims", func(t *testing.T) {
 			_, priv, jwtKeyFunc := makeKeySet(t)
-			params := makeValidateTokenParams(jwtKeyFunc, newToken(t, priv, nil), []string{}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, newToken(t, priv, nil), []string{}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -183,7 +183,7 @@ func TestValidateToken(t *testing.T) {
 			token, err := jwtToken.SignedString([]byte(pub))
 			require.NoError(t, err)
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -201,7 +201,7 @@ func TestValidateToken(t *testing.T) {
 				"tid": tid,
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -220,7 +220,7 @@ func TestValidateToken(t *testing.T) {
 				"tid": tid,
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -239,7 +239,7 @@ func TestValidateToken(t *testing.T) {
 				"tid": tid,
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -257,7 +257,7 @@ func TestValidateToken(t *testing.T) {
 				"aud": fmt.Sprintf(ExpectedAudienceFmt, TestSiteURL, TestClientID),
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -276,7 +276,7 @@ func TestValidateToken(t *testing.T) {
 				"aud": fmt.Sprintf(ExpectedAudienceFmt, TestSiteURL, TestClientID),
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -295,7 +295,7 @@ func TestValidateToken(t *testing.T) {
 				"aud": fmt.Sprintf(ExpectedAudienceFmt, TestSiteURL, TestClientID),
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -313,7 +313,7 @@ func TestValidateToken(t *testing.T) {
 				"aud": fmt.Sprintf(ExpectedAudienceFmt, TestSiteURL, TestClientID),
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -332,7 +332,7 @@ func TestValidateToken(t *testing.T) {
 				"aud": fmt.Sprintf(ExpectedAudienceFmt, TestSiteURL, TestClientID),
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -351,7 +351,7 @@ func TestValidateToken(t *testing.T) {
 				"aud": fmt.Sprintf(ExpectedAudienceFmt, TestSiteURL, TestClientID),
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -370,10 +370,10 @@ func TestValidateToken(t *testing.T) {
 				"aud": "unexpected-app",
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
-			if enableDeveloper {
+			if skipTokenValidation {
 				assert.Nil(t, validationErr)
 			} else {
 				require.NotNil(t, validationErr)
@@ -393,7 +393,7 @@ func TestValidateToken(t *testing.T) {
 				"tid": wrongTid,
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -413,7 +413,7 @@ func TestValidateToken(t *testing.T) {
 				"tid": wrongTid,
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{expectedTid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{expectedTid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -434,7 +434,7 @@ func TestValidateToken(t *testing.T) {
 				"tid": wrongTid,
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{expectedTid1, expectedTid2}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{expectedTid1, expectedTid2}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			require.NotNil(t, validationErr)
@@ -457,7 +457,7 @@ func TestValidateToken(t *testing.T) {
 				"tid": tid,
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{tid}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
 			if validationErr != nil {
@@ -478,10 +478,10 @@ func TestValidateToken(t *testing.T) {
 				"tid": developerTid,
 			})
 
-			params := makeValidateTokenParams(jwtKeyFunc, token, []string{"*"}, enableDeveloper)
+			params := makeValidateTokenParams(jwtKeyFunc, token, []string{"*"}, skipTokenValidation)
 
 			_, validationErr := validateToken(params)
-			if enableDeveloper {
+			if skipTokenValidation {
 				assert.Nil(t, validationErr)
 			} else {
 				require.NotNil(t, validationErr)
