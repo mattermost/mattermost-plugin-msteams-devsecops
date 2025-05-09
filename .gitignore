@@ -3,6 +3,7 @@ dist/
 webapp/src/manifest.ts
 server/manifest.go
 report.xml
+*.zip
 
 # Mac
 .DS_Store
