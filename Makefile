@@ -409,8 +409,10 @@ logs-watch:
 ## Build the generated code
 generate: export PATH := $(GOBIN):$(PATH)
 generate:
-	$(GO) install github.com/vektra/mockery/v2/...@v2.42.2
-	cd server && $(GO) generate ./...
+	@echo "Installing mockery..."
+	$(GO) install github.com/vektra/mockery/v3@v3.2.5
+	@echo "Generating mocks..."
+	cd server && $(GOBIN)/mockery --config=../.mockery.yaml
 
 # Help documentation à la https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help:
