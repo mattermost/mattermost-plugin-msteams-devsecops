@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Mattermost</title>
+	<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+	<style>
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+			margin: 0;
+			background-color: #f5f5f5;
+		}
+		.message {
+			text-align: center;
+			padding: 20px;
+			background-color: white;
+			border-radius: 4px;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		}
+		.spinner {
+			margin: 20px auto;
+			border: 4px solid #f3f3f3;
+			border-top: 4px solid #1C58D9;
+			border-radius: 50%;
+			width: 30px;
+			height: 30px;
+			animation: spin 1s linear infinite;
+		}
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+		.error-message {
+			color: #e53935;
+			display: none;
+			margin-top: 15px;
+		}
+		.redirect-notice {
+		    display: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="message">
+		<h2 data-msgtype="pending">Logging in...</h2>
+		<div data-msgtype="pending" class="spinner"></div>
+		<p data-msgtype="pending">Authentication is happening in a popup window.</p>
+		<p data-msgtype="pending">Please wait until the login process completes, this page will refresh automatically.</p>
+		<p data-msgtype="success" style="display: none; color: #43a047;">Authentication successful! Redirecting...</p>
+		<p data-msgtype="error">Error during authentication. Please try again.</p>
+		<p data-msgtype="error" id="error-message" class="error-message"></p>
+		<p data-msgtype="finished" id="redirect-notice" class="redirect-notice">You will be redirected in 5 seconds. If you don't want to wait, <a href="{{.SiteURL}}">click here</a>.</p>
+	</div>
+
+	<script nonce="{{.Nonce}}">
+		// Set up event listener for window messages
+		let messageHandled = false;
+
+		// Function to show/hide message types
+		function showMsgTypes(msgType) {
+			// Hide all message types first
+			document.querySelectorAll('[data-msgtype]').forEach(el => {
+				el.style.display = 'none';
+			});
+
+			// Show the requested message type
+			document.querySelectorAll(`[data-msgtype="${msgType}"]`).forEach(el => {
+				el.style.display = 'block';
+			});
+
+			// If success or error, also show finished messages
+			if (msgType === 'success' || msgType === 'error') {
+				document.querySelectorAll('[data-msgtype="finished"]').forEach(el => {
+					el.style.display = 'block';
+				});
+			}
+		}
+
+		function handleMessage(event) {
+			// If we've already handled a message, don't process any more
+			if (messageHandled) {
+				return;
+			}
+
+			console.log('SSO Wait page received message:', event.data);
+
+			// Mark as handled to ensure we only process one message
+			messageHandled = true;
+
+			// Remove the event listener after processing the first message
+			window.removeEventListener('message', handleMessage);
+
+			if (event.data && event.data.type) {
+				switch(event.data.type) {
+					case 'auth_success':
+						// Handle successful authentication
+						console.log('Authentication successful');
+						showMsgTypes('success');
+						break;
+
+					case 'auth_error':
+						// Handle authentication error
+						console.error('Authentication error:', event.data.error);
+						showMsgTypes('error');
+						document.getElementById('error-message').textContent =
+							event.data.error || 'Error during authentication. Please try again.';
+						break;
+				}
+			}
+
+			setTimeout(function() {
+				window.parent.postMessage({
+				  type: 'mattermost_external_auth_complete'
+				});
+			}, 5000);
+		}
+
+		// Initialize with pending message type
+		showMsgTypes('pending');
+		window.addEventListener('message', handleMessage);
+	</script>
+</body>
+</html>
