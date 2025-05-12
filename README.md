@@ -7,14 +7,7 @@
 > [!NOTE]  
 > This product is currently in **Beta**. We're excited to share it with you and welcome your feedback to help us improve. While the core features are ready for use, you may encounter minor issues as we continue to refine the experience. Please share your thoughts and suggestions in the [~user-feedback](https://community.mattermost.com/core/channels/user-feedback) channel or submit an issue on [GitHub](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/issues).
 
-This repository provides the foundation for multiple Microsoft app offerings that integrate with the Mattermost platform, including:
-
-- **Mattermost Mission Collaboration for Microsoft**: Extend Enterprise communications to the Tactical Edge by accessing Mattermost from your Microsoft Office365, Teams, and Outlook user experiences. 
-- **Community Mattermost for Microsoft 365 & MS Teams**: Free offering to explore Mattermost capabilities and meet with fellow end users, customers and evaluators, along with Mattermost staff. [Learn more](#community-mattermost-for-microsoft-365-and-ms-teams)
-
 ## Mattermost Mission Collaboration for Microsoft 365 and MS Teams
-
-The **Mattermost Mission Collaboration for Microsoft** application extends Enterprise communications with secure external collaboration controlled by IT by accessing Mattermost from your Microsoft Office365, Teams, and Outlook user experiences.
 
 ![image](./docs/External-Collaboration-with-Enterprise-Control-Microsoft.png)
 
@@ -47,4 +40,3 @@ For detailed setup instructions, see the [Setup Guide](https://docs.mattermost.c
 #### Where can I get support?
 
 You can browse existing open issues or submit a new issue for support in GitHub: https://github.com/mattermost/mattermost-teams-tab/issues
-
