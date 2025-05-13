@@ -2,14 +2,12 @@
 
 [![Build Status](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/actions/workflows/ci.yml/badge.svg)](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/actions/workflows/ci.yml)
 
-**Mattermost Mission Collaboration for Microsoft** extends Microsoft 365, Teams, and Outlook for mission-critical coordination, command and control, incident response, and DevSecOps workflows in demanding environments, including air-gapped and classified networks. 
+**Mattermost Mission Collaboration for Microsoft** is a plugin that embeds Mattermost directly inside Microsoft 365, Teams, and Outlook clients. This integration extends Microsoft 365, Teams, and Outlook for mission-critical coordination, command and control, incident response, and DevSecOps workflows in demanding environments, including air-gapped and classified networks. 
 
 > [!NOTE]  
 > This product is currently in **Beta**. We're excited to share it with you and welcome your feedback to help us improve. While the core features are ready for use, you may encounter minor issues as we continue to refine the experience. Please share your thoughts and suggestions in the [~user-feedback](https://community.mattermost.com/core/channels/user-feedback) channel or submit an issue on [GitHub](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/issues).
 
 ## Mattermost Mission Collaboration for Microsoft 365 and MS Teams
-
-![image](./docs/External-Collaboration-with-Enterprise-Control-Microsoft.png)
 
 **Benefits & Use Cases:**
 - **External Collaboration with IT Control**: Replace non-compliant freemium personal apps with dedicated external collaboration across mobile, web, and desktop, fully controlled by IT.
@@ -40,3 +38,11 @@ For detailed setup instructions, see the [Setup Guide](https://docs.mattermost.c
 #### Where can I get support?
 
 You can browse existing open issues or submit a new issue for support in GitHub: https://github.com/mattermost/mattermost-teams-tab/issues
+
+#### How do I fix a 404 error in Teams/Outlook tab?
+
+If after following the [Setup Guide](https://docs.mattermost.com/integrate/mattermost-mission-collaboration-for-m365.html#setup), you see a 404 error in the MS Teams tab, it likely means the plugin did not start correctly on your Mattermost instance. Check the plugin configuration for any missing or incorrect settings. Also ensure the [Site URL](https://docs.mattermost.com/configure/environment-configuration-settings.html#site-url) is correct and reachable for your Mattermost instance.
+
+#### What do I do if my users cannot see the app I deployed?
+
+If after following the [Setup Guide](https://docs.mattermost.com/integrate/mattermost-mission-collaboration-for-m365.html#setup), your users cannot see the M365 app uploaded to your app store, you may simply need to wait. Microsoft states this can take up to 24 hours, however our experience has been the delay is anywhere from seconds to a few hours. If after 24 hours users still cannot see the app, you may need to remove it and upload it again.
