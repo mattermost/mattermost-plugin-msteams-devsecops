@@ -41,7 +41,7 @@ You can browse existing open issues or submit a new issue for support in GitHub:
 
 #### How do I fix a 404 error in Teams/Outlook tab?
 
-If after following the [Setup Guide](https://docs.mattermost.com/integrate/mattermost-mission-collaboration-for-m365.html#setup), you see a 404 error in the MS Teams tab, it likely means the plugin did not start correctly on your Mattermost instance. Check the plugin configuration for any missing or incorrect settings. Also change the [Site URL](https://docs.mattermost.com/configure/environment-configuration-settings.html#site-url) is correct and reachable for your Mattermost instance.
+If after following the [Setup Guide](https://docs.mattermost.com/integrate/mattermost-mission-collaboration-for-m365.html#setup), you see a 404 error in the MS Teams tab, it likely means the plugin did not start correctly on your Mattermost instance. Check the plugin configuration for any missing or incorrect settings. Also ensure the [Site URL](https://docs.mattermost.com/configure/environment-configuration-settings.html#site-url) is correct and reachable for your Mattermost instance.
 
 #### What do I do if my users cannot see the app I deployed?
 
