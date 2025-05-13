@@ -46,3 +46,7 @@ If after following the [Setup Guide](https://docs.mattermost.com/integrate/matte
 #### What do I do if my users cannot see the app I deployed?
 
 If after following the [Setup Guide](https://docs.mattermost.com/integrate/mattermost-mission-collaboration-for-m365.html#setup), your users cannot see the M365 app uploaded to your app store, you may simply need to wait. Microsoft states this can take up to 24 hours, however our experience has been the delay is anywhere from seconds to a few hours. If after 24 hours users still cannot see the app, you may need to remove it and upload it again.
+
+#### Why am I seeing 'This app cannot be found' error dialog when clicking a activity notification
+
+This is likely due to re-installing the app in your app store, and a new internal ID being generated. Restarting the plugin in Mattermost will resolve this.
