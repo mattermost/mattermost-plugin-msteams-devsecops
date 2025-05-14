@@ -294,11 +294,18 @@ func (p *NotificationsParser) sendUserActivity(userActivity *UserActivity) error
 	for _, user := range userActivity.Users {
 		storedUser, err := p.pluginStore.GetUser(user.Id)
 		if err != nil {
-			p.PAPI.LogError("Failed to get stored user", "error", err.Error())
+			if !pluginstore.IsErrNotFound(err) {
+				p.PAPI.LogError("Failed to get stored user", "user_id", user.Id, "error", err.Error())
+			}
 			continue
 		}
 
 		msteamsUserIDs = append(msteamsUserIDs, storedUser.TeamsObjectID)
+	}
+
+	if len(msteamsUserIDs) == 0 {
+		p.PAPI.LogDebug("No registered users found for notification", "post_id", userActivity.UserNotification.Post.Id)
+		return nil
 	}
 
 	if err := p.msteamsAppClient.SendUserActivity(msteamsUserIDs, "mattermost_mention_with_name", message, url.URL{
