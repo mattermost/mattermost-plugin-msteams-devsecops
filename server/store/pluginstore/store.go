@@ -60,7 +60,7 @@ func (s *PluginStore) GetUser(mattermostUserID string) (*User, error) {
 	}
 
 	if len(userBytes) == 0 {
-		return nil, fmt.Errorf("user %s not found", mattermostUserID)
+		return nil, NewErrNotFound(fmt.Sprintf("user %s not found", mattermostUserID))
 	}
 
 	var user User
@@ -87,7 +87,7 @@ func (s *PluginStore) GetAppID(tenantID string) (string, error) {
 	}
 
 	if appIDBytes == nil {
-		return "", fmt.Errorf("app ID not found")
+		return "", NewErrNotFound("app ID not found")
 	}
 
 	return string(appIDBytes), nil
