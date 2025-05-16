@@ -9,8 +9,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -73,6 +75,10 @@ func TestAuthenticate(t *testing.T) {
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
 
+		// Store user in the plugin store
+		err := th.p.pluginStore.StoreUser(pluginstore.NewUser(user.Id, "test-oid", user.Email))
+		require.NoError(t, err)
+
 		// Set the Mattermost-User-ID header to simulate a logged-in user
 		r.Header.Set("Mattermost-User-ID", user.Id)
 
@@ -111,9 +117,8 @@ func TestAuthenticate(t *testing.T) {
 }
 
 func TestIframeNotificationPreview(t *testing.T) {
-	th := setupTestHelper(t)
-
 	t.Run("returns error when user is not authenticated", func(t *testing.T) {
+		th := setupTestHelper(t)
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe/notification_preview", nil)
@@ -135,6 +140,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 	})
 
 	t.Run("returns error when post_id is missing", func(t *testing.T) {
+		th := setupTestHelper(t)
 		// Setup
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/iframe/notification_preview", nil)
@@ -161,6 +167,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 	})
 
 	t.Run("returns error when user does not have read access to post channel", func(t *testing.T) {
+		th := setupTestHelper(t)
 		// Setup
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
@@ -204,6 +211,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 	})
 
 	t.Run("returns HTML preview when post exists", func(t *testing.T) {
+		th := setupTestHelper(t)
 		// Setup
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -31,6 +32,10 @@ func TestIFrameAuthenticate(t *testing.T) {
 		team := th.SetupTeam(t)
 		user := th.SetupUser(t, team)
 		client := th.SetupClient(t, user.Id)
+
+		// Add the user to the plugin store
+		err := th.p.pluginStore.StoreUser(pluginstore.NewUser(user.Id, "test-oid", user.Email))
+		require.NoError(t, err)
 
 		request, err := http.NewRequest(http.MethodGet, apiURL, nil)
 		require.NoError(t, err)

@@ -16,3 +16,4 @@ report.xml
 
 # tools
 .aider*
+**/.claude/settings.local.json
