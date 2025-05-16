@@ -5,7 +5,6 @@ package main
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
@@ -33,15 +32,6 @@ func (a *API) handleSSOWait(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cspDirectives := []string{
-		"default-src 'none'",
-		"style-src 'self' 'unsafe-inline'",
-		"script-src 'nonce-" + iframeCtx.Nonce + "'",
-		"connect-src 'self'",
-		"img-src 'self'",
-	}
-
-	w.Header().Set("Content-Security-Policy", strings.Join(cspDirectives, "; "))
 	w.Header().Set("Content-Type", "text/html")
 
 	if _, err := w.Write([]byte(html)); err != nil {
@@ -65,18 +55,7 @@ func (a *API) handleSSOComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cspDirectives := []string{
-		"default-src 'none'",
-		"style-src 'self' 'unsafe-inline'",
-		"script-src https://res.cdn.office.net 'nonce-" + iframeCtx.Nonce + "'",
-		"connect-src https://*.microsoft.com https://*.teams.microsoft.com https://*.cdn.office.net",
-		"img-src 'self'",
-		"frame-ancestors *", // Allow being embedded in iframes
-	}
-
-	w.Header().Set("Content-Security-Policy", strings.Join(cspDirectives, "; "))
 	w.Header().Set("Content-Type", "text/html")
-	w.Header().Set("X-Frame-Options", "ALLOWALL") // Allow iframe embedding
 
 	if _, err := w.Write([]byte(html)); err != nil {
 		a.p.API.LogWarn("Unable to serve the SSO complete page", "error", err.Error())
