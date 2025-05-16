@@ -60,6 +60,13 @@ func getExpectedPermissions() []expectedPermission {
 				Type: "Role",
 			},
 		},
+		{
+			Name: "https://graph.microsoft.com/AppCatalog.Read.All",
+			ResourceAccess: clientmodels.ResourceAccess{
+				ID:   "e12dae10-5a57-4817-b79d-dfbec5348930",
+				Type: "Role",
+			},
+		},
 	}
 }
 

@@ -268,31 +268,37 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	var logger logrus.FieldLogger
 	logger = logrus.StandardLogger()
 
-	// If the user is already logged in, redirect to the home page.
-	// TODO: Refactor the user properties setup to a function and call it from here if the user is already logged in
-	// just in case the user logs in from a tabApp in a browser.
+	// Check if the user is already logged in *and* if we already have the teams data stored in the kvstore.
+	// If we don't have the stored teams data, we allow the flow to continue so we parse the auth token and retrieve the
+	// fields we need.
+	// If we already have the user in the kvstore, we skip the authentication flow and just redirect the user.
+	// If the store retrieval fails, we continue with the logic. If there's an underlying problem with the kvstore it will fail
+	// later on.
 	if r.Header.Get("Mattermost-User-ID") != "" {
-		logger = logger.WithField("user_id", r.Header.Get("Mattermost-User-ID"))
-		logger.Info("Skipping authentication, user already logged in")
-
-		user, err := a.p.client.User.Get(r.Header.Get("Mattermost-User-ID"))
+		userID := r.Header.Get("Mattermost-User-ID")
+		exist, err := a.p.pluginStore.UserExists(userID)
 		if err != nil {
-			logger.WithError(err).Error("Failed to get user")
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
+			logger.WithError(err).Error("Failed to check if user exists")
+			// Continuing with the logic since exists=false
 		}
 
-		http.Redirect(w, r, a.p.getRedirectPathFromUser(logger, user, r.URL.Query().Get("sub_entity_id")), http.StatusSeeOther)
-		return
+		if exist {
+			logger = logger.WithField("user_id", userID)
+			logger.Info("Skipping authentication, user already logged in")
+
+			user, err := a.p.client.User.Get(r.Header.Get("Mattermost-User-ID"))
+			if err != nil {
+				logger.WithError(err).Error("Failed to get user")
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+
+			http.Redirect(w, r, a.p.getRedirectPathFromUser(logger, user, r.URL.Query().Get("sub_entity_id")), http.StatusSeeOther)
+			return
+		}
 	}
 
-	// check if the `noroute` query param is set, which will skip the routing.
-	noroute := false
-	_, noroute = r.URL.Query()["noroute"]
-
 	config := a.p.client.Configuration.GetConfig()
-
-	enableDeveloper := config.ServiceSettings.EnableDeveloper
 
 	// Ideally we'd accept the token via an Authorization header, but for now get it from the query string.
 	// token := r.Header.Get("Authorization")
@@ -301,13 +307,12 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	// Validate the token in the request, handling all errors if invalid.
 	expectedTenantIDs := []string{a.p.getConfiguration().TenantID}
 	params := &validateTokenParams{
-		jwtKeyFunc:        a.p.tabAppJWTKeyFunc,
-		token:             token,
-		expectedTenantIDs: expectedTenantIDs,
-		enableDeveloper:   enableDeveloper != nil && *enableDeveloper,
-		siteURL:           *config.ServiceSettings.SiteURL,
-		clientID:          a.p.configuration.AppClientID,
-		disableRouting:    noroute,
+		jwtKeyFunc:          a.p.tabAppJWTKeyFunc,
+		token:               token,
+		expectedTenantIDs:   expectedTenantIDs,
+		skipTokenValidation: shouldSkipTokenValidation(),
+		siteURL:             *config.ServiceSettings.SiteURL,
+		clientID:            a.p.configuration.AppClientID,
 	}
 
 	claims, validationErr := validateToken(params)
@@ -375,9 +380,15 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If the user was already authenticated we already stored the data we required in the kvstore, so we can safely redirect
+	// to the appropriate path without messing with the session and the cookies.
+	if r.Header.Get("Mattermost-User-ID") != "" {
+		http.Redirect(w, r, a.p.getRedirectPathFromUser(logger, mmUser, r.URL.Query().Get("sub_entity_id")), http.StatusSeeOther)
+		return
+	}
+
 	// This is effectively copied from https://github.com/mattermost/mattermost/blob/a184e5677d28433495b0cde764bfd99700838740/server/channels/app/login.go#L287
 	secure := true
-	maxAgeSeconds := *config.ServiceSettings.SessionLengthWebInHours * 60 * 60
 	domain := getCookieDomain(config)
 	subpath, _ := utils.GetSubpathFromConfig(config)
 
@@ -387,11 +398,22 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	expiresAt := jwtExpiresAt.Time
+
+	// check if the expiration time is in the past
+	if jwtExpiresAt.Time.Before(time.Now()) {
+		logger.Error("Token is already expired")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Session expiration is based on the Mattermost server config for web sessions.
+	maxAgeSeconds := *config.ServiceSettings.SessionLengthWebInHours * 60 * 60
+	expiresAt := time.Now().Add(time.Duration(maxAgeSeconds) * time.Second)
 
 	session, err := a.p.client.Session.Create(&model.Session{
 		UserId:    mmUser.Id,
 		ExpiresAt: model.GetMillisForTime(expiresAt),
+		Roles:     mmUser.GetRawRoles(),
 	})
 	if err != nil {
 		logger.WithError(err).Error("Failed to create session for Mattermost user")
