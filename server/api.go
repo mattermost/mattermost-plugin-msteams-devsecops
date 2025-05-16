@@ -31,6 +31,9 @@ func NewAPI(p *Plugin) *API {
 	router.HandleFunc("/iframe-manifest", api.appManifest).Methods(http.MethodGet)
 	router.HandleFunc("/csp-report", api.cspReport).Methods(http.MethodPost)
 
+	// Embedded SSO login
+	api.serveSSO(router)
+
 	return api
 }
 
