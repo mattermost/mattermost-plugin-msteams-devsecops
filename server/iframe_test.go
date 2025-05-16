@@ -12,7 +12,6 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,10 +36,6 @@ func TestIFrameAuthenticate(t *testing.T) {
 		// Add the user to the plugin store
 		err := th.p.pluginStore.StoreUser(pluginstore.NewUser(user.Id, "test-oid", user.Email))
 		require.NoError(t, err)
-
-		// Mock client user method
-		th.clientMock.On("User", mock.Anything).Return(user).Maybe()
-		th.clientMock.On("Get", user.Id).Return(user, nil).Maybe()
 
 		request, err := http.NewRequest(http.MethodGet, apiURL, nil)
 		require.NoError(t, err)
