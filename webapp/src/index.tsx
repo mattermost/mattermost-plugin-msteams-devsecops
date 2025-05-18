@@ -12,7 +12,7 @@ import type {PluginRegistry} from '@/types/mattermost-webapp';
 export default class Plugin {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
     public async initialize(registry: PluginRegistry, store: Store<GlobalState, Action<Record<string, unknown>>>) {
-        registry.registerAdminConsoleCustomSetting('appManifestDownload', MSTeamsAppManifestSetting);
+        registry.registerAdminConsoleCustomSetting('app_manifest_download', MSTeamsAppManifestSetting);
 
         // @see https://developers.mattermost.com/extend/plugins/webapp/reference/
     }
