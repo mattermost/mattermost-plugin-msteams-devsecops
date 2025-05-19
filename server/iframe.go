@@ -148,6 +148,7 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 	}
 
 	a.returnCSPHeaders(w, iFrameCtx)
+	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte(html)); err != nil {
 		a.p.API.LogError("Unable to serve the iFrame", "error", err.Error())

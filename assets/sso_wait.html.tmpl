@@ -115,7 +115,7 @@
 			setTimeout(function() {
 				window.parent.postMessage({
 				  type: 'mattermost_external_auth_complete'
-				});
+				}, event.origin);
 			}, 5000);
 		}
 
