@@ -18,20 +18,21 @@ func (a *API) serveSSO(router *mux.Router) {
 
 // handleSSOWait handles the SSO waiting page that listens for messages from the popup window
 func (a *API) handleSSOWait(w http.ResponseWriter, r *http.Request) {
-	iframeCtx, err := a.createIFrameContext("", nil)
+	iFrameCtx, err := a.createIFrameContext("", nil)
 	if err != nil {
 		a.p.API.LogError("Failed to create SSO wait context", "error", err.Error())
 		http.Error(w, "Failed to create SSO wait context", http.StatusInternalServerError)
 		return
 	}
 
-	html, err := a.formatTemplate(assets.SSOWaitHTMLTemplate, iframeCtx)
+	html, err := a.formatTemplate(assets.SSOWaitHTMLTemplate, iFrameCtx)
 	if err != nil {
 		a.p.API.LogError("Failed to format SSO wait HTML", "error", err.Error())
 		http.Error(w, "Failed to format SSO wait HTML", http.StatusInternalServerError)
 		return
 	}
 
+	a.returnCSPHeaders(w, iFrameCtx)
 	w.Header().Set("Content-Type", "text/html")
 
 	if _, err := w.Write([]byte(html)); err != nil {
@@ -41,20 +42,21 @@ func (a *API) handleSSOWait(w http.ResponseWriter, r *http.Request) {
 
 // handleSSOComplete handles the SSO completion page that posts messages back to the parent window
 func (a *API) handleSSOComplete(w http.ResponseWriter, r *http.Request) {
-	iframeCtx, err := a.createIFrameContext("", nil)
+	iFrameCtx, err := a.createIFrameContext("", nil)
 	if err != nil {
 		a.p.API.LogError("Failed to create SSO complete context", "error", err.Error())
 		http.Error(w, "Failed to create SSO complete context", http.StatusInternalServerError)
 		return
 	}
 
-	html, err := a.formatTemplate(assets.SSOCompleteHTMLTemplate, iframeCtx)
+	html, err := a.formatTemplate(assets.SSOCompleteHTMLTemplate, iFrameCtx)
 	if err != nil {
 		a.p.API.LogError("Failed to format SSO complete HTML", "error", err.Error())
 		http.Error(w, "Failed to format SSO complete HTML", http.StatusInternalServerError)
 		return
 	}
 
+	a.returnCSPHeaders(w, iFrameCtx)
 	w.Header().Set("Content-Type", "text/html")
 
 	if _, err := w.Write([]byte(html)); err != nil {
