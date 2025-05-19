@@ -190,7 +190,7 @@ func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContex
 	iFrameCtx := iFrameContext{
 		SiteURL:  *config.ServiceSettings.SiteURL,
 		PluginID: url.PathEscape(manifest.Id),
-		TenantID: a.p.getConfiguration().TenantID,
+		TenantID: a.p.getConfiguration().M365TenantID,
 		UserID:   userID,
 		Post:     post,
 	}
@@ -305,14 +305,14 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 
 	// Validate the token in the request, handling all errors if invalid.
-	expectedTenantIDs := []string{a.p.getConfiguration().TenantID}
+	expectedTenantIDs := []string{a.p.getConfiguration().M365TenantID}
 	params := &validateTokenParams{
 		jwtKeyFunc:          a.p.tabAppJWTKeyFunc,
 		token:               token,
 		expectedTenantIDs:   expectedTenantIDs,
 		skipTokenValidation: shouldSkipTokenValidation(),
 		siteURL:             *config.ServiceSettings.SiteURL,
-		clientID:            a.p.configuration.AppClientID,
+		clientID:            a.p.configuration.M365ClientID,
 	}
 
 	claims, validationErr := validateToken(params)

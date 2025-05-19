@@ -286,11 +286,11 @@ func TestAppManifest(t *testing.T) {
 		// Force an invalid configuration in-memory
 		invalidConfig := &configuration{
 			// Leave AppID empty to trigger validation error
-			AppVersion:      "1.0.0",
-			TenantID:        "test-tenant",
-			AppClientID:     "test-client-id",
-			AppClientSecret: "test-secret",
-			AppName:         "test-app",
+			AppVersion:       "1.0.0",
+			M365TenantID:     "test-tenant",
+			M365ClientID:     "test-client-id",
+			M365ClientSecret: "test-secret",
+			AppName:          "test-app",
 		}
 		th.p.setConfiguration(invalidConfig)
 

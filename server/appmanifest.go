@@ -28,7 +28,7 @@ type manifestContext struct {
 	AppVersion     string // the app version
 	AppPackageName string // fully qualified package name for the app (e.g. com.mattermost.msteams.devsecops)
 	AppID          string // the unique app id
-	AppClientID    string // the app's client ID as defined in Azure portal
+	M365ClientID   string // the app's client ID as defined in Azure portal
 	AppName        string // short and full name of the app
 
 	SiteDomain     string // the domain name extracted from this Mattermost server's site url. No protocol or path.
@@ -58,7 +58,7 @@ func (a *API) makeManifestContext() (*manifestContext, error) {
 		AppVersion:     pluginConfig.AppVersion,
 		AppPackageName: PackageName,
 		AppID:          pluginConfig.AppID,
-		AppClientID:    pluginConfig.AppClientID,
+		M365ClientID:   pluginConfig.M365ClientID,
 		AppName:        pluginConfig.AppName,
 		SiteDomain:     hostName,
 		SiteDomainPath: strings.TrimRight(strings.Join([]string{hostName, path}, "/"), "/"),
