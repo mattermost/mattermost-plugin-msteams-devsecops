@@ -5,14 +5,28 @@ import type {Store, Action} from 'redux';
 
 import type {GlobalState} from '@mattermost/types/store';
 
-import MSTeamsAppManifestSetting from '@/components/admin_console/app_manifest_setting';
+import AppID from '@/components/admin_console_settings/app_id';
+import AppName from '@/components/admin_console_settings/app_name';
+import AppVersion from '@/components/admin_console_settings/app_version';
+import ManifestDownload from '@/components/admin_console_settings/manifest_download';
+import ManifestSection from '@/components/admin_console_settings/sections/manifest_section';
 import manifest from '@/manifest';
 import type {PluginRegistry} from '@/types/mattermost-webapp';
 
-export default class Plugin {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-    public async initialize(registry: PluginRegistry, store: Store<GlobalState, Action<Record<string, unknown>>>) {
-        registry.registerAdminConsoleCustomSetting('app_manifest_download', MSTeamsAppManifestSetting);
+class Plugin {
+    public async initialize(
+        registry: PluginRegistry,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _store: Store<GlobalState, Action<Record<string, unknown>>>,
+    ): Promise<void> {
+        // Register custom settings components
+        registry.registerAdminConsoleCustomSetting('app_id', AppID);
+        registry.registerAdminConsoleCustomSetting('app_name', AppName);
+        registry.registerAdminConsoleCustomSetting('app_version', AppVersion);
+        registry.registerAdminConsoleCustomSetting('app_manifest_download', ManifestDownload);
+
+        // Register the section
+        registry.registerAdminConsoleCustomSetting('manifest_settings', ManifestSection);
 
         // @see https://developers.mattermost.com/extend/plugins/webapp/reference/
     }
@@ -20,8 +34,9 @@ export default class Plugin {
 
 declare global {
     interface Window {
-        registerPlugin(pluginId: string, plugin: Plugin): void;
+        registerPlugin: (pluginId: string, plugin: Plugin) => void;
     }
 }
 
 window.registerPlugin(manifest.id, new Plugin());
+

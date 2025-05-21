@@ -61,7 +61,7 @@
                 "key": "manifest_settings",
                 "title": "Manifest Settings",
                 "subtitle": "These settings are used to generate the Microsoft Teams app manifest which you will upload to your Microsoft Teams tenant.",
-                "custom": false,
+                "custom": true,
                 "fallback": true,
                 "settings": [
                     {
