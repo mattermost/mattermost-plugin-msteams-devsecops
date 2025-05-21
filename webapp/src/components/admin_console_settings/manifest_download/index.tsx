@@ -12,7 +12,7 @@ interface Props {
 }
 
 const ManifestDownload: React.FC<Props> = (props) => {
-    // Debug log available props 
+    // Debug log available props
     console.log('ManifestDownload props:', props);
     console.log('ManifestDownload config:', props.config);
 
@@ -21,10 +21,6 @@ const ManifestDownload: React.FC<Props> = (props) => {
             <label className='control-label'>{props.label}</label>
             <div className='help-text'>{props.helpText}</div>
             <div className='col-sm-8'>
-                <p>
-                    {'To embed Mattermost within Microsoft Teams, an application manifest can be downloaded and installed as a MS Teams app. '}
-                    {'Clicking the Download button below will generate an application manifest that will embed this instance of Mattermost. '}
-                </p>
                 <a
                     href={'/plugins/com.mattermost.plugin-msteams-devsecops/iframe-manifest'}
                     className='btn btn-primary'
@@ -35,6 +31,10 @@ const ManifestDownload: React.FC<Props> = (props) => {
                 >
                     {'Download Manifest'}
                 </a>
+                <p>
+                    {'To embed Mattermost within Microsoft Teams, an application manifest can be downloaded and installed as a MS Teams app. '}
+                    {'Clicking the Download button below will generate an application manifest that will embed this instance of Mattermost. '}
+                </p>
             </div>
         </div>
     );
