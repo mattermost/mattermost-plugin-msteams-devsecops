@@ -5,12 +5,6 @@ import React from 'react';
 
 interface Props {
     children: React.ReactNode;
-    settings?: Record<string, string | boolean>;
-    id?: string;
-    label?: string;
-    helpText?: React.ReactNode;
-    disabled?: boolean;
-    setByEnv?: boolean;
 }
 
 const ManifestSection: React.FC<Props> = (props) => {
@@ -18,7 +12,7 @@ const ManifestSection: React.FC<Props> = (props) => {
     console.log('ManifestSection props:', props);
 
     // Section container for manifest settings
-    
+
     return (
         <div className='wrapper--fixed'>
             <div className='admin-console__header'>

@@ -12,9 +12,8 @@ interface Props {
     config?: AdminConsoleConfig;
 }
 
+// Component for downloading the manifest
 const ManifestDownload: React.FC<Props> = (props) => {
-    // Component for downloading the manifest
-
     const [isDownloadEnabled, setIsDownloadEnabled] = useState(false);
     const [currentValues, setCurrentValues] = useState<Record<string, string>>({
         app_id: '',
@@ -60,11 +59,9 @@ const ManifestDownload: React.FC<Props> = (props) => {
             }
         };
 
-        // Add event listener
         window.addEventListener(EVENT_APP_INPUT_CHANGE, handleInputChange as EventListener);
 
         return () => {
-            // Remove event listener on cleanup
             window.removeEventListener(EVENT_APP_INPUT_CHANGE, handleInputChange as EventListener);
         };
     }, []);
