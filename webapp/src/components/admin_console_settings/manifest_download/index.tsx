@@ -2,15 +2,7 @@
 // See LICENSE.txt for license information.
 
 import React, {useEffect, useState} from 'react';
-
-// Custom event for input changes
-const EVENT_APP_INPUT_CHANGE = 'app_input_change';
-
-// Type for the custom event data
-interface AppInputChangeEvent {
-    id: string;
-    value: string;
-}
+import {EVENT_APP_INPUT_CHANGE, AppInputChangeEvent} from '../constants';
 
 interface Props {
     id: string;
@@ -29,65 +21,65 @@ const ManifestDownload: React.FC<Props> = (props) => {
     const [currentValues, setCurrentValues] = useState<Record<string, string>>({
         app_id: '',
         app_name: '',
-        app_version: ''
+        app_version: '',
     });
-    
+
     // Initialize from config
     useEffect(() => {
         if (!props.config) {
             return;
         }
-        
+
         // Get the plugin settings
         const pluginSettings = props.config.PluginSettings?.Plugins?.['com.mattermost.plugin-msteams-devsecops'];
         if (!pluginSettings) {
             return;
         }
-        
+
         // Update our tracking of current values with config values
-        setCurrentValues(prev => ({
+        setCurrentValues((prev) => ({
             ...prev,
             app_id: pluginSettings.app_id || '',
             app_name: pluginSettings.app_name || '',
-            app_version: pluginSettings.app_version || ''
+            app_version: pluginSettings.app_version || '',
         }));
     }, [props.config]);
-    
+
     // Listen for input changes from other components
     useEffect(() => {
         const handleInputChange = (e: CustomEvent<AppInputChangeEvent>) => {
             const {id, value} = e.detail;
             console.log('ManifestDownload received input change:', id, value);
-            
+
             // Extract the setting key from the ID (e.g., app_id from PluginSettings.Plugins.com+mattermost+plugin-msteams-devsecops.app_id)
             const settingKey = id.split('.').pop() || '';
-            
+
             if (['app_id', 'app_name', 'app_version'].includes(settingKey)) {
-                setCurrentValues(prev => ({
+                setCurrentValues((prev) => ({
                     ...prev,
-                    [settingKey]: value
+                    [settingKey]: value,
                 }));
             }
         };
-        
+
         // Add event listener
         window.addEventListener(EVENT_APP_INPUT_CHANGE, handleInputChange as EventListener);
-        
+
         return () => {
             // Remove event listener on cleanup
             window.removeEventListener(EVENT_APP_INPUT_CHANGE, handleInputChange as EventListener);
         };
     }, []);
-    
+
     // Validate settings whenever they change
     useEffect(() => {
         // Check if all required fields have values
         const hasAllValues = Boolean(
             currentValues.app_id?.trim() &&
             currentValues.app_name?.trim() &&
-            currentValues.app_version?.trim()
+            currentValues.app_version?.trim(),
         );
-        
+
         console.log('ManifestDownload validating values:', currentValues, hasAllValues);
         setIsDownloadEnabled(hasAllValues);
     }, [currentValues]);

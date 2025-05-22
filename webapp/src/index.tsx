@@ -10,7 +10,6 @@ import AppName from '@/components/admin_console_settings/app_name';
 import AppVersion from '@/components/admin_console_settings/app_version';
 import ManifestDownload from '@/components/admin_console_settings/manifest_download';
 import ManifestSection from '@/components/admin_console_settings/sections/manifest_section';
-// Removed ManifestProvider import
 import manifest from '@/manifest';
 import type {PluginRegistry} from '@/types/mattermost-webapp';
 
@@ -21,7 +20,7 @@ class Plugin {
         _store: Store<GlobalState, Action<Record<string, unknown>>>,
     ): Promise<void> {
         // Register components directly without providers
-        
+
         // Register custom settings components
         registry.registerAdminConsoleCustomSetting('app_id', AppID);
         registry.registerAdminConsoleCustomSetting('app_name', AppName);

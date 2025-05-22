@@ -2,9 +2,7 @@
 // See LICENSE.txt for license information.
 
 import React from 'react';
-
-// Custom event for input changes
-const EVENT_APP_INPUT_CHANGE = 'app_input_change';
+import {EVENT_APP_INPUT_CHANGE} from '../constants';
 
 interface Props {
     id: string;
