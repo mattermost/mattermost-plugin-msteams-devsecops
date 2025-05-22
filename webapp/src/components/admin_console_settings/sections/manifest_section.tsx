@@ -3,8 +3,6 @@
 
 import React from 'react';
 
-// No context needed
-
 interface Props {
     children: React.ReactNode;
     settings?: Record<string, string | boolean>;
@@ -19,6 +17,9 @@ const ManifestSection: React.FC<Props> = (props) => {
     // Debug props
     console.log('ManifestSection props:', props);
 
+    // Debug log
+    console.log('ManifestSection props:', props);
+    
     return (
         <div className='wrapper--fixed'>
             <div className='admin-console__header'>

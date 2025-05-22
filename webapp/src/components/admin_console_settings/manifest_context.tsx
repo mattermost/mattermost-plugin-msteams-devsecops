@@ -13,7 +13,7 @@ export interface ManifestSettings {
 interface ManifestContextType {
     manifestSettings: ManifestSettings;
     updateSetting: (key: keyof ManifestSettings, value: string) => void;
-    isValid: boolean;
+    isDownloadEnabled: boolean;
 }
 
 const defaultSettings: ManifestSettings = {
@@ -25,7 +25,7 @@ const defaultSettings: ManifestSettings = {
 export const ManifestContext = createContext<ManifestContextType>({
     manifestSettings: defaultSettings,
     updateSetting: () => {},
-    isValid: false,
+    isDownloadEnabled: false,
 });
 
 interface ManifestProviderProps {
@@ -49,9 +49,9 @@ export const ManifestProvider: React.FC<ManifestProviderProps> = ({children, ini
     });
 
     // Initialize to true if all required fields are already present
-    const [isValid, setIsValid] = useState(hasAllValues);
+    const [isDownloadEnabled, setIsDownloadEnabled] = useState(hasAllValues);
 
-    // One-time check of initial values
+    // Update values whenever initialValues changes
     useEffect(() => {
         console.log('ManifestProvider initializing with:', initialValues);
         const hasInitialValues = Boolean(
@@ -61,8 +61,15 @@ export const ManifestProvider: React.FC<ManifestProviderProps> = ({children, ini
         );
         console.log('Initial values valid?', hasInitialValues);
 
+        // Update manifestSettings from initialValues
+        setManifestSettings(prev => ({
+            ...prev,
+            ...initialValues
+        }));
+        
+        // Directly update enabled state based on initial values
         if (hasInitialValues) {
-            setIsValid(true);
+            setIsDownloadEnabled(true);
         }
     }, [initialValues]);
 
@@ -87,11 +94,12 @@ export const ManifestProvider: React.FC<ManifestProviderProps> = ({children, ini
             manifestSettings.appVersion.trim(),
         );
         console.log('ManifestProvider validation:', manifestSettings, valid);
-        setIsValid(valid);
+        console.log('Setting isDownloadEnabled to:', valid);
+        setIsDownloadEnabled(valid);
     }, [manifestSettings]);
 
     return (
-        <ManifestContext.Provider value={{manifestSettings, updateSetting, isValid}}>
+        <ManifestContext.Provider value={{manifestSettings, updateSetting, isDownloadEnabled}}>
             {children}
         </ManifestContext.Provider>
     );
