@@ -15,9 +15,8 @@ interface Props {
     onChange: (id: string, value: string) => void;
 }
 
+// Component for setting the app version
 const AppVersion: React.FC<Props> = (props) => {
-    // Component for setting the app version
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
         props.onChange(props.id, newValue);

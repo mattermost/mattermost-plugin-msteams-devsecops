@@ -2,8 +2,5 @@
   "root": true,
   "extends": [
     "plugin:@mattermost/react"
-  ],
-  "rules": {
-    "no-console": "off"
-  }
+  ]
 }

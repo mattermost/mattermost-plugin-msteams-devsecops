@@ -7,12 +7,8 @@ interface Props {
     children: React.ReactNode;
 }
 
+// Section container for manifest settings
 const ManifestSection: React.FC<Props> = (props) => {
-    // Debug props
-    console.log('ManifestSection props:', props);
-
-    // Section container for manifest settings
-
     return (
         <div className='wrapper--fixed'>
             <div className='admin-console__header'>
