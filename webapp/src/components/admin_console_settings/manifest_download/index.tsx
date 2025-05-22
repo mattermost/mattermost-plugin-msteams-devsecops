@@ -2,20 +2,18 @@
 // See LICENSE.txt for license information.
 
 import React, {useEffect, useState} from 'react';
-import {EVENT_APP_INPUT_CHANGE, AppInputChangeEvent} from '../constants';
+
+import {EVENT_APP_INPUT_CHANGE} from '../constants';
+import type {AppInputChangeEvent} from '../constants';
 
 interface Props {
-    id: string;
     label: string;
     helpText?: React.ReactNode;
-    disabled?: boolean;
     config?: Record<string, any>;
 }
 
 const ManifestDownload: React.FC<Props> = (props) => {
-    // Debug log available props
-    console.log('ManifestDownload props:', props);
-    console.log('ManifestDownload config:', props.config);
+    // Component for downloading the manifest
 
     const [isDownloadEnabled, setIsDownloadEnabled] = useState(false);
     const [currentValues, setCurrentValues] = useState<Record<string, string>>({
@@ -49,8 +47,8 @@ const ManifestDownload: React.FC<Props> = (props) => {
     useEffect(() => {
         const handleInputChange = (e: CustomEvent<AppInputChangeEvent>) => {
             const {id, value} = e.detail;
-            console.log('ManifestDownload received input change:', id, value);
 
+            // Process input change from other components
             // Extract the setting key from the ID (e.g., app_id from PluginSettings.Plugins.com+mattermost+plugin-msteams-devsecops.app_id)
             const settingKey = id.split('.').pop() || '';
 
@@ -80,7 +78,7 @@ const ManifestDownload: React.FC<Props> = (props) => {
             currentValues.app_version?.trim(),
         );
 
-        console.log('ManifestDownload validating values:', currentValues, hasAllValues);
+        // Update button state based on validation
         setIsDownloadEnabled(hasAllValues);
     }, [currentValues]);
 
@@ -104,10 +102,6 @@ const ManifestDownload: React.FC<Props> = (props) => {
                 >
                     {'Download Manifest'}
                 </a>
-                <p>
-                    {'To embed Mattermost within Microsoft Teams, an application manifest can be downloaded and installed as a MS Teams app. '}
-                    {'Clicking the Download button below will generate an application manifest that will embed this instance of Mattermost. '}
-                </p>
             </div>
         </div>
     );

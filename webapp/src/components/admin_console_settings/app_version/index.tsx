@@ -2,6 +2,7 @@
 // See LICENSE.txt for license information.
 
 import React from 'react';
+
 import {EVENT_APP_INPUT_CHANGE} from '../constants';
 
 interface Props {
@@ -15,8 +16,7 @@ interface Props {
 }
 
 const AppVersion: React.FC<Props> = (props) => {
-    // Basic debugging log
-    console.log('AppVersion props:', props);
+    // Component for setting the app version
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;

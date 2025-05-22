@@ -89,7 +89,7 @@
                         "key": "app_manifest_download",
                         "display_name": "Download Manifest",
                         "type": "custom",
-                        "help_text": "Downloads a M365 app that can be added to your M365 tenant. Make sure any config changes have been saved first.",
+                        "help_text": "To embed Mattermost within Microsoft Teams, an application manifest can be downloaded and installed as a MS Teams app. Clicking the Download button below will generate an application manifest that will embed this instance of Mattermost.",
                         "default": ""
                     }
                 ]

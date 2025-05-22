@@ -15,8 +15,7 @@ interface Props {
 }
 
 const AppID: React.FC<Props> = (props) => {
-    // Basic debugging log
-    console.log('AppID props:', props);
+    // Component for setting the app ID
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;

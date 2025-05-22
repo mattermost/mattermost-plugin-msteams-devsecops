@@ -15,8 +15,7 @@ interface Props {
 }
 
 const AppName: React.FC<Props> = (props) => {
-    // Basic debugging log
-    console.log('AppName props:', props);
+    // Component for setting the app name
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;

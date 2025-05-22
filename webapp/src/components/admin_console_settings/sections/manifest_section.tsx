@@ -17,8 +17,7 @@ const ManifestSection: React.FC<Props> = (props) => {
     // Debug props
     console.log('ManifestSection props:', props);
 
-    // Debug log
-    console.log('ManifestSection props:', props);
+    // Section container for manifest settings
     
     return (
         <div className='wrapper--fixed'>
