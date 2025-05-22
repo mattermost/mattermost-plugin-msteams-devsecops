@@ -9,3 +9,23 @@ export interface AppInputChangeEvent {
     id: string;
     value: string;
 }
+
+// Type for plugin settings
+export interface PluginSettings {
+    app_id?: string;
+    app_name?: string;
+    app_version?: string;
+    [key: string]: string | undefined;
+}
+
+// Type for config object structure
+export interface AdminConsoleConfig {
+    PluginSettings?: {
+        Plugins?: {
+            'com.mattermost.plugin-msteams-devsecops'?: PluginSettings;
+            [key: string]: unknown;
+        };
+        [key: string]: unknown;
+    };
+    [key: string]: unknown;
+}

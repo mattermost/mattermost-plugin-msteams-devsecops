@@ -4,12 +4,12 @@
 import React, {useEffect, useState} from 'react';
 
 import {EVENT_APP_INPUT_CHANGE} from '../constants';
-import type {AppInputChangeEvent} from '../constants';
+import type {AppInputChangeEvent, AdminConsoleConfig} from '../constants';
 
 interface Props {
     label: string;
     helpText?: React.ReactNode;
-    config?: Record<string, any>;
+    config?: AdminConsoleConfig;
 }
 
 const ManifestDownload: React.FC<Props> = (props) => {
