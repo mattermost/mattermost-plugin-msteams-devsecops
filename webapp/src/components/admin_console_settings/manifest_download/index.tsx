@@ -3,6 +3,15 @@
 
 import React, {useEffect, useState} from 'react';
 
+// Custom event for input changes
+const EVENT_APP_INPUT_CHANGE = 'app_input_change';
+
+// Type for the custom event data
+interface AppInputChangeEvent {
+    id: string;
+    value: string;
+}
+
 interface Props {
     id: string;
     label: string;
@@ -17,8 +26,13 @@ const ManifestDownload: React.FC<Props> = (props) => {
     console.log('ManifestDownload config:', props.config);
 
     const [isDownloadEnabled, setIsDownloadEnabled] = useState(false);
+    const [currentValues, setCurrentValues] = useState<Record<string, string>>({
+        app_id: '',
+        app_name: '',
+        app_version: ''
+    });
     
-    // Check if all required fields have values
+    // Initialize from config
     useEffect(() => {
         if (!props.config) {
             return;
@@ -30,22 +44,53 @@ const ManifestDownload: React.FC<Props> = (props) => {
             return;
         }
         
+        // Update our tracking of current values with config values
+        setCurrentValues(prev => ({
+            ...prev,
+            app_id: pluginSettings.app_id || '',
+            app_name: pluginSettings.app_name || '',
+            app_version: pluginSettings.app_version || ''
+        }));
+    }, [props.config]);
+    
+    // Listen for input changes from other components
+    useEffect(() => {
+        const handleInputChange = (e: CustomEvent<AppInputChangeEvent>) => {
+            const {id, value} = e.detail;
+            console.log('ManifestDownload received input change:', id, value);
+            
+            // Extract the setting key from the ID (e.g., app_id from PluginSettings.Plugins.com+mattermost+plugin-msteams-devsecops.app_id)
+            const settingKey = id.split('.').pop() || '';
+            
+            if (['app_id', 'app_name', 'app_version'].includes(settingKey)) {
+                setCurrentValues(prev => ({
+                    ...prev,
+                    [settingKey]: value
+                }));
+            }
+        };
+        
+        // Add event listener
+        window.addEventListener(EVENT_APP_INPUT_CHANGE, handleInputChange as EventListener);
+        
+        return () => {
+            // Remove event listener on cleanup
+            window.removeEventListener(EVENT_APP_INPUT_CHANGE, handleInputChange as EventListener);
+        };
+    }, []);
+    
+    // Validate settings whenever they change
+    useEffect(() => {
         // Check if all required fields have values
         const hasAllValues = Boolean(
-            pluginSettings.app_id?.trim() &&
-            pluginSettings.app_name?.trim() &&
-            pluginSettings.app_version?.trim()
+            currentValues.app_id?.trim() &&
+            currentValues.app_name?.trim() &&
+            currentValues.app_version?.trim()
         );
         
-        console.log('ManifestDownload checking settings:', {
-            appId: pluginSettings.app_id,
-            appName: pluginSettings.app_name,
-            appVersion: pluginSettings.app_version,
-            hasAllValues
-        });
-        
+        console.log('ManifestDownload validating values:', currentValues, hasAllValues);
         setIsDownloadEnabled(hasAllValues);
-    }, [props.config]);
+    }, [currentValues]);
 
     return (
         <div className='form-group'>

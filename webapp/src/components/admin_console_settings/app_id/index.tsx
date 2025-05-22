@@ -3,6 +3,9 @@
 
 import React from 'react';
 
+// Custom event for input changes
+const EVENT_APP_INPUT_CHANGE = 'app_input_change';
+
 interface Props {
     id: string;
     label: string;
@@ -20,6 +23,14 @@ const AppID: React.FC<Props> = (props) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
         props.onChange(props.id, newValue);
+        
+        // Dispatch custom event for real-time validation
+        window.dispatchEvent(new CustomEvent(EVENT_APP_INPUT_CHANGE, {
+            detail: {
+                id: props.id,
+                value: newValue
+            }
+        }));
     };
 
     return (
