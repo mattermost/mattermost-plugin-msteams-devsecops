@@ -15,6 +15,8 @@ export interface PluginSettings {
     app_id?: string;
     app_name?: string;
     app_version?: string;
+    icon_color_path?: string;
+    icon_outline_path?: string;
     [key: string]: string | undefined;
 }
 

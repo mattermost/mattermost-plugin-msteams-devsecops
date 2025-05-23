@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/mux"
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
 	"github.com/sirupsen/logrus"
 )
 
@@ -30,6 +31,10 @@ func NewAPI(p *Plugin) *API {
 	router.HandleFunc("/iframe/notification_preview", api.iframeNotificationPreview).Methods(http.MethodGet)
 	router.HandleFunc("/iframe-manifest", api.appManifest).Methods(http.MethodGet)
 	router.HandleFunc("/csp-report", api.cspReport).Methods(http.MethodPost)
+
+	// Default icon endpoints
+	router.HandleFunc("/icons/default/color", api.defaultColorIcon).Methods(http.MethodGet)
+	router.HandleFunc("/icons/default/outline", api.defaultOutlineIcon).Methods(http.MethodGet)
 
 	return api
 }
@@ -78,4 +83,20 @@ func handleResponseWithCode(w http.ResponseWriter, code int, publicMsg string) {
 		Error: publicMsg,
 	})
 	_, _ = w.Write(responseMsg)
+}
+
+// defaultColorIcon serves the default color icon
+func (a *API) defaultColorIcon(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(assets.LogoColorData)
+}
+
+// defaultOutlineIcon serves the default outline icon
+func (a *API) defaultOutlineIcon(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(assets.LogoOutlineData)
 }

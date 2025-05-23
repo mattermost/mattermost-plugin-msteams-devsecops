@@ -19,6 +19,8 @@ const ManifestDownload: React.FC<Props> = (props) => {
         app_id: '',
         app_name: '',
         app_version: '',
+        icon_color_path: '',
+        icon_outline_path: '',
     });
 
     // Initialize from config
@@ -39,6 +41,8 @@ const ManifestDownload: React.FC<Props> = (props) => {
             app_id: pluginSettings.app_id || '',
             app_name: pluginSettings.app_name || '',
             app_version: pluginSettings.app_version || '',
+            icon_color_path: pluginSettings.icon_color_path || '',
+            icon_outline_path: pluginSettings.icon_outline_path || '',
         }));
     }, [props.config]);
 
@@ -51,7 +55,7 @@ const ManifestDownload: React.FC<Props> = (props) => {
             // Extract the setting key from the ID (e.g., app_id from PluginSettings.Plugins.com+mattermost+plugin-msteams-devsecops.app_id)
             const settingKey = id.split('.').pop() || '';
 
-            if (['app_id', 'app_name', 'app_version'].includes(settingKey)) {
+            if (['app_id', 'app_name', 'app_version', 'icon_color_path', 'icon_outline_path'].includes(settingKey)) {
                 setCurrentValues((prev) => ({
                     ...prev,
                     [settingKey]: value,

@@ -30,9 +30,11 @@ type configuration struct {
 	DisableCheckCredentials          bool `json:"internal_disable_check_credentials"`
 
 	// Manifest Settings
-	AppVersion string `json:"app_version"`
-	AppID      string `json:"app_id"`
-	AppName    string `json:"app_name"`
+	AppVersion      string `json:"app_version"`
+	AppID           string `json:"app_id"`
+	AppName         string `json:"app_name"`
+	IconColorPath   string `json:"icon_color_path"`
+	IconOutlinePath string `json:"icon_outline_path"`
 
 	// Legacy
 	LegacyTenantID        string `json:"tenantID"`        // Deprecated: use M365TenantID instead
