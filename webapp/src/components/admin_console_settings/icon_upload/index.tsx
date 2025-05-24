@@ -222,31 +222,23 @@ const IconUpload: React.FC<Props> = (props) => {
                                 }}
                             />
                             <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                                <button
-                                    type='button'
-                                    className='btn btn-sm btn-primary'
-                                    onClick={handleUploadClick}
-                                    disabled={props.disabled || isUploading}
-                                >
-                                    {(() => {
-                                        if (isUploading) {
-                                            return 'Uploading...';
-                                        }
-                                        if (isCustomIcon) {
-                                            return 'Replace';
-                                        }
-                                        return `Upload ${props.label} Icon`;
-                                    })()}
-                                </button>
-                                {isCustomIcon && (
+                                {isCustomIcon ? (
                                     <button
                                         type='button'
-                                        className='btn btn-sm btn-link'
+                                        className='btn btn-sm btn-danger'
                                         onClick={handleRemove}
                                         disabled={props.disabled || isUploading}
-                                        style={{padding: '0', fontSize: '12px'}}
                                     >
-                                        {'Remove'}
+                                        {isUploading ? 'Removing...' : 'Remove'}
+                                    </button>
+                                ) : (
+                                    <button
+                                        type='button'
+                                        className='btn btn-sm btn-primary'
+                                        onClick={handleUploadClick}
+                                        disabled={props.disabled || isUploading}
+                                    >
+                                        {isUploading ? 'Uploading...' : `Upload ${props.label} Icon`}
                                     </button>
                                 )}
                             </div>
