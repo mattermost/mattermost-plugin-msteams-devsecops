@@ -61,7 +61,7 @@
                 "key": "manifest_settings",
                 "title": "Manifest Settings",
                 "subtitle": "These settings are used to generate the Microsoft Teams app manifest which you will upload to your Microsoft Teams tenant.",
-                "custom": false,
+                "custom": true,
                 "fallback": true,
                 "settings": [
                     {
@@ -86,10 +86,24 @@
                         "default": "Mattermost DevSecOps"
                     },
                     {
+                        "key": "icon_color_path",
+                        "display_name": "Color",
+                        "type": "custom",
+                        "help_text": "Upload a color icon for your Microsoft Teams app. The icon will be used in the app store and side bar. See icon guidelines [here](https://learn.microsoft.com/en-us/microsoftteams/platform/concepts/design/design-teams-app-icon-store-appbar).",
+                        "default": ""
+                    },
+                    {
+                        "key": "icon_outline_path",
+                        "display_name": "Outline",
+                        "type": "custom",
+                        "help_text": "Upload an outline icon for your Microsoft Teams app. The icon will be used in the app store and side bar. See icon guidelines [here](https://learn.microsoft.com/en-us/microsoftteams/platform/concepts/design/design-teams-app-icon-store-appbar).",
+                        "default": ""
+                    },
+                    {
                         "key": "app_manifest_download",
                         "display_name": "Download Manifest",
                         "type": "custom",
-                        "help_text": "Downloads a M365 app that can be added to your M365 tenant. Make sure any config changes have been saved first.",
+                        "help_text": "To embed Mattermost within Microsoft Teams, an application manifest can be downloaded and installed as a MS Teams app. Clicking the Download button below will generate an application manifest that will embed this instance of Mattermost.",
                         "default": ""
                     }
                 ]

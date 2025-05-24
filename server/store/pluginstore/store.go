@@ -30,6 +30,9 @@ type Store interface {
 	StoreAppID(tenantID, appID string) error
 	GetAppID(tenantID string) (string, error)
 	UserExists(mattermostUserID string) (bool, error)
+	StoreIcon(iconType string, data []byte) error
+	GetIcon(iconType string) ([]byte, error)
+	DeleteIcon(iconType string) error
 }
 
 type PluginStore struct {
@@ -114,4 +117,40 @@ func getUserKey(mattermostUserID string) string {
 
 func getAppIDKey(tenantID string) string {
 	return "appid_" + tenantID
+}
+
+// StoreIcon stores icon data in the KV store
+func (s *PluginStore) StoreIcon(iconType string, data []byte) error {
+	appErr := s.API.KVSet(getIconKey(iconType), data)
+	if appErr != nil {
+		return fmt.Errorf("failed to store icon %s: %w", iconType, appErr)
+	}
+	return nil
+}
+
+// GetIcon retrieves icon data from the KV store
+func (s *PluginStore) GetIcon(iconType string) ([]byte, error) {
+	iconData, appErr := s.API.KVGet(getIconKey(iconType))
+	if appErr != nil {
+		return nil, fmt.Errorf("failed to get icon %s: %w", iconType, appErr)
+	}
+
+	if len(iconData) == 0 {
+		return nil, NewErrNotFound(fmt.Sprintf("icon %s not found", iconType))
+	}
+
+	return iconData, nil
+}
+
+// DeleteIcon removes icon data from the KV store
+func (s *PluginStore) DeleteIcon(iconType string) error {
+	appErr := s.API.KVDelete(getIconKey(iconType))
+	if appErr != nil {
+		return fmt.Errorf("failed to delete icon %s: %w", iconType, appErr)
+	}
+	return nil
+}
+
+func getIconKey(iconType string) string {
+	return fmt.Sprintf("icon:%s", iconType)
 }
