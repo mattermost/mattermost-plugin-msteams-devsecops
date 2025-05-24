@@ -3,6 +3,8 @@
 
 import React, {useState, useRef, useEffect} from 'react';
 
+import {Client4} from 'mattermost-redux/client';
+
 import {EVENT_APP_INPUT_CHANGE} from '../constants';
 
 interface Props {
@@ -30,7 +32,7 @@ const IconUpload: React.FC<Props> = (props) => {
     useEffect(() => {
         const fetchIcon = async () => {
             try {
-                const response = await fetch(iconPath);
+                const response = await fetch(iconPath, Client4.getOptions({method: 'GET'}));
                 if (response.ok) {
                     const blob = await response.blob();
                     const reader = new FileReader();
@@ -108,10 +110,12 @@ const IconUpload: React.FC<Props> = (props) => {
         formData.append('iconType', isColorIcon ? 'color' : 'outline');
 
         try {
-            const response = await fetch('/plugins/com.mattermost.plugin-msteams-devsecops/icons/upload', {
-                method: 'POST',
-                body: formData,
-            });
+            const response = await fetch('/plugins/com.mattermost.plugin-msteams-devsecops/icons/upload',
+                Client4.getOptions({
+                    method: 'POST',
+                    body: formData,
+                }),
+            );
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -157,9 +161,11 @@ const IconUpload: React.FC<Props> = (props) => {
 
         try {
             const iconType = isColorIcon ? 'color' : 'outline';
-            const response = await fetch(`/plugins/com.mattermost.plugin-msteams-devsecops/icons/${iconType}`, {
-                method: 'DELETE',
-            });
+            const response = await fetch(`/plugins/com.mattermost.plugin-msteams-devsecops/icons/${iconType}`,
+                Client4.getOptions({
+                    method: 'DELETE',
+                }),
+            );
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -208,8 +214,8 @@ const IconUpload: React.FC<Props> = (props) => {
                                 src={iconToShow}
                                 alt={`${props.label} preview`}
                                 style={{
-                                    width: '48px',
-                                    height: '48px',
+                                    width: '96px',
+                                    height: '96px',
                                     border: '1px solid #ddd',
                                     borderRadius: '4px',
                                     objectFit: 'cover',
