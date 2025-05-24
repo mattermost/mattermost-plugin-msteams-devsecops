@@ -118,20 +118,6 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update configuration with icon path
-	config := a.p.getConfiguration().Clone()
-	if iconType == IconTypeColor {
-		config.IconColorPath = fmt.Sprintf("/plugins/com.mattermost.plugin-msteams-devsecops/icons/%s", iconType)
-	} else {
-		config.IconOutlinePath = fmt.Sprintf("/plugins/com.mattermost.plugin-msteams-devsecops/icons/%s", iconType)
-	}
-
-	// Save configuration
-	if err := a.p.API.SavePluginConfig(config.ToMap()); err != nil {
-		handleErrorWithCode(logger, w, http.StatusInternalServerError, "Failed to save configuration", err)
-		return
-	}
-
 	w.WriteHeader(http.StatusOK)
 	response := map[string]interface{}{
 		"success":  true,
@@ -211,20 +197,6 @@ func (a *API) deleteIcon(w http.ResponseWriter, r *http.Request) {
 			handleErrorWithCode(logger, w, http.StatusInternalServerError, "Failed to delete icon", err)
 			return
 		}
-	}
-
-	// Update configuration to remove icon path
-	config := a.p.getConfiguration().Clone()
-	if iconType == IconTypeColor {
-		config.IconColorPath = ""
-	} else {
-		config.IconOutlinePath = ""
-	}
-
-	// Save configuration
-	if err := a.p.API.SavePluginConfig(config.ToMap()); err != nil {
-		handleErrorWithCode(logger, w, http.StatusInternalServerError, "Failed to save configuration", err)
-		return
 	}
 
 	w.WriteHeader(http.StatusOK)
