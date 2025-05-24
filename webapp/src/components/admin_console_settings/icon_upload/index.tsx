@@ -22,15 +22,15 @@ const IconUpload: React.FC<Props> = (props) => {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Determine which default icon to fetch based on the label
+    // Determine which icon to fetch based on the label
     const isColorIcon = props.label.toLowerCase().includes('color');
-    const defaultIconPath = isColorIcon ? '/plugins/com.mattermost.plugin-msteams-devsecops/icons/default/color' : '/plugins/com.mattermost.plugin-msteams-devsecops/icons/default/outline';
+    const iconPath = isColorIcon ? '/plugins/com.mattermost.plugin-msteams-devsecops/icons/color' : '/plugins/com.mattermost.plugin-msteams-devsecops/icons/outline';
 
-    // Fetch default icon on component mount
+    // Fetch icon on component mount (custom or default)
     useEffect(() => {
-        const fetchDefaultIcon = async () => {
+        const fetchIcon = async () => {
             try {
-                const response = await fetch(defaultIconPath);
+                const response = await fetch(iconPath);
                 if (response.ok) {
                     const blob = await response.blob();
                     const reader = new FileReader();
@@ -46,8 +46,8 @@ const IconUpload: React.FC<Props> = (props) => {
             }
         };
 
-        fetchDefaultIcon();
-    }, [defaultIconPath, props.label]);
+        fetchIcon();
+    }, [iconPath, props.label]);
 
     const validateImage = (file: File): Promise<boolean> => {
         return new Promise((resolve) => {
@@ -58,9 +58,9 @@ const IconUpload: React.FC<Props> = (props) => {
                 return;
             }
 
-            // Check file size (reasonable limit for 192x192 PNG)
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                setError('File size too large. Please upload an image under 5MB.');
+            // Check file size (1MB limit)
+            if (file.size > 1024 * 1024) { // 1MB limit
+                setError('File size too large. Please upload an image under 1MB.');
                 resolve(false);
                 return;
             }
@@ -68,12 +68,15 @@ const IconUpload: React.FC<Props> = (props) => {
             // Check image dimensions
             const img = new Image();
             img.onload = () => {
-                if (img.width !== 192 || img.height !== 192) {
-                    setError('Image must be exactly 192x192 pixels.');
+                if (img.width < 150 || img.height < 150 || img.width > 300 || img.height > 300) {
+                    setError('Image must be between 150x150 and 300x300 pixels, and should be 192x192 pixels.');
                     resolve(false);
-                } else {
+                } else if (img.width === img.height) {
                     setError(null);
                     resolve(true);
+                } else {
+                    setError('Image must be square (width and height must be equal).');
+                    resolve(false);
                 }
             };
             img.onerror = () => {
@@ -99,52 +102,99 @@ const IconUpload: React.FC<Props> = (props) => {
             return;
         }
 
-        // Create preview
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const result = event.target?.result as string;
-            setPreview(result);
+        // Upload file to server
+        const formData = new FormData();
+        formData.append('icon', file);
+        formData.append('iconType', isColorIcon ? 'color' : 'outline');
+
+        try {
+            const response = await fetch('/plugins/com.mattermost.plugin-msteams-devsecops/icons/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                setError(errorText || 'Failed to upload icon');
+                setIsUploading(false);
+                return;
+            }
+
+            const result = await response.json();
+
+            // Create preview from uploaded file
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const dataUrl = event.target?.result as string;
+                setPreview(dataUrl);
+                setIsUploading(false);
+
+                // Update configuration with the icon path
+                props.onChange(props.id, result.iconPath);
+
+                // Dispatch custom event for real-time validation
+                window.dispatchEvent(new CustomEvent(EVENT_APP_INPUT_CHANGE, {
+                    detail: {
+                        id: props.id,
+                        value: result.iconPath,
+                    },
+                }));
+            };
+            reader.readAsDataURL(file);
+        } catch (err) {
+            setError('Failed to upload icon');
             setIsUploading(false);
-
-            // For now, we'll store the data URL
-            // TODO: In the next phase, this will upload to the file store
-            props.onChange(props.id, result);
-
-            // Dispatch custom event for real-time validation
-            window.dispatchEvent(new CustomEvent(EVENT_APP_INPUT_CHANGE, {
-                detail: {
-                    id: props.id,
-                    value: result,
-                },
-            }));
-        };
-        reader.readAsDataURL(file);
+        }
     };
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
 
-    const handleRemove = () => {
-        setPreview(null);
+    const handleRemove = async () => {
+        setIsUploading(true);
         setError(null);
-        props.onChange(props.id, '');
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
 
-        // Dispatch custom event for real-time validation
-        window.dispatchEvent(new CustomEvent(EVENT_APP_INPUT_CHANGE, {
-            detail: {
-                id: props.id,
-                value: '',
-            },
-        }));
+        try {
+            const iconType = isColorIcon ? 'color' : 'outline';
+            const response = await fetch(`/plugins/com.mattermost.plugin-msteams-devsecops/icons/${iconType}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                setError(errorText || 'Failed to remove icon');
+                setIsUploading(false);
+                return;
+            }
+
+            // Clear the preview and reset to default
+            setPreview(null);
+            props.onChange(props.id, '');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+
+            // Dispatch custom event for real-time validation
+            window.dispatchEvent(new CustomEvent(EVENT_APP_INPUT_CHANGE, {
+                detail: {
+                    id: props.id,
+                    value: '',
+                },
+            }));
+
+            setIsUploading(false);
+        } catch (err) {
+            setError('Failed to remove icon');
+            setIsUploading(false);
+        }
     };
 
-    // Show custom icon if available, otherwise show default icon
+    // Show preview if we have one, otherwise show the fetched icon (which could be custom or default)
     const iconToShow = preview || defaultIcon;
-    const isCustomIcon = Boolean(preview);
+
+    // An icon is custom if we have a preview (just uploaded) or if the props.value indicates a custom path
+    const isCustomIcon = Boolean(preview) || Boolean(props.value && props.value.includes('/icons/'));
 
     return (
         <div className='form-group'>
@@ -218,7 +268,7 @@ const IconUpload: React.FC<Props> = (props) => {
                     className='help-text text-muted'
                     style={{fontSize: '12px'}}
                 >
-                    {'Must be a PNG image, exactly 192x192 pixels'}
+                    {'Must be a square PNG image, 150x150 to 300x300 pixels (192x192 recommended), under 1MB'}
                 </div>
                 <input
                     ref={fileInputRef}

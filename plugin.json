@@ -89,14 +89,14 @@
                         "key": "icon_color_path",
                         "display_name": "Color",
                         "type": "custom",
-                        "help_text": "Upload a color icon for your Microsoft Teams app. The icon will be used in the app list and other locations in Microsoft Teams.",
+                        "help_text": "Upload a color icon for your Microsoft Teams app. The icon will be used in the app store and side bar. See icon guidelines [here](https://learn.microsoft.com/en-us/microsoftteams/platform/concepts/design/design-teams-app-icon-store-appbar).",
                         "default": ""
                     },
                     {
                         "key": "icon_outline_path",
                         "display_name": "Outline",
                         "type": "custom",
-                        "help_text": "Upload an outline icon for your Microsoft Teams app. The icon will be used when the app is pinned to the Teams sidebar.",
+                        "help_text": "Upload an outline icon for your Microsoft Teams app. The icon will be used in the app store and side bar. See icon guidelines [here](https://learn.microsoft.com/en-us/microsoftteams/platform/concepts/design/design-teams-app-icon-store-appbar).",
                         "default": ""
                     },
                     {

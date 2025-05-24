@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,18 +29,40 @@ func NewAPI(p *Plugin) *API {
 	router.HandleFunc("/iframe/mattermostTab", api.iFrame).Methods(http.MethodGet)
 	router.HandleFunc("/iframe/authenticate", api.authenticate).Methods(http.MethodGet)
 	router.HandleFunc("/iframe/notification_preview", api.iframeNotificationPreview).Methods(http.MethodGet)
-	router.HandleFunc("/iframe-manifest", api.appManifest).Methods(http.MethodGet)
+	router.HandleFunc("/iframe-manifest", api.adminRequired(api.appManifest)).Methods(http.MethodGet)
 	router.HandleFunc("/csp-report", api.cspReport).Methods(http.MethodPost)
 
-	// Default icon endpoints
-	router.HandleFunc("/icons/default/color", api.defaultColorIcon).Methods(http.MethodGet)
-	router.HandleFunc("/icons/default/outline", api.defaultOutlineIcon).Methods(http.MethodGet)
+	// Icon upload and retrieval endpoints
+	router.HandleFunc("/icons/upload", api.adminRequired(api.uploadIcon)).Methods(http.MethodPost)
+	router.HandleFunc("/icons/{iconType}", api.adminRequired(api.getIcon)).Methods(http.MethodGet)
+	router.HandleFunc("/icons/{iconType}", api.adminRequired(api.deleteIcon)).Methods(http.MethodDelete)
 
 	return api
 }
 
 func (a *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.router.ServeHTTP(w, r)
+}
+
+// adminRequired is a middleware that checks if the user is an admin
+func (a *API) adminRequired(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// User must be logged in
+		userID := r.Header.Get("Mattermost-User-ID")
+		if userID == "" {
+			http.Error(w, "Not authorized", http.StatusUnauthorized)
+			return
+		}
+
+		// User must be an admin
+		if !a.p.API.HasPermissionTo(userID, model.PermissionManageSystem) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		// Credentials are valid, call the next handler
+		next(w, r)
+	}
 }
 
 // handleStaticFiles handles the static files under the assets directory.
@@ -83,20 +105,4 @@ func handleResponseWithCode(w http.ResponseWriter, code int, publicMsg string) {
 		Error: publicMsg,
 	})
 	_, _ = w.Write(responseMsg)
-}
-
-// defaultColorIcon serves the default color icon
-func (a *API) defaultColorIcon(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "image/png")
-	w.Header().Set("Cache-Control", "public, max-age=3600")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(assets.LogoColorData)
-}
-
-// defaultOutlineIcon serves the default outline icon
-func (a *API) defaultOutlineIcon(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "image/png")
-	w.Header().Set("Cache-Control", "public, max-age=3600")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(assets.LogoOutlineData)
 }
