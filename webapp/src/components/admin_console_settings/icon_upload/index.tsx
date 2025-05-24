@@ -16,7 +16,6 @@ interface Props {
     id: string;
     label: string;
     helpText?: React.ReactNode;
-    value?: string;
     disabled?: boolean;
     onChange: (id: string, value: string) => void;
 }
