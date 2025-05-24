@@ -20,8 +20,8 @@ import (
 const (
 	PackageName         = "com.mattermost.msteams.devsecops"
 	ManifestName        = "manifest.json"
-	LogoColorFilename   = "mm-logo-color.png"
-	LogoOutlineFilename = "mm-logo-outline.png"
+	LogoColorFilename   = "icon-color.png"
+	LogoOutlineFilename = "icon-outline.png"
 )
 
 type manifestContext struct {
@@ -67,17 +67,17 @@ func (a *API) makeManifestContext() (*manifestContext, error) {
 }
 
 // getIconData fetches icon data from KV store or falls back to default icons
-func (a *API) getIconData(iconType string) []byte {
+func (a *API) getIconData(iconType IconType) []byte {
 	// Try to get custom icon from KV store
-	if data, err := a.p.pluginStore.GetIcon(iconType); err == nil && len(data) > 0 {
+	if data, err := a.p.pluginStore.GetIcon(string(iconType)); err == nil && len(data) > 0 {
 		return data
 	}
 
 	// Fall back to default icons
 	switch iconType {
-	case "color":
+	case IconTypeColor:
 		return assets.LogoColorData
-	case "outline":
+	case IconTypeOutline:
 		return assets.LogoOutlineData
 	default:
 		a.p.API.LogWarn("Unknown icon type requested", "iconType", iconType)
@@ -112,8 +112,8 @@ func (a *API) appManifest(w http.ResponseWriter, _ *http.Request) {
 	// Create a zip file with the manifest and logo files
 	bufReader, err := createManifestZip(
 		zipFile{name: ManifestName, data: buf.Bytes()},
-		zipFile{name: LogoColorFilename, data: a.getIconData("color")},
-		zipFile{name: LogoOutlineFilename, data: a.getIconData("outline")},
+		zipFile{name: LogoColorFilename, data: a.getIconData(IconTypeColor)},
+		zipFile{name: LogoOutlineFilename, data: a.getIconData(IconTypeOutline)},
 	)
 	if err != nil {
 		a.p.API.LogError("Error generating app manifest", "error", err.Error())

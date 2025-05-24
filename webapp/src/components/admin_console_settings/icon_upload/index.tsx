@@ -7,6 +7,11 @@ import {Client4} from 'mattermost-redux/client';
 
 import {EVENT_APP_INPUT_CHANGE} from '../constants';
 
+enum IconType {
+    COLOR = 'color',
+    OUTLINE = 'outline',
+}
+
 interface Props {
     id: string;
     label: string;
@@ -26,7 +31,8 @@ const IconUpload: React.FC<Props> = (props) => {
 
     // Determine which icon to fetch based on the label
     const isColorIcon = props.label.toLowerCase().includes('color');
-    const iconPath = isColorIcon ? '/plugins/com.mattermost.plugin-msteams-devsecops/icons/color' : '/plugins/com.mattermost.plugin-msteams-devsecops/icons/outline';
+    const iconType = isColorIcon ? IconType.COLOR : IconType.OUTLINE;
+    const iconPath = `/plugins/com.mattermost.plugin-msteams-devsecops/icons/${iconType}`;
 
     // Fetch icon on component mount (custom or default)
     useEffect(() => {
@@ -107,7 +113,7 @@ const IconUpload: React.FC<Props> = (props) => {
         // Upload file to server
         const formData = new FormData();
         formData.append('icon', file);
-        formData.append('iconType', isColorIcon ? 'color' : 'outline');
+        formData.append('iconType', iconType);
 
         try {
             const response = await fetch('/plugins/com.mattermost.plugin-msteams-devsecops/icons/upload',
@@ -160,7 +166,6 @@ const IconUpload: React.FC<Props> = (props) => {
         setError(null);
 
         try {
-            const iconType = isColorIcon ? 'color' : 'outline';
             const response = await fetch(`/plugins/com.mattermost.plugin-msteams-devsecops/icons/${iconType}`,
                 Client4.getOptions({
                     method: 'DELETE',

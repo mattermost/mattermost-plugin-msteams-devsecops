@@ -21,6 +21,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type IconType string
+
+const (
+	IconTypeColor   IconType = "color"
+	IconTypeOutline IconType = "outline"
+)
+
+// IsValid checks if the IconType is valid
+func (it IconType) IsValid() bool {
+	return it == IconTypeColor || it == IconTypeOutline
+}
+
 // uploadIcon handles file uploads for custom icons
 func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 	logger := logrus.StandardLogger()
@@ -46,8 +58,9 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the icon type from form data
-	iconType := r.FormValue("iconType")
-	if iconType != "color" && iconType != "outline" {
+	iconTypeStr := r.FormValue("iconType")
+	iconType := IconType(iconTypeStr)
+	if !iconType.IsValid() {
 		http.Error(w, "Invalid icon type. Must be 'color' or 'outline'", http.StatusBadRequest)
 		return
 	}
@@ -99,7 +112,7 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Store the icon in KV store
-	err = a.p.pluginStore.StoreIcon(iconType, data)
+	err = a.p.pluginStore.StoreIcon(string(iconType), data)
 	if err != nil {
 		handleErrorWithCode(logger, w, http.StatusInternalServerError, "Failed to store icon", err)
 		return
@@ -107,7 +120,7 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 
 	// Update configuration with icon path
 	config := a.p.getConfiguration().Clone()
-	if iconType == "color" {
+	if iconType == IconTypeColor {
 		config.IconColorPath = fmt.Sprintf("/plugins/com.mattermost.plugin-msteams-devsecops/icons/%s", iconType)
 	} else {
 		config.IconOutlinePath = fmt.Sprintf("/plugins/com.mattermost.plugin-msteams-devsecops/icons/%s", iconType)
@@ -130,19 +143,20 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 // getIcon serves custom icons or falls back to default icons
 func (a *API) getIcon(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	iconType := vars["iconType"]
+	iconTypeStr := vars["iconType"]
+	iconType := IconType(iconTypeStr)
 
-	if iconType != "color" && iconType != "outline" {
+	if !iconType.IsValid() {
 		http.Error(w, "Invalid icon type", http.StatusBadRequest)
 		return
 	}
 
 	// Try to get custom icon from KV store
-	iconData, err := a.p.pluginStore.GetIcon(iconType)
+	iconData, err := a.p.pluginStore.GetIcon(string(iconType))
 	if err != nil {
 		// If not found, serve default icon
 		var defaultData []byte
-		if iconType == "color" {
+		if iconType == IconTypeColor {
 			defaultData = assets.LogoColorData
 		} else {
 			defaultData = assets.LogoOutlineData
@@ -180,15 +194,16 @@ func (a *API) deleteIcon(w http.ResponseWriter, r *http.Request) {
 	}
 
 	vars := mux.Vars(r)
-	iconType := vars["iconType"]
+	iconTypeStr := vars["iconType"]
+	iconType := IconType(iconTypeStr)
 
-	if iconType != "color" && iconType != "outline" {
+	if !iconType.IsValid() {
 		http.Error(w, "Invalid icon type", http.StatusBadRequest)
 		return
 	}
 
 	// Delete from KV store
-	err := a.p.pluginStore.DeleteIcon(iconType)
+	err := a.p.pluginStore.DeleteIcon(string(iconType))
 	if err != nil {
 		// If the icon doesn't exist, that's fine
 		var notFoundErr *pluginstore.ErrNotFound
@@ -200,7 +215,7 @@ func (a *API) deleteIcon(w http.ResponseWriter, r *http.Request) {
 
 	// Update configuration to remove icon path
 	config := a.p.getConfiguration().Clone()
-	if iconType == "color" {
+	if iconType == IconTypeColor {
 		config.IconColorPath = ""
 	} else {
 		config.IconOutlinePath = ""
