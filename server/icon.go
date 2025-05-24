@@ -149,7 +149,9 @@ func (a *API) getIcon(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Content-Type", "image/png")
-		w.Header().Set("Cache-Control", "public, max-age=3600")
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(defaultData)
 		return
@@ -157,7 +159,9 @@ func (a *API) getIcon(w http.ResponseWriter, r *http.Request) {
 
 	// Serve custom icon
 	w.Header().Set("Content-Type", "image/png")
-	w.Header().Set("Cache-Control", "public, max-age=3600")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(iconData)
 }
@@ -203,6 +207,29 @@ func (a *API) deleteIcon(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"success": true,
 		"message": "Icon deleted successfully",
+	}
+	_ = json.NewEncoder(w).Encode(response)
+}
+
+// iconExists checks if a custom icon exists in the KV store
+func (a *API) iconExists(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	iconTypeStr := vars["iconType"]
+	iconType := IconType(iconTypeStr)
+
+	if !iconType.IsValid() {
+		http.Error(w, "Invalid icon type", http.StatusBadRequest)
+		return
+	}
+
+	// Check if custom icon exists in KV store
+	_, err := a.p.pluginStore.GetIcon(string(iconType))
+	exists := err == nil
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response := map[string]interface{}{
+		"exists": exists,
 	}
 	_ = json.NewEncoder(w).Encode(response)
 }

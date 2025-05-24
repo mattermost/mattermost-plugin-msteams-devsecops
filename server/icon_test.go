@@ -482,7 +482,7 @@ func TestGetIcon(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "image/png", resp.Header.Get("Content-Type"))
-		assert.Equal(t, "public, max-age=3600", resp.Header.Get("Cache-Control"))
+		assert.Equal(t, "no-cache, no-store, must-revalidate", resp.Header.Get("Cache-Control"))
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -507,7 +507,7 @@ func TestGetIcon(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "image/png", resp.Header.Get("Content-Type"))
-		assert.Equal(t, "public, max-age=3600", resp.Header.Get("Cache-Control"))
+		assert.Equal(t, "no-cache, no-store, must-revalidate", resp.Header.Get("Cache-Control"))
 
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -636,5 +636,139 @@ func TestDeleteIcon(t *testing.T) {
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Contains(t, string(body), "Invalid icon type")
+	})
+}
+
+func TestIconExists(t *testing.T) {
+	th := setupTestHelper(t)
+
+	// Create admin user
+	team := th.SetupTeam(t)
+	admin := th.SetupUser(t, team)
+
+	// Grant admin permissions
+	_, appErr := th.p.API.UpdateUserRoles(admin.Id, model.SystemAdminRoleId)
+	require.Nil(t, appErr)
+
+	// Create regular user
+	regularUser := th.SetupUser(t, team)
+
+	// Store a custom icon first
+	customIconData := createTestPNGData(192, 192)
+	err := th.p.pluginStore.StoreIcon("color", customIconData)
+	require.NoError(t, err)
+
+	t.Run("returns true when custom icon exists", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/icons/color/exists", nil)
+		req.Header.Set("Mattermost-User-ID", admin.Id)
+
+		w := httptest.NewRecorder()
+		th.p.apiHandler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		assert.Contains(t, string(body), `"exists":true`)
+	})
+
+	t.Run("returns false when custom icon does not exist", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/icons/outline/exists", nil)
+		req.Header.Set("Mattermost-User-ID", admin.Id)
+
+		w := httptest.NewRecorder()
+		th.p.apiHandler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		assert.Contains(t, string(body), `"exists":false`)
+	})
+
+	t.Run("unauthorized when no user ID provided", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/icons/color/exists", nil)
+
+		w := httptest.NewRecorder()
+		th.p.apiHandler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("forbidden when user is not admin", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/icons/color/exists", nil)
+		req.Header.Set("Mattermost-User-ID", regularUser.Id)
+
+		w := httptest.NewRecorder()
+		th.p.apiHandler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("bad request for invalid icon type", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/icons/invalid/exists", nil)
+		req.Header.Set("Mattermost-User-ID", admin.Id)
+
+		w := httptest.NewRecorder()
+		th.p.apiHandler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		assert.Contains(t, string(body), "Invalid icon type")
+	})
+
+	t.Run("returns false after icon is deleted", func(t *testing.T) {
+		// First verify the icon exists
+		req := httptest.NewRequest(http.MethodGet, "/icons/color/exists", nil)
+		req.Header.Set("Mattermost-User-ID", admin.Id)
+
+		w := httptest.NewRecorder()
+		th.p.apiHandler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		assert.Contains(t, string(body), `"exists":true`)
+
+		// Delete the icon
+		err = th.p.pluginStore.DeleteIcon("color")
+		require.NoError(t, err)
+
+		// Check that it no longer exists
+		req = httptest.NewRequest(http.MethodGet, "/icons/color/exists", nil)
+		req.Header.Set("Mattermost-User-ID", admin.Id)
+
+		w = httptest.NewRecorder()
+		th.p.apiHandler.ServeHTTP(w, req)
+
+		resp = w.Result()
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		body, err = io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		assert.Contains(t, string(body), `"exists":false`)
 	})
 }

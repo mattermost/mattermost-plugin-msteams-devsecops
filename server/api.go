@@ -36,6 +36,7 @@ func NewAPI(p *Plugin) *API {
 	router.HandleFunc("/icons/upload", api.adminRequired(api.uploadIcon)).Methods(http.MethodPost)
 	router.HandleFunc("/icons/{iconType}", api.adminRequired(api.getIcon)).Methods(http.MethodGet)
 	router.HandleFunc("/icons/{iconType}", api.adminRequired(api.deleteIcon)).Methods(http.MethodDelete)
+	router.HandleFunc("/icons/{iconType}/exists", api.adminRequired(api.iconExists)).Methods(http.MethodGet)
 
 	return api
 }

@@ -23,10 +23,11 @@ interface Props {
 
 // Component for uploading manifest icons
 const IconUpload: React.FC<Props> = (props) => {
-    const [preview, setPreview] = useState<string | null>(props.value || null);
+    const [preview, setPreview] = useState<string | null>(null);
     const [defaultIcon, setDefaultIcon] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [hasCustomIcon, setHasCustomIcon] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Determine which icon to fetch based on the label
@@ -34,10 +35,21 @@ const IconUpload: React.FC<Props> = (props) => {
     const iconType = isColorIcon ? IconType.COLOR : IconType.OUTLINE;
     const iconPath = `/plugins/com.mattermost.plugin-msteams-devsecops/icons/${iconType}`;
 
-    // Fetch icon on component mount (custom or default)
+    // Fetch icon and check if custom icon exists on component mount
     useEffect(() => {
-        const fetchIcon = async () => {
+        const fetchIconAndCheckCustom = async () => {
             try {
+                // Check if custom icon exists
+                const existsResponse = await fetch(`${iconPath}/exists`, Client4.getOptions({method: 'GET'}));
+                if (existsResponse.ok) {
+                    const existsData = await existsResponse.json();
+                    setHasCustomIcon(existsData.exists);
+                } else {
+                    // If exists check fails, assume no custom icon
+                    setHasCustomIcon(false);
+                }
+
+                // Fetch the icon (custom or default)
                 const response = await fetch(iconPath, Client4.getOptions({method: 'GET'}));
                 if (response.ok) {
                     const blob = await response.blob();
@@ -47,14 +59,16 @@ const IconUpload: React.FC<Props> = (props) => {
                     };
                     reader.readAsDataURL(blob);
                 } else {
-                    setError(`Failed to load default ${props.label.toLowerCase()} icon.`);
+                    setError(`Failed to load ${props.label.toLowerCase()} icon.`);
                 }
             } catch (err) {
-                setError(`Failed to load default ${props.label.toLowerCase()} icon.`);
+                // If any error occurs, assume no custom icon exists
+                setHasCustomIcon(false);
+                setError(`Failed to load ${props.label.toLowerCase()} icon.`);
             }
         };
 
-        fetchIcon();
+        fetchIconAndCheckCustom();
     }, [iconPath, props.label]);
 
     const validateImage = (file: File): Promise<boolean> => {
@@ -137,6 +151,7 @@ const IconUpload: React.FC<Props> = (props) => {
             reader.onload = (event) => {
                 const dataUrl = event.target?.result as string;
                 setPreview(dataUrl);
+                setHasCustomIcon(true);
                 setIsUploading(false);
 
                 // Update configuration with the icon path
@@ -181,9 +196,26 @@ const IconUpload: React.FC<Props> = (props) => {
 
             // Clear the preview and reset to default
             setPreview(null);
+            setHasCustomIcon(false);
             props.onChange(props.id, '');
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
+            }
+
+            // Refetch the icon to get the default icon
+            try {
+                const refreshResponse = await fetch(iconPath, Client4.getOptions({method: 'GET'}));
+                if (refreshResponse.ok) {
+                    const blob = await refreshResponse.blob();
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        setDefaultIcon(reader.result as string);
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            } catch (refreshErr) {
+                // If refresh fails, just continue - the UI will still work
+                // The component will show no icon preview but the Upload button will appear
             }
 
             // Dispatch custom event for real-time validation
@@ -204,8 +236,8 @@ const IconUpload: React.FC<Props> = (props) => {
     // Show preview if we have one, otherwise show the fetched icon (which could be custom or default)
     const iconToShow = preview || defaultIcon;
 
-    // An icon is custom if we have a preview (just uploaded) or if the props.value indicates a custom path
-    const isCustomIcon = Boolean(preview) || Boolean(props.value && props.value.includes('/icons/'));
+    // An icon is custom if we have a preview (just uploaded) or if we detected a custom icon exists
+    const isCustomIcon = Boolean(preview) || hasCustomIcon;
 
     return (
         <div className='form-group'>
