@@ -5,12 +5,10 @@ import type {Store, Action} from 'redux';
 
 import type {GlobalState} from '@mattermost/types/store';
 
-import AppID from '@/components/admin_console_settings/app_id';
-import AppName from '@/components/admin_console_settings/app_name';
-import AppVersion from '@/components/admin_console_settings/app_version';
 import IconUpload from '@/components/admin_console_settings/icon_upload';
 import ManifestDownload from '@/components/admin_console_settings/manifest_download';
 import ManifestSection from '@/components/admin_console_settings/sections/manifest_section';
+import TextInput from '@/components/admin_console_settings/text_input';
 import manifest from '@/manifest';
 import type {PluginRegistry} from '@/types/mattermost-webapp';
 
@@ -23,9 +21,9 @@ class Plugin {
         // Register components directly without providers
 
         // Register custom settings components
-        registry.registerAdminConsoleCustomSetting('app_id', AppID);
-        registry.registerAdminConsoleCustomSetting('app_name', AppName);
-        registry.registerAdminConsoleCustomSetting('app_version', AppVersion);
+        registry.registerAdminConsoleCustomSetting('app_id', TextInput);
+        registry.registerAdminConsoleCustomSetting('app_name', TextInput);
+        registry.registerAdminConsoleCustomSetting('app_version', TextInput);
         registry.registerAdminConsoleCustomSetting('icon_color_path', IconUpload);
         registry.registerAdminConsoleCustomSetting('icon_outline_path', IconUpload);
         registry.registerAdminConsoleCustomSetting('app_manifest_download', ManifestDownload);
