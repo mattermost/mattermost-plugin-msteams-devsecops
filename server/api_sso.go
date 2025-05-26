@@ -56,6 +56,9 @@ func (a *API) handleSSOComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	iFrameCtx.CSPConnectSrc = DefaultCSPConnectSrc
+	iFrameCtx.CSPScriptSrc = DefaultCSPScriptSrc
+
 	a.returnCSPHeaders(w, iFrameCtx)
 	w.Header().Set("Content-Type", "text/html")
 

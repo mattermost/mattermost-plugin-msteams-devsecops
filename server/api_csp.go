@@ -7,23 +7,32 @@ import (
 	"strings"
 )
 
+const (
+	DefaultCSPConnectSrc = "https://*.microsoft.com https://*.teams.microsoft.com https://*.cdn.office.net"
+	DefaultCSPScriptSrc  = "https://res.cdn.office.net https://cdn.jsdelivr.net"
+)
+
 // return returnCSPHeaderssets and returns the Content Security Policy headers for the iframe context.
 func (a *API) returnCSPHeaders(w http.ResponseWriter, iFrameCtx iFrameContext) {
 	cspDirectives := []string{
 		// default-src: Block all resources by default
 		"default-src 'none'",
+		// script-src: Allow scripts from provided sources (like Microsoft Teams CDN and jsdelivr) with nonce
+		"script-src " + iFrameCtx.CSPScriptSrc + " 'nonce-" + iFrameCtx.Nonce + "'",
 		// style-src: Allow inline styles with nonce
 		"style-src 'nonce-" + iFrameCtx.Nonce + "'",
-		// script-src: Allow scripts from Microsoft Teams CDN and jsdelivr with nonce
-		"script-src https://res.cdn.office.net https://cdn.jsdelivr.net 'nonce-" + iFrameCtx.Nonce + "'",
 		// script-src-attr: Allow inline event handlers with nonce
 		"script-src-attr 'nonce-" + iFrameCtx.Nonce + "'",
-		// connect-src: Allow connections to Microsoft and Teams domains
-		"connect-src https://*.microsoft.com https://*.teams.microsoft.com https://*.cdn.office.net",
+		// connect-src: Allow connections to provided domains (like Microsoft and Teams domains)
+		"connect-src " + iFrameCtx.CSPConnectSrc,
 		// img-src: Allow images from the same origin
 		"img-src 'self'",
 		// report-to: Send CSP violation reports to our endpoint
 		"report-to csp-endpoint",
+	}
+
+	if iFrameCtx.CSPFrameSrc != "" {
+		cspDirectives = append(cspDirectives, "frame-src '"+iFrameCtx.CSPFrameSrc+"'")
 	}
 
 	// Set the Report-To header to define the reporting endpoint group
