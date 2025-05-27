@@ -27,11 +27,12 @@ import (
 )
 
 type iFrameContext struct {
-	SiteURL  string
-	PluginID string
-	TenantID string
-	UserID   string
-	Nonce    string
+	SiteURL    string
+	PluginID   string
+	TenantID   string
+	TeamsAppID string
+	UserID     string
+	Nonce      string
 
 	Post                       *model.Post
 	PostJSON                   string
@@ -187,12 +188,20 @@ func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContex
 		return iFrameContext{}, fmt.Errorf("ServiceSettings.SiteURL cannot be empty for MS Teams iFrame")
 	}
 
+	var appID string
+	var err error
+	appID, err = a.p.pluginStore.GetAppID(a.p.getConfiguration().M365TenantID)
+	if err != nil {
+		a.p.API.LogWarn("Failed to get app ID, button in notification preview won't work", "error", err.Error())
+	}
+
 	iFrameCtx := iFrameContext{
-		SiteURL:  *config.ServiceSettings.SiteURL,
-		PluginID: url.PathEscape(manifest.Id),
-		TenantID: a.p.getConfiguration().M365TenantID,
-		UserID:   userID,
-		Post:     post,
+		SiteURL:    *config.ServiceSettings.SiteURL,
+		PluginID:   url.PathEscape(manifest.Id),
+		TenantID:   a.p.getConfiguration().M365TenantID,
+		TeamsAppID: appID,
+		UserID:     userID,
+		Post:       post,
 	}
 
 	// Generate a random nonce for the script/style tags
