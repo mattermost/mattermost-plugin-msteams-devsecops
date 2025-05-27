@@ -192,7 +192,7 @@ func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContex
 	var err error
 	appID, err = a.p.pluginStore.GetAppID(a.p.getConfiguration().M365TenantID)
 	if err != nil {
-		a.p.API.LogWarn("Failed to get app ID, button in notification preview won't work", "error", err.Error())
+		a.p.API.LogWarn("Failed to get app ID, button in notification preview won't work", "tenantID", a.p.getConfiguration().M365TenantID, "error", err.Error())
 	}
 
 	iFrameCtx := iFrameContext{
