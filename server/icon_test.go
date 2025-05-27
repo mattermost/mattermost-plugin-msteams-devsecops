@@ -300,9 +300,9 @@ func TestUploadIcon(t *testing.T) {
 	})
 
 	t.Run("bad request when file is too large", func(t *testing.T) {
-		// Create a file larger than 1MB by padding the real PNG
+		// Create a file larger than MaxUploadSize by padding the real PNG
 		basePNG := loadTestPNG()
-		largePNGData := make([]byte, 1024*1024+1) // 1MB + 1 byte
+		largePNGData := make([]byte, MaxUploadSize+1)
 		copy(largePNGData, basePNG)
 
 		req, err := createMultipartRequest("color", largePNGData, "")

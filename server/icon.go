@@ -24,6 +24,12 @@ import (
 type IconType string
 
 const (
+	MaxUploadSize = 1024 * 1024 // 1MB
+	MaxIconWidth  = 300         // pixels
+	MaxIconHeight = 300
+	MinIconWidth  = 150
+	MinIconHeight = 150
+
 	IconTypeColor   IconType = "color"
 	IconTypeOutline IconType = "outline"
 )
@@ -51,7 +57,7 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse multipart form
-	err := r.ParseMultipartForm(1 << 20) // 1MB max
+	err := r.ParseMultipartForm(MaxUploadSize)
 	if err != nil {
 		handleErrorWithCode(logger, w, http.StatusBadRequest, "Failed to parse multipart form", err)
 		return
@@ -88,8 +94,8 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate file size
-	if len(data) > 1024*1024 { // 1MB
-		http.Error(w, "File too large. Maximum size is 1MB", http.StatusBadRequest)
+	if len(data) > MaxUploadSize {
+		http.Error(w, fmt.Sprintf("File too large. Maximum size is %d bytes", MaxUploadSize), http.StatusBadRequest)
 		return
 	}
 
@@ -106,8 +112,9 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if img.Width < 150 || img.Width > 300 || img.Height < 150 || img.Height > 300 {
-		http.Error(w, "Image must be between 150x150 and 300x300 pixels, and should be 192x192 pixels", http.StatusBadRequest)
+	if img.Width < MinIconWidth || img.Width > MaxIconWidth || img.Height < MinIconHeight || img.Height > MaxIconHeight {
+		msg := fmt.Sprintf("Image must be between %dx%d and %dx%d pixels", MinIconWidth, MinIconHeight, MaxIconWidth, MaxIconHeight)
+		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
@@ -141,20 +148,11 @@ func (a *API) getIcon(w http.ResponseWriter, r *http.Request) {
 	iconData, err := a.p.pluginStore.GetIcon(string(iconType))
 	if err != nil {
 		// If not found, serve default icon
-		var defaultData []byte
 		if iconType == IconTypeColor {
-			defaultData = assets.LogoColorData
+			iconData = assets.LogoColorData
 		} else {
-			defaultData = assets.LogoOutlineData
+			iconData = assets.LogoOutlineData
 		}
-
-		w.Header().Set("Content-Type", "image/png")
-		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		w.Header().Set("Pragma", "no-cache")
-		w.Header().Set("Expires", "0")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(defaultData)
-		return
 	}
 
 	// Serve custom icon
