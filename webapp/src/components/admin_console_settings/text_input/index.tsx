@@ -15,8 +15,8 @@ interface Props {
     onChange: (id: string, value: string) => void;
 }
 
-// Component for setting the app ID
-const AppID: React.FC<Props> = (props) => {
+// Reusable text input component for app settings
+const TextInput: React.FC<Props> = (props) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
         props.onChange(props.id, newValue);
@@ -49,4 +49,4 @@ const AppID: React.FC<Props> = (props) => {
     );
 };
 
-export default AppID;
+export default TextInput;

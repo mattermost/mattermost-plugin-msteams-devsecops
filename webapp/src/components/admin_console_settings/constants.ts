@@ -2,7 +2,7 @@
 // See LICENSE.txt for license information.
 
 // Custom event for input changes
-export const EVENT_APP_INPUT_CHANGE = 'app_input_change';
+export const EVENT_APP_INPUT_CHANGE = 'com.mattermost.plugin-msteams-devsecops__app_input_change';
 
 // Type for the custom event data
 export interface AppInputChangeEvent {
@@ -15,6 +15,8 @@ export interface PluginSettings {
     app_id?: string;
     app_name?: string;
     app_version?: string;
+    icon_color_path?: string;
+    icon_outline_path?: string;
     [key: string]: string | undefined;
 }
 

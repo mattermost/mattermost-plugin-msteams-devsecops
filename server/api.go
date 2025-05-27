@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/mux"
+	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,14 +29,41 @@ func NewAPI(p *Plugin) *API {
 	router.HandleFunc("/iframe/mattermostTab", api.iFrame).Methods(http.MethodGet)
 	router.HandleFunc("/iframe/authenticate", api.authenticate).Methods(http.MethodGet)
 	router.HandleFunc("/iframe/notification_preview", api.iframeNotificationPreview).Methods(http.MethodGet)
-	router.HandleFunc("/iframe-manifest", api.appManifest).Methods(http.MethodGet)
+	router.HandleFunc("/iframe-manifest", api.adminRequired(api.appManifest)).Methods(http.MethodGet)
 	router.HandleFunc("/csp-report", api.cspReport).Methods(http.MethodPost)
+
+	// Icon upload and retrieval endpoints
+	router.HandleFunc("/icons/upload", api.adminRequired(api.uploadIcon)).Methods(http.MethodPost)
+	router.HandleFunc("/icons/{iconType}", api.adminRequired(api.getIcon)).Methods(http.MethodGet)
+	router.HandleFunc("/icons/{iconType}", api.adminRequired(api.deleteIcon)).Methods(http.MethodDelete)
+	router.HandleFunc("/icons/{iconType}/exists", api.adminRequired(api.iconExists)).Methods(http.MethodGet)
 
 	return api
 }
 
 func (a *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.router.ServeHTTP(w, r)
+}
+
+// adminRequired is a middleware that checks if the user is an admin
+func (a *API) adminRequired(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// User must be logged in
+		userID := r.Header.Get("Mattermost-User-ID")
+		if userID == "" {
+			http.Error(w, "Not authorized", http.StatusUnauthorized)
+			return
+		}
+
+		// User must be an admin
+		if !a.p.API.HasPermissionTo(userID, model.PermissionManageSystem) {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		// Credentials are valid, call the next handler
+		next(w, r)
+	}
 }
 
 // handleStaticFiles handles the static files under the assets directory.
