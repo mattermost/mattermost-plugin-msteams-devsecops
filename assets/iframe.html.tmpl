@@ -108,6 +108,7 @@
         microsoftTeams.app.notifySuccess();
       }).catch((error) => {
         console.error('Failed to initialize Microsoft Teams SDK:', error);
+        iframe.src = '{{.SiteURL}}';
       });
 
       // Choose the iFrame content based on the tenant.
