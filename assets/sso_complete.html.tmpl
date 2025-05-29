@@ -3,11 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Mattermost</title>
-    <script
-        src="https://res.cdn.office.net/teams-js/2.34.0/js/MicrosoftTeams.min.js"
-        integrity="sha384-brW9AazbKR2dYw2DucGgWCCcmrm2oBFV4HQidyuyZRI/TnAkmOOnTARSTdps3Hwt"
-        crossorigin="anonymous"
-    ></script>
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
     <style nonce="{{.Nonce}}">
         body {
@@ -52,42 +47,50 @@
 <body>
     <div class="container">
         <h2>Authentication Complete</h2>
-        <p>You have successfully authenticated with Microsoft Teams.</p>
+        <p>You have successfully authenticated with Mattermost.</p>
         <button id="completeButton">Complete Authentication</button>
         <p class="footer">If the window doesn't close automatically, you can close it manually.</p>
     </div>
 
     <script nonce="{{.Nonce}}">
-        window.mmTeamsCompleteSSO = null;
-        window.mmTeamsHandleError = null;
-
-        (function (microsoftTeams) {
-            function completeSSO() {
-                microsoftTeams.authentication.notifySuccess();
+        function completeSSO() {
+            // Notify the opener window that authentication was successful
+            if (window.opener) {
+                window.opener.postMessage({ type: 'auth_success' }, '*');
+                // Close this window after sending the message
+                setTimeout(() => window.close(), 100);
+            } else {
+                console.error('Cannot find opener window');
+                // If no opener is found, just close the window
+                window.close();
             }
+        }
 
-            function handleError(error) {
-                microsoftTeams.authentication.notifyFailure(error || 'Authentication failed');
+        function handleError(error) {
+            // Notify the opener window that authentication failed
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'auth_error',
+                    error: error || 'Authentication failed'
+                }, '*');
+                // Close this window after sending the message
+                setTimeout(() => window.close(), 100);
+            } else {
+                console.error('Cannot find opener window:', error);
+                // If no opener is found, just close the window
+                window.close();
             }
+        }
 
-            // Assign the functions to the global references
-            window.mmTeamsCompleteSSO = completeSSO;
-            window.mmTeamsHandleError = handleError;
+        // Make functions available globally if needed
+        window.mmTeamsCompleteSSO = completeSSO;
+        window.mmTeamsHandleError = handleError;
 
-            // Set up button click handler
-            document.getElementById('completeButton').addEventListener('click', completeSSO);
+        // Set up button click handler
+        document.getElementById('completeButton').addEventListener('click', completeSSO);
 
-            // Initialize Teams
-            microsoftTeams.app.initialize().then(() => {
-                // Ready for user to complete
-                console.log("Teams initialized successfully");
-
-                setTimeout(completeSSO, 200);
-            }).catch(err => {
-                console.log(err)
-                handleError('There was an error with the authentication. Refresh the page and try again.');
-            });
-        })(microsoftTeams);
+        // Auto-complete after a short delay
+        setTimeout(completeSSO, 200);
     </script>
 </body>
 </html>

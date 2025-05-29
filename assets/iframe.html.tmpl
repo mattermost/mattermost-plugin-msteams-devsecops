@@ -55,22 +55,50 @@
           // Store reference to wait iframe window to send messages
           const waitIframeWindow = iframe.contentWindow;
 
-          // Launch auth popup using msteams sdk
-          microsoftTeams.authentication.authenticate({
-            url: url.toString(),
-            width: 600,
-            height: 535,
-            isExternal: false, // settings this to `true` will force the url to open in a web browser instead of a popup
-          }).then(() => {
-              waitIframeWindow.postMessage({
-                type: 'auth_success'
-              }, domainRoot);
-          }).catch((error) => {
+          // Launch auth popup using native JavaScript
+          const popup = window.open(url.toString(), 'MattermostAuth', 'width=600,height=535,resizable=yes');
+          
+          // Check if popup was blocked
+          if (!popup || popup.closed || typeof popup.closed === 'undefined') {
             waitIframeWindow.postMessage({
               type: 'auth_error',
-              error: error ? (error.message || String(error)) : 'Authentication failed'
+              error: 'Popup was blocked. Please enable popups for this site.'
             }, domainRoot);
-          })
+            return;
+          }
+          
+          // Setup message listener for auth_success and auth_error messages from the popup
+          const authMessageHandler = function(messageEvent) {
+            if (messageEvent.data && (messageEvent.data.type === 'auth_success' || messageEvent.data.type === 'auth_error')) {
+              // Forward the message to the wait iframe
+              waitIframeWindow.postMessage(messageEvent.data, domainRoot);
+              
+              // Remove the event listener once we've received a response
+              window.removeEventListener('message', authMessageHandler);
+              
+              // Clear the interval since we don't need to poll anymore
+              clearInterval(popupCheckInterval);
+            }
+          };
+          
+          // Add event listener for messages from the popup
+          window.addEventListener('message', authMessageHandler);
+          
+          // Still keep polling to detect when the popup is closed
+          const popupCheckInterval = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(popupCheckInterval);
+              // Remove the event listener when popup is closed
+              window.removeEventListener('message', authMessageHandler);
+              
+              // Don't assume success or failure if the popup was closed without sending a message
+              // Just inform the user that authentication was cancelled
+              waitIframeWindow.postMessage({
+                type: 'auth_error',
+                error: 'Authentication was cancelled or interrupted. Please try again.'
+              }, domainRoot);
+            }
+          }, 500);
         }
 
         // External auth is completed, move the iframe to Mattermost again.
