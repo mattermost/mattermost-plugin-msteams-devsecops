@@ -32,6 +32,20 @@
       const domainRoot = '{{.SiteURL}}';
       const iframe = document.querySelector('iframe');
 
+      function isValidOrigin(eventOrigin, expectedOrigin) {
+        try {
+          const eventUrl = new URL(eventOrigin);
+          const expectedUrl = new URL(expectedOrigin);
+
+          return eventUrl.protocol === expectedUrl.protocol &&
+          eventUrl.hostname === expectedUrl.hostname &&
+          eventUrl.port === expectedUrl.port;
+        } catch (e) {
+          console.error('Invalid origin URL:', e);
+          return false;
+        }
+      }
+
       // Listen for a message from the iframe "mattermost_external_auth_login" sent by using `window.parent.postMessage`
       window.addEventListener('message', async function (event) {
         if (event.data.type === 'mattermost_external_auth_login') {
@@ -41,16 +55,16 @@
 
           iframe.src = domainRoot + '/plugins/com.mattermost.plugin-msteams-devsecops/sso/wait';
 
+
+          // Ensure that the URL hostname is the same as domainRoot
+          if (!isValidOrigin(event.origin, domainRoot)) {
+            console.error('Rejecting unknown origin: ' + event.origin);
+            return;
+          }
+
           // Parse the URL and add redirect_to parameter
           const url = new URL(event.data.href);
           url.searchParams.set('redirect_to', '/plugins/com.mattermost.plugin-msteams-devsecops/sso/complete');
-
-          // Ensure that the URL hostname is the same as domainRoot
-          const domainRootUrl = new URL(domainRoot);
-          if (url.hostname !== domainRootUrl.hostname) {
-            console.error('URL hostname does not match domainRoot hostname');
-            return
-          }
 
           // Store reference to wait iframe window to send messages
           const waitIframeWindow = iframe.contentWindow;
