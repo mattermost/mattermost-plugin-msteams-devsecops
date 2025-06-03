@@ -32,6 +32,20 @@
       const domainRoot = '{{.SiteURL}}';
       const iframe = document.querySelector('iframe');
 
+      function isValidOrigin(eventOrigin, expectedOrigin) {
+        try {
+          const eventUrl = new URL(eventOrigin);
+          const expectedUrl = new URL(expectedOrigin);
+
+          return eventUrl.protocol === expectedUrl.protocol &&
+          eventUrl.hostname === expectedUrl.hostname &&
+          eventUrl.port === expectedUrl.port;
+        } catch (e) {
+          console.error('Invalid origin URL:', e);
+          return false;
+        }
+      }
+
       // Listen for a message from the iframe "mattermost_external_auth_login" sent by using `window.parent.postMessage`
       window.addEventListener('message', async function (event) {
         if (event.data.type === 'mattermost_external_auth_login') {
@@ -43,21 +57,21 @@
 
           // Parse the URL and add redirect_to parameter
           const url = new URL(event.data.href);
-          url.searchParams.set('redirect_to', '/plugins/com.mattermost.plugin-msteams-devsecops/sso/complete');
 
           // Ensure that the URL hostname is the same as domainRoot
-          const domainRootUrl = new URL(domainRoot);
-          if (url.hostname !== domainRootUrl.hostname) {
-            console.error('URL hostname does not match domainRoot hostname');
+          if (!isValidOrigin(url, domainRoot)) {
+            console.error('Rejecting an invalid origin');
             return
           }
+
+          url.searchParams.set('redirect_to', '/plugins/com.mattermost.plugin-msteams-devsecops/sso/complete');
 
           // Store reference to wait iframe window to send messages
           const waitIframeWindow = iframe.contentWindow;
 
           // Launch auth popup using native JavaScript
           const popup = window.open(url.toString(), 'MattermostAuth', 'width=600,height=535,resizable=yes');
-          
+
           // Check if popup was blocked
           if (!popup || popup.closed || typeof popup.closed === 'undefined') {
             waitIframeWindow.postMessage({
@@ -66,31 +80,31 @@
             }, domainRoot);
             return;
           }
-          
+
           // Setup message listener for auth_success and auth_error messages from the popup
           const authMessageHandler = function(messageEvent) {
             if (messageEvent.data && (messageEvent.data.type === 'auth_success' || messageEvent.data.type === 'auth_error')) {
               // Forward the message to the wait iframe
               waitIframeWindow.postMessage(messageEvent.data, domainRoot);
-              
+
               // Remove the event listener once we've received a response
               window.removeEventListener('message', authMessageHandler);
-              
+
               // Clear the interval since we don't need to poll anymore
               clearInterval(popupCheckInterval);
             }
           };
-          
+
           // Add event listener for messages from the popup
           window.addEventListener('message', authMessageHandler);
-          
+
           // Still keep polling to detect when the popup is closed
           const popupCheckInterval = setInterval(() => {
             if (popup.closed) {
               clearInterval(popupCheckInterval);
               // Remove the event listener when popup is closed
               window.removeEventListener('message', authMessageHandler);
-              
+
               // Don't assume success or failure if the popup was closed without sending a message
               // Just inform the user that authentication was cancelled
               waitIframeWindow.postMessage({

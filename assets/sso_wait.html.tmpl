@@ -57,8 +57,25 @@
 	</div>
 
 	<script nonce="{{.Nonce}}">
+		const domainRoot = '{{.SiteURL}}';
+
 		// Set up event listener for window messages
 		let messageHandled = false;
+
+
+		function isValidOrigin(eventOrigin, expectedOrigin) {
+			try {
+				const eventUrl = new URL(eventOrigin);
+				const expectedUrl = new URL(expectedOrigin);
+
+				return eventUrl.protocol === expectedUrl.protocol &&
+					eventUrl.hostname === expectedUrl.hostname &&
+					eventUrl.port === expectedUrl.port;
+			} catch (e) {
+				console.error('Invalid origin URL:', e);
+				return false;
+			}
+		}
 
 		// Function to show/hide message types
 		function showMsgTypes(msgType) {
@@ -83,6 +100,11 @@
 		function handleMessage(event) {
 			// If we've already handled a message, don't process any more
 			if (messageHandled) {
+				return;
+			}
+
+			if (!isValidOrigin(event.origin, domainRoot)) {
+				console.error('Rejecting an invalid origin');
 				return;
 			}
 
