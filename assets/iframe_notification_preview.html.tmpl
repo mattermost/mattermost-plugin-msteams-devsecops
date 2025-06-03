@@ -8,7 +8,7 @@
         integrity="sha384-brW9AazbKR2dYw2DucGgWCCcmrm2oBFV4HQidyuyZRI/TnAkmOOnTARSTdps3Hwt"
         crossorigin="anonymous"
     ></script>
-    <script 
+    <script
         src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"
         integrity="sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb"
         crossorigin="anonymous"
@@ -202,6 +202,7 @@
         // Variables that need to be in global scope
         let context;
         let currentUserId = "{{.UserID}}";
+        let appID = "{{.TeamsAppID}}";
 
         // IIFE for initialization and utility functions
         (function() {
@@ -224,7 +225,7 @@
             // Function to navigate to Mattermost
             function goToMattermost() {
                 microsoftTeams.pages.navigateToApp({
-                    appId: context.app.appId.appIdAsString,
+                    appId: appID,
                     subPageId: 'post_{{.Post.Id}}'
                 });
             }
@@ -240,7 +241,7 @@
                 // Render the message as markdown
                 const messageContent = `{{.Post.Message}}`;
                 document.getElementById('message-content').innerHTML = marked.parse(messageContent);
-                
+
                 // Add event listener to the view link
                 document.getElementById('view-in-mattermost').addEventListener('click', goToMattermost);
             };
