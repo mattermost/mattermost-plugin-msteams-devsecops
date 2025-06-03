@@ -26,11 +26,12 @@ import (
 )
 
 type iFrameContext struct {
-	SiteURL  string
-	PluginID string
-	TenantID string
-	UserID   string
-	Nonce    string
+	SiteURL    string
+	PluginID   string
+	TenantID   string
+	TeamsAppID string
+	UserID     string
+	Nonce      string
 
 	Post                       *model.Post
 	PostJSON                   string
@@ -150,12 +151,20 @@ func (a *API) createIFrameContext(userID string, post *model.Post) (iFrameContex
 		return iFrameContext{}, fmt.Errorf("ServiceSettings.SiteURL cannot be empty for MS Teams iFrame")
 	}
 
+	var appID string
+	var err error
+	appID, err = a.p.pluginStore.GetAppID(a.p.getConfiguration().M365TenantID)
+	if err != nil {
+		a.p.API.LogWarn("Failed to get app ID, button in notification preview won't work", "tenantID", a.p.getConfiguration().M365TenantID, "error", err.Error())
+	}
+
 	iFrameCtx := iFrameContext{
-		SiteURL:  *config.ServiceSettings.SiteURL,
-		PluginID: url.PathEscape(manifest.Id),
-		TenantID: a.p.getConfiguration().TenantID,
-		UserID:   userID,
-		Post:     post,
+		SiteURL:    *config.ServiceSettings.SiteURL,
+		PluginID:   url.PathEscape(manifest.Id),
+		TenantID:   a.p.getConfiguration().M365TenantID,
+		TeamsAppID: appID,
+		UserID:     userID,
+		Post:       post,
 	}
 
 	// Generate a random nonce for the script/style tags
@@ -268,14 +277,14 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 
 	// Validate the token in the request, handling all errors if invalid.
-	expectedTenantIDs := []string{a.p.getConfiguration().TenantID}
+	expectedTenantIDs := []string{a.p.getConfiguration().M365TenantID}
 	params := &validateTokenParams{
 		jwtKeyFunc:          a.p.tabAppJWTKeyFunc,
 		token:               token,
 		expectedTenantIDs:   expectedTenantIDs,
 		skipTokenValidation: shouldSkipTokenValidation(),
 		siteURL:             *config.ServiceSettings.SiteURL,
-		clientID:            a.p.configuration.AppClientID,
+		clientID:            a.p.configuration.M365ClientID,
 	}
 
 	claims, validationErr := validateToken(params)

@@ -90,7 +90,7 @@ func (p *Plugin) checkCredentials() {
 		return
 	}
 
-	app, err := client.GetApp(p.getConfiguration().AppClientID)
+	app, err := client.GetApp(p.getConfiguration().M365ClientID)
 	if err != nil {
 		p.API.LogWarn("Failed to get app credentials", "error", err.Error())
 		return
@@ -106,7 +106,7 @@ func (p *Plugin) checkCredentials() {
 
 	found := false
 	for _, credential := range credentials {
-		if strings.HasPrefix(p.getConfiguration().AppClientSecret, credential.Hint) {
+		if strings.HasPrefix(p.getConfiguration().M365ClientSecret, credential.Hint) {
 			p.API.LogInfo("Found matching credential", "credential_name", credential.Name, "credential_id", credential.ID, "credential_end_date_time", credential.EndDateTime)
 
 			if found {
@@ -133,7 +133,7 @@ func (p *Plugin) checkCredentials() {
 			"permission", permission.Name,
 			"resource_id", permission.ResourceAccess.ID,
 			"type", describeResourceAccessType(permission.ResourceAccess),
-			"application_id", p.getConfiguration().AppClientID,
+			"application_id", p.getConfiguration().M365ClientID,
 		)
 	}
 
@@ -142,7 +142,7 @@ func (p *Plugin) checkCredentials() {
 			"Application has redundant API Permission",
 			"resource_id", resourceAccess.ID,
 			"type", describeResourceAccessType(resourceAccess),
-			"application_id", p.getConfiguration().AppClientID,
+			"application_id", p.getConfiguration().M365ClientID,
 		)
 	}
 }
@@ -156,7 +156,7 @@ func (p *Plugin) checkPermissions(app *clientmodels.App) ([]expectedPermission, 
 			"Found API Permission",
 			"resource_id", requiredResource.ID,
 			"type", describeResourceAccessType(requiredResource),
-			"application_id", p.getConfiguration().AppClientID,
+			"application_id", p.getConfiguration().M365ClientID,
 		)
 	}
 

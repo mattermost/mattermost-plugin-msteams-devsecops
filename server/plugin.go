@@ -266,9 +266,9 @@ func (p *Plugin) connectTeamsAppClient() error {
 	}
 
 	p.msteamsAppClient = msteams.NewApp(
-		p.getConfiguration().TenantID,
-		p.getConfiguration().AppClientID,
-		p.getConfiguration().AppClientSecret,
+		p.getConfiguration().M365TenantID,
+		p.getConfiguration().M365ClientID,
+		p.getConfiguration().M365ClientSecret,
 		&p.client.Log,
 	)
 
@@ -278,17 +278,17 @@ func (p *Plugin) connectTeamsAppClient() error {
 		return err
 	}
 
-	// Retrieve the Teams application ID by external ID (using AppClientID)
-	if p.getConfiguration().AppClientID != "" {
+	// Retrieve the Teams application ID by external ID (using M365 client ID)
+	if p.getConfiguration().M365ClientID != "" {
 		appID, err := p.msteamsAppClient.GetTeamsAppIDByExternalID(p.getConfiguration().AppID)
 		if err != nil {
 			p.API.LogError("Unable to retrieve Teams application ID", "error", err)
 			// Continue even if we couldn't retrieve the app ID, it's not essential for all operations
 		} else {
-			if err := p.pluginStore.StoreAppID(p.configuration.TenantID, appID); err != nil {
-				p.API.LogError("Unable to store Teams application ID", "error", err)
+			if err := p.pluginStore.StoreAppID(p.configuration.M365TenantID, appID); err != nil {
+				p.API.LogError("Unable to store Teams internal application ID", "error", err)
 			} else {
-				p.API.LogDebug("Retrieved Teams application ID", "appID", appID)
+				p.API.LogDebug("Retrieved Teams internal application ID", "appID", appID)
 			}
 		}
 	}

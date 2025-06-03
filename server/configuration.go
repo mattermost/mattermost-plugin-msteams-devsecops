@@ -20,39 +20,101 @@ import (
 // If you add non-reference types to your configuration struct, be sure to rewrite Clone as a deep
 // copy appropriate for your types.
 type configuration struct {
-	AppVersion                       string `json:"appVersion"`
-	AppID                            string `json:"appID"`
-	AppClientID                      string `json:"appClientID"`
-	AppClientSecret                  string `json:"appClientSecret"`
-	AppName                          string `json:"appName"`
-	TenantID                         string `json:"tenantID"`
-	DisableCheckCredentials          bool   `json:"internalDisableCheckCredentials"`
-	DisableUserActivityNotifications bool   `json:"disableUserActivityNotifications"`
+	// M365 Settings
+	M365TenantID     string `json:"m365_tenant_id"`
+	M365ClientID     string `json:"m365_client_id"`
+	M365ClientSecret string `json:"m365_client_secret"`
+
+	// Plugin Settings
+	DisableUserActivityNotifications bool `json:"disable_user_activity_notifications"`
+	DisableCheckCredentials          bool `json:"internal_disable_check_credentials"`
+
+	// Manifest Settings
+	AppVersion string `json:"app_version"`
+	AppID      string `json:"app_id"`
+	AppName    string `json:"app_name"`
+
+	// Legacy
+	LegacyTenantID        string `json:"tenantID"`        // Deprecated: use M365TenantID instead
+	LegacyAppClientID     string `json:"appClientID"`     // Deprecated: use M365ClientID instead
+	LegacyAppClientSecret string `json:"appClientSecret"` // Deprecated: use M365ClientSecret instead
+	LegacyAppVersion      string `json:"appVersion"`      // Deprecated: use AppVersion instead
+	LegacyAppID           string `json:"appID"`           // Deprecated: use AppID instead
+	LegacyAppName         string `json:"appName"`         // Deprecated: use AppName instead
 }
 
-func (c *configuration) ProcessConfiguration() {
-	c.TenantID = strings.TrimSpace(c.TenantID)
-	c.AppClientID = strings.TrimSpace(c.AppClientID)
-	c.AppClientSecret = strings.TrimSpace(c.AppClientSecret)
+func (c *configuration) ProcessConfiguration() bool {
+	hasChange := false
+
+	// handle legacy configuration fields
+	if c.M365TenantID == "" && c.LegacyTenantID != "" {
+		c.M365TenantID = c.LegacyTenantID
+		hasChange = true
+	}
+	if c.M365ClientID == "" && c.LegacyAppClientID != "" {
+		c.M365ClientID = c.LegacyAppClientID
+		hasChange = true
+	}
+	if c.M365ClientSecret == "" && c.LegacyAppClientSecret != "" {
+		c.M365ClientSecret = c.LegacyAppClientSecret
+		hasChange = true
+	}
+
+	if c.AppVersion == "" && c.LegacyAppVersion != "" {
+		c.AppVersion = c.LegacyAppVersion
+		hasChange = true
+	}
+
+	if c.AppID == "" && c.LegacyAppID != "" {
+		c.AppID = c.LegacyAppID
+		hasChange = true
+	}
+
+	if c.AppName == "" && c.LegacyAppName != "" {
+		c.AppName = c.LegacyAppName
+		hasChange = true
+	}
+
+	// Trim whitespace from key fields
+	length := len(c.M365TenantID)
+	c.M365TenantID = strings.TrimSpace(c.M365TenantID)
+	if length != len(c.M365TenantID) {
+		hasChange = true
+	}
+
+	length = len(c.M365ClientID)
+	c.M365ClientID = strings.TrimSpace(c.M365ClientID)
+	if length != len(c.M365ClientID) {
+		hasChange = true
+	}
+
+	length = len(c.M365ClientSecret)
+	c.M365ClientSecret = strings.TrimSpace(c.M365ClientSecret)
+	if length != len(c.M365ClientSecret) {
+		hasChange = true
+	}
+
+	return hasChange
 }
 
 func (p *Plugin) validateConfiguration(configuration *configuration) error {
 	configuration.ProcessConfiguration()
+
+	if configuration.M365TenantID == "" {
+		return errors.New("tenant ID should not be empty")
+	}
+	if configuration.M365ClientID == "" {
+		return errors.New("client ID should not be empty")
+	}
+	if configuration.M365ClientSecret == "" {
+		return errors.New("client secret should not be empty")
+	}
 
 	if configuration.AppVersion == "" {
 		return errors.New("application version should not be empty")
 	}
 	if configuration.AppID == "" {
 		return errors.New("application ID should not be empty")
-	}
-	if configuration.TenantID == "" {
-		return errors.New("tenant ID should not be empty")
-	}
-	if configuration.AppClientID == "" {
-		return errors.New("client ID should not be empty")
-	}
-	if configuration.AppClientSecret == "" {
-		return errors.New("client secret should not be empty")
 	}
 	if configuration.AppName == "" {
 		return errors.New("app name should not be empty")
@@ -65,6 +127,34 @@ func (p *Plugin) validateConfiguration(configuration *configuration) error {
 func (c *configuration) Clone() *configuration {
 	var clone = *c
 	return &clone
+}
+
+// ToMap converts the configuration struct to a map using JSON tags as keys.
+func (c *configuration) ToMap() map[string]any {
+	// Convert the configuration struct to a map
+	configMap := make(map[string]any)
+	v := reflect.ValueOf(c).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Type().Field(i)
+		value := v.Field(i).Interface()
+
+		// Get the JSON tag name
+		jsonTag := field.Tag.Get("json")
+		if jsonTag == "" {
+			// If no JSON tag, fall back to field name
+			configMap[field.Name] = value
+			continue
+		}
+
+		// Handle JSON tag `-` which indicates to skip this field
+		jsonName := strings.Split(jsonTag, ",")[0]
+		if jsonName == "-" {
+			continue
+		}
+
+		configMap[jsonName] = value
+	}
+	return configMap
 }
 
 // getConfiguration retrieves the active configuration under lock, making it safe to use
@@ -118,9 +208,16 @@ func (p *Plugin) OnConfigurationChange() error {
 		return errors.Wrap(err, "failed to load plugin configuration")
 	}
 
+	if newConfig.ProcessConfiguration() {
+		// If the configuration has changed, we need to save it back to the config store
+		if err := p.API.SavePluginConfig(newConfig.ToMap()); err != nil {
+			return errors.Wrap(err, "failed to set plugin configuration")
+		}
+	}
+
 	// Validate the configuration
 	/*
-		Skip validation for now, as it is prpreventing the plugin from being installed
+		Skip validation for now, as it is preventing the plugin from being installed
 		since the configuration is not set yet.  OnConfigurationChange is called before
 		OnActivate.
 
