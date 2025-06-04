@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mattermost</title>
+    <script
+        src="https://res.cdn.office.net/teams-js/2.34.0/js/MicrosoftTeams.min.js"
+        integrity="sha384-brW9AazbKR2dYw2DucGgWCCcmrm2oBFV4HQidyuyZRI/TnAkmOOnTARSTdps3Hwt"
+        crossorigin="anonymous"
+    ></script>
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+    <style nonce="{{.Nonce}}">
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+            flex-direction: column;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 400px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #1C58D9;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #144BB4;
+        }
+        .footer {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Authentication Complete</h2>
+        <p>You have successfully authenticated with Microsoft Teams.</p>
+        <button id="completeButton">Complete Authentication</button>
+        <p class="footer">If the window doesn't close automatically, you can close it manually.</p>
+    </div>
+
+    <script nonce="{{.Nonce}}">
+        window.mmTeamsCompleteSSO = null;
+        window.mmTeamsHandleError = null;
+
+        (function (microsoftTeams) {
+            function completeSSO() {
+                microsoftTeams.authentication.notifySuccess();
+            }
+
+            function handleError(error) {
+                microsoftTeams.authentication.notifyFailure(error || 'Authentication failed');
+            }
+
+            // Assign the functions to the global references
+            window.mmTeamsCompleteSSO = completeSSO;
+            window.mmTeamsHandleError = handleError;
+
+            // Set up button click handler
+            document.getElementById('completeButton').addEventListener('click', completeSSO);
+
+            // Initialize Teams
+            microsoftTeams.app.initialize().then(() => {
+                // Ready for user to complete
+                console.log("Teams initialized successfully");
+
+                setTimeout(completeSSO, 200);
+            }).catch(err => {
+                console.log(err)
+                handleError('There was an error with the authentication. Refresh the page and try again.');
+            });
+        })(microsoftTeams);
+    </script>
+</body>
+</html>

@@ -19,5 +19,11 @@ var IFrameHTMLTemplate string
 //go:embed iframe_notification_preview.html.tmpl
 var IFrameNotificationPreviewHTMLTemplate string
 
+//go:embed sso_wait.html.tmpl
+var SSOWaitHTMLTemplate string
+
+//go:embed sso_complete.html.tmpl
+var SSOCompleteHTMLTemplate string
+
 //go:embed appmanifest.json.tmpl
 var AppManifestTemplate string

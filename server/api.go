@@ -38,6 +38,9 @@ func NewAPI(p *Plugin) *API {
 	router.HandleFunc("/icons/{iconType}", api.adminRequired(api.deleteIcon)).Methods(http.MethodDelete)
 	router.HandleFunc("/icons/{iconType}/exists", api.adminRequired(api.iconExists)).Methods(http.MethodGet)
 
+	// Embedded SSO login
+	api.serveSSO(router)
+
 	return api
 }
 
