@@ -50,3 +50,8 @@ If after following the [Setup Guide](https://docs.mattermost.com/integrate/matte
 #### Why am I seeing a 'This app cannot be found' error dialog when clicking an activity notification?
 
 This is likely due to re-installing the app in your app store, and a new internal ID being generated. Restarting the plugin in Mattermost will resolve this.
+
+#### Is MacOS supported?
+
+Outlook for Mac (native client) does not support apps currently. MS Teams on Mac (native client) is supported as are web clients for Outlook, MS Teams and Microsoft 365.
+
