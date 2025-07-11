@@ -27,13 +27,13 @@
        {
           "entityId":"Corpus",
           "name":"Corpus",
-          "contentUrl":"https://corpus.mattermost.io/plugins/com.mattermost.msteams-sync/iframe/mattermostTab?noroute",
+          "contentUrl":"https://corpus.mattermost.io/plugins/com.mattermost.plugin-msteams-devsecops/iframe/mattermostTab?noroute",
           "scopes":["personal"]
        },
        {
          "entityId": "notification_preview",
          "name": "Notification Preview",
-         "contentUrl": "https://corpus.mattermost.io/plugins/com.mattermost.msteams-sync/iframe/mattermostTab?action=notification_preview&noroute",
+         "contentUrl": "https://corpus.mattermost.io/plugins/com.mattermost.plugin-msteams-devsecops/iframe/mattermostTab?action=notification_preview&noroute",
          "scopes": ["personal"]
        },       
        {
