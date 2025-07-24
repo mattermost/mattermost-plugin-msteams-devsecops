@@ -19,8 +19,8 @@
     "full": "The Mattermost app for Microsoft 365 provides seamless access to the Mattermost platform from inside the tools you use every day. Communicate and collaborate effectively with your team in a centralized and familiar interface.\n\nKey Features:\n- Direct Access: Access Mattermost directly from a tab without switching applications or opening a browser\n- Seamless Integration: Experience the full functionality of Mattermost within a familiar interface\n- Real-time Collaboration: Collaborate with your team on projects, workflows, and communications in real time\n\nThis app is designed to work with Microsoft 365, Outlook, and Microsoft Teams. An account with Mattermost is required to use this app.\n\nAbout Mattermost: \nMattermost is a purpose-built platform for technical and operational teams working in organizations vital to national security, public safety, and critical infrastructure. [https://mattermost.com/](https://mattermost.com/)"
   },
   "icons": {
-    "outline": "community-logo-outline.png",
-    "color": "community-logo-color.png"
+    "outline": "community-outline.png",
+    "color": "community-color.png"
   },
   "accentColor": "#1e325c",
   "staticTabs": [
