@@ -1,26 +1,26 @@
 {
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
-  "version": "1.0.8",
+  "version": "1.0.7",
   "manifestVersion": "1.19",
-  "id": "b5f44ca1-af3f-4928-892f-63aa09d3527a",
+  "id": "98924ceb-b4ae-4c6e-a3b0-faa78426b0c9",
   "name": {
-    "short": "Community for Mattermost",
-    "full": "Community for Mattermost"
+    "short": "Community",
+    "full": "Community"
   },
   "developer": {
     "name": "Mattermost",
     "mpnId": "",
-    "websiteUrl": "https://mattermost.com/",
+    "websiteUrl": "https://github.com/mattermost/mattermost-plugin-msteams-devsecops/",
     "privacyUrl": "https://mattermost.com/privacy-policy/",
     "termsOfUseUrl": "https://mattermost.com/software-services-license-agreement/"
   },
   "description": {
-    "short": "Connect with the Community for Mattermost for seamless collaboration.",
-    "full": "The Community for Mattermost app for Microsoft 365 provides seamless access to the public Community for Mattermost instance from inside the tools you use every day. Join thousands of Mattermost users, contributors, and staff members in a vibrant community where you can ask questions, get support, share ideas, and contribute to shaping the future of Mattermost.\n\nKey Features:\n- Direct Access: Access the Community for Mattermost directly from a tab without switching applications or opening a browser\n- Seamless Integration: Experience the full functionality of Community for Mattermost within a familiar interface\n- Real-time Collaboration: Engage with the Community for Mattermost in real-time discussions on product features, technical questions, and best practices\n- Product Support: Get help from both Mattermost staff and experienced community members\n- Contribute to Development: Participate in discussions that shape the future direction of Mattermost products\n- Knowledge Sharing: Learn implementation strategies and best practices from a diverse community of users\n- Stay Updated: Keep up with the latest Mattermost announcements, updates, and roadmap information\n\nThis app is designed to work with Microsoft 365, Outlook and Microsoft Teams. A free account is required to use Community for Mattermost.\n\nAbout Mattermost: \nMattermost is a purpose-built platform for technical and operational teams working in organizations vital to national security, public safety and critical infrastructure. [https://mattermost.com/](https://mattermost.com/)"
+    "short": "Connect with Mattermost Community for seamless team collaboration.",
+    "full": "The Mattermost app for Microsoft 365 provides seamless access to the Mattermost platform from inside the tools you use every day. Communicate and collaborate effectively with your team in a centralized and familiar interface.\n\nKey Features:\n- Direct Access: Access Mattermost directly from a tab without switching applications or opening a browser\n- Seamless Integration: Experience the full functionality of Mattermost within a familiar interface\n- Real-time Collaboration: Collaborate with your team on projects, workflows, and communications in real time\n\nThis app is designed to work with Microsoft 365, Outlook, and Microsoft Teams. An account with Mattermost is required to use this app.\n\nAbout Mattermost: \nMattermost is a purpose-built platform for technical and operational teams working in organizations vital to national security, public safety, and critical infrastructure. [https://mattermost.com/](https://mattermost.com/)"
   },
   "icons": {
-    "outline": "community-outline.png",
-    "color": "community-color.png"
+    "outline": "community-logo-outline.png",
+    "color": "community-logo-color.png"
   },
   "accentColor": "#1e325c",
   "staticTabs": [
