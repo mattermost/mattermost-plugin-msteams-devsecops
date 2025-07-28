@@ -98,7 +98,7 @@ validate_args() {
         log_error "AppStore directory not found: $APPSTORE_DIR"
         exit 1
     fi
-    
+
     # Validate action
     case "$ACTION" in
         build-all|build-one|list|clean)
@@ -109,14 +109,14 @@ validate_args() {
             exit 1
             ;;
     esac
-    
+
     # Validate specific app if building one
     if [ "$ACTION" == "build-one" ] && [ -z "$SPECIFIC_APP" ]; then
         log_error "Specific app name required for build-one action"
         log_error "Use --app APP_NAME or set SPECIFIC_APP environment variable"
         exit 1
     fi
-    
+
     # Check if specific app exists
     if [ -n "$SPECIFIC_APP" ]; then
         if [ ! -d "$APPSTORE_DIR/$SPECIFIC_APP" ]; then
@@ -129,29 +129,29 @@ validate_args() {
 # Build all Teams apps
 build_all_apps() {
     log_info "Building all Teams apps from $APPSTORE_DIR"
-    
+
     local apps
     apps=$(get_all_teams_apps "$APPSTORE_DIR")
-    
+
     if [ -z "$apps" ]; then
         log_warning "No Teams apps found in $APPSTORE_DIR"
         return 0
     fi
-    
+
     local total_apps=0
     local successful_builds=0
     local failed_builds=0
-    
+
     while IFS= read -r app; do
         if [ -z "$app" ]; then
             continue
         fi
-        
+
         total_apps=$((total_apps + 1))
         log_info "Processing app: $app"
-        
+
         local app_dir="$APPSTORE_DIR/$app"
-        
+
         # Validate app
         if validate_teams_app "$app_dir" "$app"; then
             # Build package
@@ -164,10 +164,10 @@ build_all_apps() {
             log_error "Skipping invalid app: $app"
             failed_builds=$((failed_builds + 1))
         fi
-        
+
         echo # Empty line for readability
     done <<< "$apps"
-    
+
     # Summary
     log_info "Build Summary:"
     log_info "  Total apps: $total_apps"
@@ -175,28 +175,28 @@ build_all_apps() {
     if [ $failed_builds -gt 0 ]; then
         log_error "  Failed builds: $failed_builds"
     fi
-    
+
     if [ $successful_builds -gt 0 ]; then
         echo
         list_packages "$OUTPUT_DIR"
     fi
-    
-    return $([ $failed_builds -eq 0 ] && echo 0 || echo 1)
+
+    return $([ $failed_builds -eq 0 ])
 }
 
 # Build a specific Teams app
 build_specific_app() {
     local app="$SPECIFIC_APP"
     log_info "Building specific Teams app: $app"
-    
+
     local app_dir="$APPSTORE_DIR/$app"
-    
+
     # Validate app
     if ! validate_teams_app "$app_dir" "$app"; then
         log_error "App validation failed: $app"
         return 1
     fi
-    
+
     # Build package
     if create_app_package "$app_dir" "$app" "$OUTPUT_DIR"; then
         log_success "Successfully built app: $app"
@@ -212,10 +212,10 @@ build_specific_app() {
 # List available apps and existing packages
 list_apps_and_packages() {
     log_info "Available Teams apps in $APPSTORE_DIR:"
-    
+
     local apps
     apps=$(get_all_teams_apps "$APPSTORE_DIR")
-    
+
     if [ -z "$apps" ]; then
         log_warning "No Teams apps found in $APPSTORE_DIR"
     else
@@ -223,10 +223,10 @@ list_apps_and_packages() {
             if [ -z "$app" ]; then
                 continue
             fi
-            
+
             local app_dir="$APPSTORE_DIR/$app"
             local manifest_file="$app_dir/manifest.json"
-            
+
             if [ -f "$manifest_file" ]; then
                 local version
                 version=$(get_app_version "$manifest_file" 2>/dev/null) || version="unknown"
@@ -236,7 +236,7 @@ list_apps_and_packages() {
             fi
         done <<< "$apps"
     fi
-    
+
     echo
     list_packages "$OUTPUT_DIR"
 }
@@ -251,7 +251,7 @@ clean_packages_action() {
 main() {
     # Parse arguments
     parse_args "$@"
-    
+
     # Show configuration
     log_info "Teams App Builder Configuration:"
     log_info "  AppStore Directory: $APPSTORE_DIR"
@@ -261,15 +261,15 @@ main() {
         log_info "  Specific App: $SPECIFIC_APP"
     fi
     echo
-    
+
     # Validate arguments
     validate_args
-    
+
     # Check dependencies
     if ! check_dependencies; then
         exit 1
     fi
-    
+
     # Execute action
     case "$ACTION" in
         build-all)

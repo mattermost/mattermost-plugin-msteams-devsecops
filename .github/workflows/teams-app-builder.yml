@@ -3,63 +3,60 @@ name: Teams App Builder
 on:
   push:
     paths:
-      - 'appstore/**'
+      - "appstore/**"
   pull_request:
     paths:
-      - 'appstore/**'
+      - "appstore/**"
   workflow_dispatch:
 
 jobs:
   build-apps:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Set up Go
-      uses: actions/setup-go@v4
-    
-    - name: Get changed files
-      id: changes
-      run: |
-        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          echo "Building all apps (manual trigger)"
-          echo "changed_apps=Community for Mattermost,Corpus,HUB" >> $GITHUB_OUTPUT
-        else
-          # Get changed files in appstore directory
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            changed_files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '^appstore/' || true)
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "Building all apps (manual trigger)"
+            echo "changed_apps=Community for Mattermost,Corpus,HUB" >> $GITHUB_OUTPUT
           else
-            changed_files=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^appstore/' || true)
+            # Get changed files in appstore directory
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              changed_files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '^appstore/' || true)
+            else
+              changed_files=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^appstore/' || true)
+            fi
+
+            if [ -z "$changed_files" ]; then
+              echo "No changes in appstore directory"
+              echo "changed_apps=" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            # Extract app names from changed files
+            changed_apps=$(echo "$changed_files" | cut -d'/' -f2 | sort -u | tr '\n' ',' | sed 's/,$//')
+            echo "Changed apps: $changed_apps"
+            echo "changed_apps=$changed_apps" >> $GITHUB_OUTPUT
           fi
-          
-          if [ -z "$changed_files" ]; then
-            echo "No changes in appstore directory"
-            echo "changed_apps=" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          # Extract app names from changed files
-          changed_apps=$(echo "$changed_files" | cut -d'/' -f2 | sort -u | tr '\n' ',' | sed 's/,$//')
-          echo "Changed apps: $changed_apps"
-          echo "changed_apps=$changed_apps" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: Build app packages
-      if: steps.changes.outputs.changed_apps != ''
-      run: make build-teams-apps
-    
-    - name: Upload artifacts
-      if: steps.changes.outputs.changed_apps != ''
-      uses: actions/upload-artifact@v4
-      with:
-        name: teams-app-packages
-        path: dist/teams-apps/*.zip
-        retention-days: 30
-    
-    - name: Show build results
-      if: steps.changes.outputs.changed_apps != ''
-      run: make list-teams-apps
+
+      - name: Build app packages
+        if: steps.changes.outputs.changed_apps != ''
+        run: make build-teams-apps
+
+      - name: Upload artifacts
+        if: steps.changes.outputs.changed_apps != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: teams-app-packages
+          path: dist/teams-apps/*.zip
+          retention-days: 30
+
+      - name: Show build results
+        if: steps.changes.outputs.changed_apps != ''
+        run: make list-teams-apps

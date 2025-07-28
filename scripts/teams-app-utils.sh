@@ -32,33 +32,33 @@ log_error() {
 # Check if required commands are available
 check_dependencies() {
     local missing_deps=()
-    
+
     if ! command -v jq &> /dev/null; then
         missing_deps+=(jq)
     fi
-    
+
     if ! command -v zip &> /dev/null; then
         missing_deps+=(zip)
     fi
-    
+
     if [ ${#missing_deps[@]} -ne 0 ]; then
         log_error "Missing required dependencies: ${missing_deps[*]}"
         log_error "Please install the missing dependencies and try again."
         return 1
     fi
-    
+
     return 0
 }
 
 # Get all available Teams apps
 get_all_teams_apps() {
     local appstore_dir="$1"
-    
+
     if [ ! -d "$appstore_dir" ]; then
         log_error "AppStore directory not found: $appstore_dir"
         return 1
     fi
-    
+
     find "$appstore_dir" -maxdepth 1 -type d -not -path "$appstore_dir" -exec basename {} \; | sort
 }
 
@@ -66,24 +66,24 @@ get_all_teams_apps() {
 validate_teams_app() {
     local app_dir="$1"
     local app_name="$2"
-    
+
     if [ ! -d "$app_dir" ]; then
         log_error "App directory not found: $app_dir"
         return 1
     fi
-    
+
     local manifest_file="$app_dir/manifest.json"
     if [ ! -f "$manifest_file" ]; then
         log_error "manifest.json not found in $app_dir"
         return 1
     fi
-    
+
     # Validate JSON syntax
     if ! jq empty "$manifest_file" 2>/dev/null; then
         log_error "Invalid JSON in $manifest_file"
         return 1
     fi
-    
+
     # Check required fields
     local version
     version=$(jq -r '.version' "$manifest_file" 2>/dev/null)
@@ -91,31 +91,31 @@ validate_teams_app() {
         log_error "Missing or invalid version in $manifest_file"
         return 1
     fi
-    
+
     local app_id
     app_id=$(jq -r '.id' "$manifest_file" 2>/dev/null)
     if [ "$app_id" == "null" ] || [ -z "$app_id" ]; then
         log_error "Missing or invalid id in $manifest_file"
         return 1
     fi
-    
+
     # Check for required icon files
     local color_icon outline_icon
     color_icon=$(jq -r '.icons.color' "$manifest_file" 2>/dev/null)
     outline_icon=$(jq -r '.icons.outline' "$manifest_file" 2>/dev/null)
-    
+
     if [ "$color_icon" != "null" ] && [ -n "$color_icon" ]; then
         if [ ! -f "$app_dir/$color_icon" ]; then
             log_warning "Color icon file not found: $app_dir/$color_icon"
         fi
     fi
-    
+
     if [ "$outline_icon" != "null" ] && [ -n "$outline_icon" ]; then
         if [ ! -f "$app_dir/$outline_icon" ]; then
             log_warning "Outline icon file not found: $app_dir/$outline_icon"
         fi
     fi
-    
+
     log_info "App '$app_name' validated successfully (version: $version)"
     return 0
 }
@@ -123,19 +123,19 @@ validate_teams_app() {
 # Extract version from manifest.json
 get_app_version() {
     local manifest_file="$1"
-    
+
     if [ ! -f "$manifest_file" ]; then
         log_error "Manifest file not found: $manifest_file"
         return 1
     fi
-    
+
     local version
     version=$(jq -r '.version' "$manifest_file" 2>/dev/null)
     if [ "$version" == "null" ] || [ -z "$version" ]; then
         log_error "Could not extract version from $manifest_file"
         return 1
     fi
-    
+
     echo "$version"
 }
 
@@ -151,46 +151,46 @@ create_app_package() {
     local app_dir="$1"
     local app_name="$2"
     local output_dir="$3"
-    
+
     if [ ! -d "$app_dir" ]; then
         log_error "App directory not found: $app_dir"
         return 1
     fi
-    
+
     local manifest_file="$app_dir/manifest.json"
     local version
     version=$(get_app_version "$manifest_file")
     if [ $? -ne 0 ]; then
         return 1
     fi
-    
+
     # Create output directory if it doesn't exist
     mkdir -p "$output_dir"
-    
+
     # Sanitize app name for filename
     local sanitized_name
     sanitized_name=$(sanitize_app_name "$app_name")
-    
+
     # Create zip file with version in name
     local zip_name="${sanitized_name}-${version}.zip"
     local zip_path="$output_dir/$zip_name"
-    
+
     log_info "Creating package: $zip_name"
-    
+
     # Create the zip file
     local current_dir
     current_dir=$(pwd)
-    
+
     cd "$app_dir"
-    if zip -r "$current_dir/$zip_path" . -x "*.DS_Store" "Thumbs.db" "*~" "*.tmp" > /dev/null 2>&1; then
+    if zip -r "$current_dir/$zip_path" . -x "*.DS_Store" -x "Thumbs.db" -x "*~" -x "*.tmp" > /dev/null 2>&1; then
         cd "$current_dir"
         log_success "Created package: $zip_path"
-        
+
         # Display package info
         local file_size
         file_size=$(du -h "$zip_path" | cut -f1)
         log_info "Package size: $file_size"
-        
+
         return 0
     else
         cd "$current_dir"
@@ -202,20 +202,20 @@ create_app_package() {
 # List all files in a directory with their sizes
 list_packages() {
     local output_dir="$1"
-    
+
     if [ ! -d "$output_dir" ]; then
         log_info "No packages found (output directory doesn't exist)"
         return 0
     fi
-    
+
     local packages
     packages=$(find "$output_dir" -name "*.zip" -type f 2>/dev/null)
-    
+
     if [ -z "$packages" ]; then
         log_info "No packages found in $output_dir"
         return 0
     fi
-    
+
     log_info "Available packages:"
     echo "$packages" | while read -r package; do
         local basename_pkg size
@@ -228,28 +228,28 @@ list_packages() {
 # Clean up old packages
 clean_packages() {
     local output_dir="$1"
-    
+
     if [ ! -d "$output_dir" ]; then
         log_info "Nothing to clean (output directory doesn't exist)"
         return 0
     fi
-    
+
     local packages
     packages=$(find "$output_dir" -name "*.zip" -type f 2>/dev/null)
-    
+
     if [ -z "$packages" ]; then
         log_info "Nothing to clean (no packages found)"
         return 0
     fi
-    
+
     log_info "Cleaning up packages..."
     echo "$packages" | while read -r package; do
         rm -f "$package"
         log_info "Removed: $(basename "$package")"
     done
-    
+
     # Remove empty directory
     rmdir "$output_dir" 2>/dev/null || true
-    
+
     log_success "Cleanup completed"
 }
