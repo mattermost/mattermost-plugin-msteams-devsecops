@@ -28,20 +28,28 @@
       "entityId": "Community",
       "name": "Community",
       "contentUrl": "https://community.mattermost.com/plugins/com.mattermost.plugin-msteams-devsecops/iframe/mattermostTab",
-      "scopes": ["personal"]
+      "scopes": [
+        "personal"
+      ]
     },
     {
       "entityId": "notification_preview",
       "name": "Notification Preview",
       "contentUrl": "https://community.mattermost.com/plugins/com.mattermost.plugin-msteams-devsecops/iframe/mattermostTab?action=notification_preview",
-      "scopes": ["personal"]
+      "scopes": [
+        "personal"
+      ]
     },
     {
       "entityId": "about",
-      "scopes": ["personal"]
+      "scopes": [
+        "personal"
+      ]
     }
   ],
-  "validDomains": ["community.mattermost.com"],
+  "validDomains": [
+    "community.mattermost.com"
+  ],
   "showLoadingIndicator": false,
   "isFullScreen": true,
   "webApplicationInfo": {
@@ -58,7 +66,9 @@
       ]
     }
   },
-  "devicePermissions": ["media"],
+  "devicePermissions": [
+    "media"
+  ],
   "defaultGroupCapability": {
     "team": "tab"
   },
