@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.1
 	github.com/MicahParks/jwkset v0.9.6
 	github.com/MicahParks/keyfunc/v3 v3.4.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
