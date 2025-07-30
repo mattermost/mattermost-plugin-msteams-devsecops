@@ -33,6 +33,11 @@ ifneq ($(wildcard build/custom.mk),)
 	include build/custom.mk
 endif
 
+# Include Teams apps makefile, if present
+ifneq ($(wildcard build/teams-apps.mk),)
+	include build/teams-apps.mk
+endif
+
 ifneq ($(MM_DEBUG),)
 	GO_BUILD_GCFLAGS = -gcflags "all=-N -l"
 else
