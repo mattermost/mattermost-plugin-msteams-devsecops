@@ -32,7 +32,7 @@ const IconUpload: React.FC<Props> = (props) => {
     // Determine which icon to fetch based on the label
     const isColorIcon = props.label.toLowerCase().includes('color');
     const iconType = isColorIcon ? IconType.COLOR : IconType.OUTLINE;
-    const iconPath = `/plugins/com.mattermost.plugin-msteams-devsecops/icons/${iconType}`;
+    const iconPath = `/plugins/com.mattermost.msteams-sync/icons/${iconType}`;
 
     // Fetch icon and check if custom icon exists on component mount
     useEffect(() => {
@@ -129,7 +129,7 @@ const IconUpload: React.FC<Props> = (props) => {
         formData.append('iconType', iconType);
 
         try {
-            const response = await fetch('/plugins/com.mattermost.plugin-msteams-devsecops/icons/upload',
+            const response = await fetch('/plugins/com.mattermost.msteams-sync/icons/upload',
                 Client4.getOptions({
                     method: 'POST',
                     body: formData,
@@ -180,7 +180,7 @@ const IconUpload: React.FC<Props> = (props) => {
         setError(null);
 
         try {
-            const response = await fetch(`/plugins/com.mattermost.plugin-msteams-devsecops/icons/${iconType}`,
+            const response = await fetch(`/plugins/com.mattermost.msteams-sync/icons/${iconType}`,
                 Client4.getOptions({
                     method: 'DELETE',
                 }),

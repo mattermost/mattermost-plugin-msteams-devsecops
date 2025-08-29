@@ -156,7 +156,7 @@ func TestUploadIcon(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Contains(t, string(body), `"success":true`)
-		assert.Contains(t, string(body), "/plugins/com.mattermost.plugin-msteams-devsecops/icons/color")
+		assert.Contains(t, string(body), "/plugins/com.mattermost.msteams-sync/icons/color")
 
 		// Verify the icon was stored correctly in the KV store
 		storedIconData, err := th.p.pluginStore.GetIcon("color")
@@ -181,7 +181,7 @@ func TestUploadIcon(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Contains(t, string(body), `"success":true`)
-		assert.Contains(t, string(body), "/plugins/com.mattermost.plugin-msteams-devsecops/icons/outline")
+		assert.Contains(t, string(body), "/plugins/com.mattermost.msteams-sync/icons/outline")
 
 		// Verify the icon was stored correctly in the KV store
 		storedIconData, err := th.p.pluginStore.GetIcon("outline")

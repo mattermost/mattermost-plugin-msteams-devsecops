@@ -30,7 +30,7 @@ const ManifestDownload: React.FC<Props> = (props) => {
         }
 
         // Get the plugin settings
-        const pluginSettings = props.config.PluginSettings?.Plugins?.['com.mattermost.plugin-msteams-devsecops'];
+        const pluginSettings = props.config.PluginSettings?.Plugins?.['com.mattermost.msteams-sync'];
         if (!pluginSettings) {
             return;
         }
@@ -89,7 +89,7 @@ const ManifestDownload: React.FC<Props> = (props) => {
             <div className='help-text'>{props.helpText}</div>
             <div className='col-sm-8'>
                 <a
-                    href={isDownloadEnabled ? '/plugins/com.mattermost.plugin-msteams-devsecops/iframe-manifest' : '#'}
+                    href={isDownloadEnabled ? '/plugins/com.mattermost.msteams-sync/iframe-manifest' : '#'}
                     className={`btn ${isDownloadEnabled ? 'btn-primary' : 'btn-inactive'}`}
                     rel='noreferrer'
                     target='_self'

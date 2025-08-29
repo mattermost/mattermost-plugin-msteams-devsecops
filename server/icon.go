@@ -128,7 +128,7 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	response := map[string]interface{}{
 		"success":  true,
-		"iconPath": fmt.Sprintf("/plugins/com.mattermost.plugin-msteams-devsecops/icons/%s", iconType),
+		"iconPath": fmt.Sprintf("/plugins/com.mattermost.msteams-sync/icons/%s", iconType),
 	}
 	_ = json.NewEncoder(w).Encode(response)
 }

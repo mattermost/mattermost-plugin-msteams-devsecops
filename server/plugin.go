@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	pluginID                = "com.mattermost.plugin-msteams-devsecops"
+	pluginID                = "com.mattermost.msteams-sync"
 	checkCredentialsJobName = "check_credentials" //#nosec G101 -- This is a false positive
 	allowedFrameAncestors   = "*.cloud.microsoft teams.microsoft.com *.teams.microsoft.com *.microsoft365.com *.office.com outlook.office.com outlook.office365.com outlook-sdf.office.com outlook-sdf.office365.com"
 )

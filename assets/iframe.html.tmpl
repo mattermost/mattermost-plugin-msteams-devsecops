@@ -53,7 +53,7 @@
           // Reply the message to let Mattermost know we are going to handle the authentication flow.
           event.source.postMessage({type: 'mattermost_external_auth_login', ack: true}, domainRoot);
 
-          iframe.src = domainRoot + '/plugins/com.mattermost.plugin-msteams-devsecops/sso/wait';
+          iframe.src = domainRoot + '/plugins/com.mattermost.msteams-sync/sso/wait';
 
 
           // Ensure that the URL hostname is the same as domainRoot
@@ -64,7 +64,7 @@
 
           // Parse the URL and add redirect_to parameter
           const url = new URL(event.data.href);
-          url.searchParams.set('redirect_to', '/plugins/com.mattermost.plugin-msteams-devsecops/sso/complete');
+          url.searchParams.set('redirect_to', '/plugins/com.mattermost.msteams-sync/sso/complete');
 
           // Store reference to wait iframe window to send messages
           const waitIframeWindow = iframe.contentWindow;

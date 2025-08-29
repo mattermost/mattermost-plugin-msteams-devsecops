@@ -1,5 +1,5 @@
 {
-    "id": "com.mattermost.plugin-msteams-devsecops",
+    "id": "com.mattermost.msteams-sync",
     "name": "Mattermost DevSecOps for Microsoft Teams",
     "description": "Access Mattermost DevSecOps directly within Microsoft Teams, with single sign-on using your Microsoft O365 account.",
     "homepage_url": "https://github.com/mattermost/mattermost-plugin-msteams-devsecops",
