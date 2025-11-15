@@ -83,8 +83,10 @@ func validatePermissions(ctx context.Context, client *msgraphsdk.GraphServiceCli
 
 	memberOf, err := client.Me().MemberOf().Get(ctx, nil)
 	if err != nil {
+		// Always show this warning as it's important for users to know
+		fmt.Println("⚠️  Warning: Could not check directory roles")
 		if verbose {
-			fmt.Println("   ⚠️  Warning: Could not check directory roles")
+			fmt.Printf("   Error details: %v\n", err)
 		}
 		// Don't fail here - proceed and let the actual operations fail if needed
 		return nil
@@ -111,9 +113,11 @@ func validatePermissions(ctx context.Context, client *msgraphsdk.GraphServiceCli
 		}
 	}
 
-	if !hasAdminRole && verbose {
-		fmt.Println("   ⚠️  Warning: User may not have Application Administrator permissions")
-		fmt.Println("      Setup will proceed, but may fail if permissions are insufficient")
+	if !hasAdminRole {
+		// Always show this warning as it's critical for users to know
+		fmt.Println("⚠️  Warning: User may not have Application Administrator permissions")
+		fmt.Println("   Setup will proceed, but may fail if permissions are insufficient")
+		fmt.Println("   Required role: Application Administrator, Cloud Application Administrator, or Global Administrator")
 	}
 
 	if verbose && hasAdminRole {
@@ -143,10 +147,14 @@ func checkExistingApp(ctx context.Context, client *msgraphsdk.GraphServiceClient
 	var filter string
 	if clientID != "" {
 		// Search by client ID (appId field)
-		filter = fmt.Sprintf("appId eq '%s'", clientID)
+		// Escape single quotes for OData filter
+		escapedClientID := strings.ReplaceAll(clientID, "'", "''")
+		filter = fmt.Sprintf("appId eq '%s'", escapedClientID)
 	} else {
 		// Search by display name
-		filter = fmt.Sprintf("displayName eq '%s'", appName)
+		// Escape single quotes for OData filter
+		escapedAppName := strings.ReplaceAll(appName, "'", "''")
+		filter = fmt.Sprintf("displayName eq '%s'", escapedAppName)
 	}
 
 	apps, err := client.Applications().Get(ctx, &applications.ApplicationsRequestBuilderGetRequestConfiguration{
@@ -202,4 +210,33 @@ func buildApplicationIDURI(siteURL, clientID string) (string, error) {
 	}
 
 	return fmt.Sprintf("api://%s%s/%s", hostname, path, clientID), nil
+}
+
+// getTenantID retrieves the tenant ID from the Azure organization
+func getTenantID(ctx context.Context, client *msgraphsdk.GraphServiceClient, verbose bool) (string, error) {
+	if verbose {
+		fmt.Println("🔍 Retrieving tenant ID from Azure...")
+	}
+
+	// Get organization details to retrieve tenant ID
+	org, err := client.Organization().Get(ctx, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get organization information")
+	}
+
+	if org == nil || org.GetValue() == nil || len(org.GetValue()) == 0 {
+		return "", errors.New("no organization information found")
+	}
+
+	orgInfo := org.GetValue()[0]
+	tenantID := orgInfo.GetId()
+	if tenantID == nil || *tenantID == "" {
+		return "", errors.New("organization ID is empty")
+	}
+
+	if verbose {
+		fmt.Printf("   ✅ Tenant ID: %s\n", *tenantID)
+	}
+
+	return *tenantID, nil
 }

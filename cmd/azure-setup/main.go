@@ -263,12 +263,14 @@ func executeSetup(ctx context.Context, client *msgraphsdk.GraphServiceClient, co
 		return nil, errors.Wrap(err, "failed to build Application ID URI")
 	}
 
-	// Extract tenant ID from the app if not provided
+	// Get tenant ID - either from config or from Azure
 	tenantID := config.TenantID
 	if tenantID == "" {
-		// In a real scenario, you would extract this from the auth token or app details
-		// For now, we'll use a placeholder
-		tenantID = "YOUR_TENANT_ID"
+		// Try to get tenant ID from the organization
+		tenantID, err = getTenantID(ctx, client, config.Verbose)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get tenant ID - please provide --tenant-id flag")
+		}
 	}
 
 	// Build result

@@ -107,12 +107,15 @@ func buildPreAuthorizedApplications(scopeID uuid.UUID) []models.PreAuthorizedApp
 	for _, clientIDStr := range clientIDs {
 		clientID, err := uuid.Parse(clientIDStr)
 		if err != nil {
+			// This should never happen with hardcoded Microsoft client IDs
+			// Log the error but continue with other clients
+			fmt.Printf("⚠️  Warning: Failed to parse pre-authorized client ID %s: %v\n", clientIDStr, err)
 			continue
 		}
 
 		preAuthApp := models.NewPreAuthorizedApplication()
-		clientIDStr := clientID.String()
-		preAuthApp.SetAppId(&clientIDStr)
+		parsedClientIDStr := clientID.String()
+		preAuthApp.SetAppId(&parsedClientIDStr)
 
 		// Add the scope ID to the delegated permission IDs
 		delegatedPermissionIDs := []string{scopeID.String()}
