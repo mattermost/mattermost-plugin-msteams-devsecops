@@ -77,7 +77,7 @@ func setupDatabase(mt *mainT) error {
 	}
 
 	postgresDSN := fmt.Sprintf("postgres://mmuser:mostest@%s/mattermost_test?sslmode=disable", net.JoinHostPort("localhost", containerPort.Port()))
-	os.Setenv("TEST_DATABASE_POSTGRESQL_DSN", postgresDSN)
+	_ = os.Setenv("TEST_DATABASE_POSTGRESQL_DSN", postgresDSN)
 
 	mt.Cleanup(func() {
 		if err := pgContainer.Terminate(context.TODO()); err != nil {
@@ -97,15 +97,15 @@ func getSiteURL() string {
 // setupServer initializes a singleton Mattermost instance for use with tests.
 func setupServer(mt *mainT) error {
 	// Ignore any locally defined SiteURL as we intend to host our own.
-	os.Unsetenv("MM_SERVICESETTINGS_SITEURL")
-	os.Unsetenv("MM_SERVICESETTINGS_LISTENADDRESS")
+	_ = os.Unsetenv("MM_SERVICESETTINGS_SITEURL")
+	_ = os.Unsetenv("MM_SERVICESETTINGS_LISTENADDRESS")
 
 	tmpDir, err := os.MkdirTemp("", "msteams")
 	if err != nil {
 		return err
 	}
 	mt.Cleanup(func() {
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 	})
 
 	// Execute from the temporary directory to avoid polluting the developer's working
@@ -116,7 +116,7 @@ func setupServer(mt *mainT) error {
 	}
 
 	// Setup a custom MM_LOCALSOCKETPATH.
-	os.Setenv("MM_LOCALSOCKETPATH", path.Join(tmpDir, "mattermost_local.socket"))
+	_ = os.Setenv("MM_LOCALSOCKETPATH", path.Join(tmpDir, "mattermost_local.socket"))
 
 	// Create a test memory store and modify configuration appropriately
 	configStore := config.NewTestMemoryStore()
@@ -126,7 +126,7 @@ func setupServer(mt *mainT) error {
 	config.ServiceSettings.ListenAddress = model.NewPointer("localhost:0")
 	config.TeamSettings.MaxUsersPerTeam = model.NewPointer(10000)
 	config.LocalizationSettings.SetDefaults()
-	config.SqlSettings = *storetest.MakeSqlSettings("postgres", false)
+	config.SqlSettings = *storetest.MakeSqlSettings("postgres")
 	config.ServiceSettings.SiteURL = model.NewPointer("http://example.com/")
 	config.LogSettings.EnableConsole = model.NewPointer(true)
 	config.LogSettings.EnableFile = model.NewPointer(false)

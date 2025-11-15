@@ -148,7 +148,7 @@ func createManifestZip(files ...zipFile) (io.Reader, error) {
 	buf := &bytes.Buffer{}
 
 	w := zip.NewWriter(buf)
-	defer w.Close()
+	defer func() { _ = w.Close() }()
 
 	for _, zf := range files {
 		fw, err := w.Create(zf.name)

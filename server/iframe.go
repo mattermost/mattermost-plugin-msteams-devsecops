@@ -372,7 +372,7 @@ func (a *API) authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if the expiration time is in the past
-	if jwtExpiresAt.Time.Before(time.Now()) {
+	if jwtExpiresAt.Before(time.Now()) {
 		logger.Error("Token is already expired")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
