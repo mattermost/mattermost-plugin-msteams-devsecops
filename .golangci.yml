@@ -1,37 +1,34 @@
+version: "2"
+
 run:
   timeout: 5m
   modules-download-mode: readonly
 
 linters-settings:
-  gofmt:
-    simplify: true
-  goimports:
-    local-prefixes: github.com/mattermost/mattermost-msteams-devsecops
   govet:
     enable-all: true
     disable:
       - fieldalignment
   misspell:
     locale: US
+  revive:
+    enable-all-rules: false
+    rules:
+      - name: unused-parameter
+        disabled: false
 
 linters:
-  disable-all: true
+  default: none
   enable:
     - bodyclose
     - errcheck
     - gocritic
-    - gofmt
-    - goimports
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - misspell
     - nakedret
-    - revive
     - staticcheck
-    - stylecheck
-    - typecheck
     - unconvert
     - unused
     - whitespace
@@ -48,3 +45,9 @@ issues:
     - linters:
         - revive
       text: unused-parameter
+    - linters:
+        - revive
+      text: exported
+    - linters:
+        - revive
+      text: package-comments

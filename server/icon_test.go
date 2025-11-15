@@ -148,7 +148,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -173,7 +173,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -197,7 +197,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
@@ -211,7 +211,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -225,7 +225,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -239,7 +239,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -257,7 +257,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -271,7 +271,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -290,7 +290,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -313,7 +313,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -334,7 +334,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -354,7 +354,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -374,7 +374,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -394,7 +394,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -415,7 +415,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -441,7 +441,7 @@ func TestUploadIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -478,7 +478,7 @@ func TestGetIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "image/png", resp.Header.Get("Content-Type"))
@@ -503,7 +503,7 @@ func TestGetIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "image/png", resp.Header.Get("Content-Type"))
@@ -528,7 +528,7 @@ func TestGetIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -565,7 +565,7 @@ func TestDeleteIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -587,7 +587,7 @@ func TestDeleteIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -603,7 +603,7 @@ func TestDeleteIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
@@ -616,7 +616,7 @@ func TestDeleteIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -629,7 +629,7 @@ func TestDeleteIcon(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -666,7 +666,7 @@ func TestIconExists(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
@@ -684,7 +684,7 @@ func TestIconExists(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
@@ -701,7 +701,7 @@ func TestIconExists(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
@@ -714,7 +714,7 @@ func TestIconExists(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
@@ -727,7 +727,7 @@ func TestIconExists(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -745,7 +745,7 @@ func TestIconExists(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		body, err := io.ReadAll(resp.Body)
@@ -764,7 +764,7 @@ func TestIconExists(t *testing.T) {
 		th.p.apiHandler.ServeHTTP(w, req)
 
 		resp = w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		body, err = io.ReadAll(resp.Body)

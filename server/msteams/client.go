@@ -656,7 +656,7 @@ func (tc *ClientImpl) UploadFile(teamID, channelID, filename string, filesize in
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if chat != nil {
 		requestBody := drives.NewItemItemsItemInvitePostRequestBody()
@@ -1538,11 +1538,11 @@ func (tc *ClientImpl) GetFileContentStream(downloadURL string, writer *io.PipeWr
 			return
 		}
 
-		res.Body.Close()
+		_ = res.Body.Close()
 		contentLengthHeader := res.Header.Get("Content-Length")
 		contentLength, err := strconv.ParseInt(contentLengthHeader, 10, 64)
 		if (err == nil && contentLength < rangeIncrement) || res.StatusCode != http.StatusPartialContent {
-			writer.Close()
+			_ = writer.Close()
 			break
 		}
 

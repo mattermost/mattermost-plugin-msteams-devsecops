@@ -77,7 +77,7 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 		handleErrorWithCode(logger, w, http.StatusBadRequest, "Failed to get uploaded file", err)
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// Validate file type
 	contentType := header.Header.Get("Content-Type")

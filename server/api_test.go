@@ -29,7 +29,7 @@ func TestIFrame(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "text/html", resp.Header.Get("Content-Type"))
@@ -87,7 +87,7 @@ func TestAuthenticate(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusSeeOther, resp.StatusCode)
 		assert.Equal(t, "/", resp.Header.Get("Location"))
@@ -106,7 +106,7 @@ func TestAuthenticate(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
@@ -130,7 +130,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
@@ -157,7 +157,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
@@ -201,7 +201,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		require.Equal(t, http.StatusForbidden, resp.StatusCode)
 
@@ -250,7 +250,7 @@ func TestIframeNotificationPreview(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, "text/html", resp.Header.Get("Content-Type"))

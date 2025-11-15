@@ -27,7 +27,7 @@ func TestAppManifest(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
@@ -53,7 +53,7 @@ func TestAppManifest(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		require.Equal(t, http.StatusForbidden, resp.StatusCode)
 
@@ -100,7 +100,7 @@ func TestAppManifest(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 
@@ -130,7 +130,7 @@ func TestAppManifest(t *testing.T) {
 
 		// Assert
 		resp := w.Result()
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		// If the test is still failing, provide more diagnostic information
 		if resp.StatusCode != http.StatusOK {
