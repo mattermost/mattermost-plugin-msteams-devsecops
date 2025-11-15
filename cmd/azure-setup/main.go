@@ -112,7 +112,9 @@ func init() {
 
 // runCreate executes the create command
 func runCreate(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	// Set a reasonable timeout for the entire operation
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
 
 	// Build configuration
 	config := &SetupConfig{
@@ -185,7 +187,9 @@ func runCreate(cmd *cobra.Command, args []string) error {
 
 // runValidate executes the validate command
 func runValidate(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
+	// Set a reasonable timeout for validation
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
 
 	fmt.Println("🔍 Validating Azure credentials and permissions...")
 

@@ -138,6 +138,14 @@ func isApplicationAdminRole(roleTemplateID string) bool {
 	return adminRoles[roleTemplateID]
 }
 
+// escapeODataString escapes a string for use in OData filter expressions
+// OData escaping rules:
+// - Single quotes must be doubled: ' -> ”
+// Note: Other special characters are generally handled by the Graph SDK
+func escapeODataString(s string) string {
+	return strings.ReplaceAll(s, "'", "''")
+}
+
 // checkExistingApp checks if an application with the given name or client ID already exists
 func checkExistingApp(ctx context.Context, client *msgraphsdk.GraphServiceClient, appName, clientID string, verbose bool) (models.Applicationable, error) {
 	if verbose {
@@ -147,13 +155,14 @@ func checkExistingApp(ctx context.Context, client *msgraphsdk.GraphServiceClient
 	var filter string
 	if clientID != "" {
 		// Search by client ID (appId field)
-		// Escape single quotes for OData filter
-		escapedClientID := strings.ReplaceAll(clientID, "'", "''")
+		// Escape for OData filter - client IDs are UUIDs so escaping is unlikely needed
+		// but we do it for consistency
+		escapedClientID := escapeODataString(clientID)
 		filter = fmt.Sprintf("appId eq '%s'", escapedClientID)
 	} else {
 		// Search by display name
-		// Escape single quotes for OData filter
-		escapedAppName := strings.ReplaceAll(appName, "'", "''")
+		// Escape for OData filter
+		escapedAppName := escapeODataString(appName)
 		filter = fmt.Sprintf("displayName eq '%s'", escapedAppName)
 	}
 

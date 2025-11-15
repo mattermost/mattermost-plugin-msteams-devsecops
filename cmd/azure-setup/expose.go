@@ -74,7 +74,10 @@ func configureAPIExposure(ctx context.Context, client *msgraphsdk.GraphServiceCl
 	api.SetOauth2PermissionScopes(oauth2PermissionScopes)
 
 	// Add pre-authorized applications
-	preAuthorizedApps := buildPreAuthorizedApplications(scopeID)
+	preAuthorizedApps, err := buildPreAuthorizedApplications(scopeID)
+	if err != nil {
+		return err
+	}
 	api.SetPreAuthorizedApplications(preAuthorizedApps)
 
 	appUpdate.SetApi(api)
@@ -100,7 +103,8 @@ func configureAPIExposure(ctx context.Context, client *msgraphsdk.GraphServiceCl
 }
 
 // buildPreAuthorizedApplications creates the list of pre-authorized applications
-func buildPreAuthorizedApplications(scopeID uuid.UUID) []models.PreAuthorizedApplicationable {
+// Returns an error if any hardcoded client ID fails to parse (which should never happen)
+func buildPreAuthorizedApplications(scopeID uuid.UUID) ([]models.PreAuthorizedApplicationable, error) {
 	clientIDs := getPreAuthorizedClients()
 	var preAuthorizedApps []models.PreAuthorizedApplicationable
 
@@ -108,9 +112,8 @@ func buildPreAuthorizedApplications(scopeID uuid.UUID) []models.PreAuthorizedApp
 		clientID, err := uuid.Parse(clientIDStr)
 		if err != nil {
 			// This should never happen with hardcoded Microsoft client IDs
-			// Log the error but continue with other clients
-			fmt.Printf("⚠️  Warning: Failed to parse pre-authorized client ID %s: %v\n", clientIDStr, err)
-			continue
+			// If it does, it indicates a bug in our constants
+			return nil, errors.Wrapf(err, "BUG: invalid hardcoded pre-authorized client ID %s", clientIDStr)
 		}
 
 		preAuthApp := models.NewPreAuthorizedApplication()
@@ -124,5 +127,5 @@ func buildPreAuthorizedApplications(scopeID uuid.UUID) []models.PreAuthorizedApp
 		preAuthorizedApps = append(preAuthorizedApps, preAuthApp)
 	}
 
-	return preAuthorizedApps
+	return preAuthorizedApps, nil
 }

@@ -292,3 +292,54 @@ func TestIsApplicationAdminRole(t *testing.T) {
 		})
 	}
 }
+
+func TestEscapeODataString(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "no special characters",
+			input:    "Mattermost for Teams",
+			expected: "Mattermost for Teams",
+		},
+		{
+			name:     "single quote",
+			input:    "O'Brien's App",
+			expected: "O''Brien''s App",
+		},
+		{
+			name:     "multiple single quotes",
+			input:    "It's Mike's App",
+			expected: "It''s Mike''s App",
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "only single quote",
+			input:    "'",
+			expected: "''",
+		},
+		{
+			name:     "UUID (no escaping needed)",
+			input:    "abc123-def456-789",
+			expected: "abc123-def456-789",
+		},
+		{
+			name:     "special characters other than single quote",
+			input:    "App-Name_123 (Test)",
+			expected: "App-Name_123 (Test)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := escapeODataString(tt.input)
+			assert.Equal(t, tt.expected, result, "OData escaping should handle single quotes")
+		})
+	}
+}
