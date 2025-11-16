@@ -203,6 +203,18 @@ else
 endif
 endif
 
+## Builds the azure-setup CLI tool for multiple platforms.
+.PHONY: azure-setup
+azure-setup:
+	@echo Building azure-setup CLI tool
+	mkdir -p bin/
+	cd cmd/azure-setup && env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) -trimpath -o ../../bin/azure-setup-linux-amd64
+	cd cmd/azure-setup && env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build $(GO_BUILD_FLAGS) -trimpath -o ../../bin/azure-setup-linux-arm64
+	cd cmd/azure-setup && env CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) -trimpath -o ../../bin/azure-setup-darwin-amd64
+	cd cmd/azure-setup && env CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) build $(GO_BUILD_FLAGS) -trimpath -o ../../bin/azure-setup-darwin-arm64
+	cd cmd/azure-setup && env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) -trimpath -o ../../bin/azure-setup-windows-amd64.exe
+	@echo Azure setup tool built successfully in bin/
+
 ## Ensures NPM dependencies are installed without having to run this all the time.
 webapp/node_modules: $(wildcard webapp/package.json)
 ifneq ($(HAS_WEBAPP),)
