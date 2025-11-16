@@ -47,14 +47,19 @@ func TestGetPreAuthorizedClients(t *testing.T) {
 	clients := getPreAuthorizedClients()
 
 	// Should have exactly 4 pre-authorized clients
-	assert.Len(t, clients, 4, "should have 4 pre-authorized clients")
+	assert.Len(t, clients, 9, "should have 9 pre-authorized clients")
 
 	// Verify all expected client IDs are present
 	expectedClients := []string{
 		ClientIDTeamsWeb,
-		ClientIDTeamsDesktop,
+		ClientIDTeamsMobileDesktop,
 		ClientIDOutlookWeb,
 		ClientIDOutlookDesktop,
+		ClientIDOutlookMobile,
+		ClientIDOfficeWeb,
+		ClientIDOfficeDesktop,
+		ClientIDCopilot,
+		ClientIDOfficeUniversal,
 	}
 
 	for _, expected := range expectedClients {
@@ -82,16 +87,37 @@ func TestPreAuthorizedClientConstants(t *testing.T) {
 	// Verify all client IDs are valid UUIDs (basic format check)
 	uuidPattern := "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
 
+	// Microsoft Teams
 	assert.Regexp(t, uuidPattern, ClientIDTeamsWeb, "Teams Web client ID should be a valid UUID")
-	assert.Regexp(t, uuidPattern, ClientIDTeamsDesktop, "Teams Desktop client ID should be a valid UUID")
+	assert.Regexp(t, uuidPattern, ClientIDTeamsMobileDesktop, "Teams Mobile/Desktop client ID should be a valid UUID")
+
+	// Microsoft Outlook
 	assert.Regexp(t, uuidPattern, ClientIDOutlookWeb, "Outlook Web client ID should be a valid UUID")
 	assert.Regexp(t, uuidPattern, ClientIDOutlookDesktop, "Outlook Desktop client ID should be a valid UUID")
+	assert.Regexp(t, uuidPattern, ClientIDOutlookMobile, "Outlook Mobile client ID should be a valid UUID")
 
-	// Verify the specific known values
+	// Microsoft Office / M365
+	assert.Regexp(t, uuidPattern, ClientIDOfficeWeb, "Office Web client ID should be a valid UUID")
+	assert.Regexp(t, uuidPattern, ClientIDOfficeDesktop, "Office Desktop client ID should be a valid UUID")
+	assert.Regexp(t, uuidPattern, ClientIDOfficeMobile, "Office Mobile client ID should be a valid UUID")
+
+	// Microsoft 365 Copilot
+	assert.Regexp(t, uuidPattern, ClientIDCopilot, "Copilot client ID should be a valid UUID")
+
+	// Universal Office
+	assert.Regexp(t, uuidPattern, ClientIDOfficeUniversal, "Office Universal client ID should be a valid UUID")
+
+	// Verify the specific known values (from Microsoft documentation)
 	assert.Equal(t, "5e3ce6c0-2b1f-4285-8d4b-75ee78787346", ClientIDTeamsWeb)
-	assert.Equal(t, "1fec8e78-bce4-4aaf-ab1b-5451cc387264", ClientIDTeamsDesktop)
+	assert.Equal(t, "1fec8e78-bce4-4aaf-ab1b-5451cc387264", ClientIDTeamsMobileDesktop)
 	assert.Equal(t, "bc59ab01-8403-45c6-8796-ac3ef710b3e3", ClientIDOutlookWeb)
 	assert.Equal(t, "d3590ed6-52b3-4102-aeff-aad2292ab01c", ClientIDOutlookDesktop)
+	assert.Equal(t, "27922004-5251-4030-b22d-91ecd9a37ea4", ClientIDOutlookMobile)
+	assert.Equal(t, "4765445b-32c6-49b0-83e6-1d93765276ca", ClientIDOfficeWeb)
+	assert.Equal(t, "0ec893e0-5785-4de6-99da-4ed124e5296c", ClientIDOfficeDesktop)
+	assert.Equal(t, "d3590ed6-52b3-4102-aeff-aad2292ab01c", ClientIDOfficeMobile)
+	assert.Equal(t, "ab3be6b7-f5df-413d-ac2d-abf1e3fd9c0b", ClientIDCopilot)
+	assert.Equal(t, "ea5a67f6-b6f3-4338-b240-c655ddc3cc8e", ClientIDOfficeUniversal)
 }
 
 func TestScopeConstants(t *testing.T) {

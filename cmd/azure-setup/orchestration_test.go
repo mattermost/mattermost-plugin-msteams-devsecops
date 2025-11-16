@@ -53,7 +53,7 @@ func TestOrchestrationCreateNewApp(t *testing.T) {
 
 	// Test pre-authorized clients
 	clients := getPreAuthorizedClients()
-	assert.Len(t, clients, 4, "Should have 4 pre-authorized clients")
+	assert.Len(t, clients, 9, "Should have 9 pre-authorized clients (Teams, Outlook, Office, Copilot)")
 }
 
 // TestOrchestrationDryRun tests that dry-run mode doesn't modify state
@@ -301,7 +301,7 @@ func TestOrchestrationPermissionConstants(t *testing.T) {
 func TestOrchestrationPreAuthorizedClients(t *testing.T) {
 	clients := getPreAuthorizedClients()
 
-	require.Len(t, clients, 4, "Should have exactly 4 pre-authorized clients")
+	require.Len(t, clients, 9, "Should have exactly 9 pre-authorized clients (Teams, Outlook, Office, Copilot)")
 
 	// Verify all are valid UUIDs
 	for i, client := range clients {
@@ -311,11 +311,16 @@ func TestOrchestrationPreAuthorizedClients(t *testing.T) {
 		})
 	}
 
-	// Verify specific clients are present
+	// Verify all Microsoft first-party clients are present
 	assert.Contains(t, clients, ClientIDTeamsWeb, "Should contain Teams Web")
-	assert.Contains(t, clients, ClientIDTeamsDesktop, "Should contain Teams Desktop")
+	assert.Contains(t, clients, ClientIDTeamsMobileDesktop, "Should contain Teams Mobile/Desktop")
 	assert.Contains(t, clients, ClientIDOutlookWeb, "Should contain Outlook Web")
 	assert.Contains(t, clients, ClientIDOutlookDesktop, "Should contain Outlook Desktop")
+	assert.Contains(t, clients, ClientIDOutlookMobile, "Should contain Outlook Mobile")
+	assert.Contains(t, clients, ClientIDOfficeWeb, "Should contain Office Web")
+	assert.Contains(t, clients, ClientIDOfficeDesktop, "Should contain Office Desktop")
+	assert.Contains(t, clients, ClientIDCopilot, "Should contain Copilot")
+	assert.Contains(t, clients, ClientIDOfficeUniversal, "Should contain Office Universal")
 }
 
 // TestOrchestrationBuildRequiredResourceAccess tests permission structure building
@@ -369,7 +374,7 @@ func TestOrchestrationBuildPreAuthorizedApplications(t *testing.T) {
 	preAuthApps, err := buildPreAuthorizedApplications(scopeUUID)
 	require.NoError(t, err, "Should build pre-authorized apps successfully")
 
-	assert.Len(t, preAuthApps, 4, "Should have 4 pre-authorized applications")
+	assert.Len(t, preAuthApps, 9, "Should have 9 pre-authorized applications (Teams, Outlook, Office, Copilot)")
 
 	// Verify each app has the scope
 	for _, app := range preAuthApps {

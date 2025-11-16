@@ -24,15 +24,30 @@ const (
 	PermissionTypeRole  = "Role"  // Application permission
 )
 
-// Pre-authorized client application IDs for Microsoft Teams and Outlook
+// Pre-authorized client application IDs for Microsoft first-party applications
+// These IDs allow SSO across Teams, Outlook, Office, and other M365 products
+// Source: https://learn.microsoft.com/en-us/microsoftteams/platform/tabs/how-to/authentication/tab-sso-register-aad
 const (
 	// Microsoft Teams
-	ClientIDTeamsWeb     = "5e3ce6c0-2b1f-4285-8d4b-75ee78787346"
-	ClientIDTeamsDesktop = "1fec8e78-bce4-4aaf-ab1b-5451cc387264"
+	ClientIDTeamsWeb           = "5e3ce6c0-2b1f-4285-8d4b-75ee78787346"
+	ClientIDTeamsMobileDesktop = "1fec8e78-bce4-4aaf-ab1b-5451cc387264" // Covers both mobile and desktop
 
 	// Microsoft Outlook
 	ClientIDOutlookWeb     = "bc59ab01-8403-45c6-8796-ac3ef710b3e3"
 	ClientIDOutlookDesktop = "d3590ed6-52b3-4102-aeff-aad2292ab01c"
+	ClientIDOutlookMobile  = "27922004-5251-4030-b22d-91ecd9a37ea4"
+
+	// Microsoft 365 / Office applications
+	ClientIDOfficeWeb     = "4765445b-32c6-49b0-83e6-1d93765276ca"
+	ClientIDOfficeDesktop = "0ec893e0-5785-4de6-99da-4ed124e5296c"
+	ClientIDOfficeMobile  = "d3590ed6-52b3-4102-aeff-aad2292ab01c" // Shares ID with Outlook Desktop
+
+	// Microsoft 365 Copilot
+	// Source: https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/api-plugin-authentication
+	ClientIDCopilot = "ab3be6b7-f5df-413d-ac2d-abf1e3fd9c0b"
+
+	// Universal client ID that pre-authorizes all Microsoft Office application endpoints
+	ClientIDOfficeUniversal = "ea5a67f6-b6f3-4338-b240-c655ddc3cc8e"
 )
 
 // Scope configuration
@@ -117,11 +132,27 @@ func getRequiredPermissions() []requiredPermission {
 }
 
 // getPreAuthorizedClients returns the list of Microsoft client IDs that should be pre-authorized
+// This enables SSO across Teams, Outlook, Office apps, and Copilot on all platforms (web, desktop, mobile)
 func getPreAuthorizedClients() []string {
 	return []string{
+		// Microsoft Teams (web, mobile, desktop)
 		ClientIDTeamsWeb,
-		ClientIDTeamsDesktop,
+		ClientIDTeamsMobileDesktop,
+
+		// Microsoft Outlook (web, desktop, mobile)
 		ClientIDOutlookWeb,
 		ClientIDOutlookDesktop,
+		ClientIDOutlookMobile,
+
+		// Microsoft Office / M365 (web, desktop)
+		ClientIDOfficeWeb,
+		ClientIDOfficeDesktop,
+		// Note: Office Mobile shares the same ID as Outlook Desktop, so it's already covered
+
+		// Microsoft 365 Copilot
+		ClientIDCopilot,
+
+		// Universal Office endpoints (catch-all for other Office apps)
+		ClientIDOfficeUniversal,
 	}
 }
