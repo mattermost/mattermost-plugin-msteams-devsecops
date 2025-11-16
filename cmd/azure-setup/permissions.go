@@ -160,10 +160,8 @@ func ensureServicePrincipalExists(ctx context.Context, client *msgraphsdk.GraphS
 		if config.Verbose {
 			fmt.Println("   ✅ Service principal created")
 		}
-	} else {
-		if config.Verbose {
-			fmt.Println("   ✅ Service principal already exists")
-		}
+	} else if config.Verbose {
+		fmt.Println("   ✅ Service principal already exists")
 	}
 
 	if config.Verbose {

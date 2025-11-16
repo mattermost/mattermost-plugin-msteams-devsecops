@@ -100,7 +100,7 @@ func init() {
 	createCmd.Flags().BoolVarP(&flagVerbose, "verbose", "v", false, "Enable verbose output")
 	createCmd.Flags().StringVarP(&flagOutputFormat, "output", "o", "human", "Output format (human, json, env, mattermost)")
 
-	createCmd.MarkFlagRequired("site-url")
+	_ = createCmd.MarkFlagRequired("site-url")
 
 	// Validate command flags
 	validateCmd.Flags().StringVar(&flagTenantID, "tenant-id", "", "Azure AD Tenant ID (optional)")
@@ -258,7 +258,7 @@ func executeSetup(ctx context.Context, client *msgraphsdk.GraphServiceClient, co
 		}
 	} else {
 		secretExpiration = time.Now().AddDate(0, config.SecretExpiration, 0)
-		clientSecret = "***DRY-RUN-NO-SECRET-GENERATED***"
+		clientSecret = "***DRY-RUN-NO-SECRET-GENERATED***" // #nosec G101 -- This is a placeholder for dry-run mode, not a real credential
 	}
 
 	// Build application ID URI

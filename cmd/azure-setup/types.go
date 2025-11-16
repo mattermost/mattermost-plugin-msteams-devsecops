@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/microsoftgraph/msgraph-sdk-go/models"
 )
 
 // Microsoft Graph API Permission IDs and Types
@@ -61,7 +60,6 @@ type SetupConfig struct {
 	// Internal state
 	ctx        context.Context
 	credential azcore.TokenCredential
-	createdApp *models.Application
 	rollback   []func() error
 }
 

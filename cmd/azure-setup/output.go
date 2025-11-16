@@ -28,11 +28,12 @@ func OutputResult(result *SetupResult, format string) error {
 // outputHuman outputs results in human-readable format
 func outputHuman(result *SetupResult) error {
 	fmt.Println("\n" + strings.Repeat("=", 70))
-	if result.DryRun {
+	switch {
+	case result.DryRun:
 		fmt.Println("🔍 DRY RUN COMPLETE - No changes were made")
-	} else if result.Success {
+	case result.Success:
 		fmt.Println("✅ AZURE SETUP COMPLETE")
-	} else {
+	default:
 		fmt.Println("❌ AZURE SETUP FAILED")
 	}
 	fmt.Println(strings.Repeat("=", 70))

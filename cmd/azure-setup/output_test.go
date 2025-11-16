@@ -38,11 +38,11 @@ func TestOutputJSON(t *testing.T) {
 	err := outputJSON(result)
 	require.NoError(t, err)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	// Verify it's valid JSON
@@ -76,17 +76,18 @@ func TestOutputEnv(t *testing.T) {
 
 	// Capture stdout
 	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
 	os.Stdout = w
 
-	err := outputEnv(result)
+	err = outputEnv(result)
 	require.NoError(t, err)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	// Verify it contains export statements
@@ -132,17 +133,18 @@ func TestOutputMattermostConfig(t *testing.T) {
 
 	// Capture stdout
 	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
 	os.Stdout = w
 
-	err := outputMattermostConfig(result)
+	err = outputMattermostConfig(result)
 	require.NoError(t, err)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = oldStdout
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	// Verify it contains JSON config
@@ -272,11 +274,11 @@ func TestOutputHuman(t *testing.T) {
 			err := outputHuman(tt.result)
 			require.NoError(t, err)
 
-			w.Close()
+			_ = w.Close()
 			os.Stdout = oldStdout
 
 			var buf bytes.Buffer
-			io.Copy(&buf, r)
+			_, _ = io.Copy(&buf, r)
 			output := buf.String()
 
 			// Verify expected strings are present
@@ -348,11 +350,11 @@ func TestOutputResult(t *testing.T) {
 
 			err := OutputResult(result, tt.format)
 
-			w.Close()
+			_ = w.Close()
 			os.Stdout = oldStdout
 
 			// Drain the pipe
-			io.Copy(io.Discard, r)
+			_, _ = io.Copy(io.Discard, r)
 
 			if tt.expectError {
 				require.Error(t, err)
