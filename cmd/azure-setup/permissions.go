@@ -60,9 +60,11 @@ func configureAPIPermissions(ctx context.Context, client *msgraphsdk.GraphServic
 
 	// Create service principal to enable admin consent
 	if err := ensureServicePrincipalExists(ctx, client, config, app); err != nil {
+		fmt.Printf("\n⚠️  WARNING: Could not create service principal: %v\n", err)
+		fmt.Println("   The service principal is required for admin consent to work properly")
+		fmt.Println("   You may need to create it manually in the Azure Portal")
 		if config.Verbose {
-			fmt.Printf("   ⚠️  Warning: Could not create service principal: %v\n", err)
-			fmt.Println("      Service principal may need to be created manually")
+			fmt.Printf("   Error details: %v\n", err)
 		}
 	}
 

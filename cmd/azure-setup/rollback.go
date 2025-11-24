@@ -13,21 +13,23 @@ func executeRollback(config *SetupConfig) {
 		return
 	}
 
-	if config.Verbose {
-		fmt.Println("\n🔄 Executing rollback operations...")
-	}
+	fmt.Println("\n🔄 Executing rollback operations...")
 
 	// Execute rollback functions in reverse order
+	// Track failures so we can warn about potentially leaked resources
+	var failures []error
 	for i := len(config.rollback) - 1; i >= 0; i-- {
 		rollbackFunc := config.rollback[i]
 		if err := rollbackFunc(); err != nil {
-			if config.Verbose {
-				fmt.Printf("   ⚠️  Rollback operation failed: %v\n", err)
-			}
+			failures = append(failures, err)
+			fmt.Printf("   ⚠️  Rollback operation failed: %v\n", err)
 		}
 	}
 
-	if config.Verbose {
+	if len(failures) > 0 {
+		fmt.Printf("\n⚠️  WARNING: %d rollback operation(s) failed\n", len(failures))
+		fmt.Println("   Some Azure resources may require manual cleanup in the Azure Portal")
+	} else {
 		fmt.Println("✅ Rollback complete")
 	}
 }
