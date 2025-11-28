@@ -86,6 +86,7 @@ var (
 	flagNonInteractive   bool
 	flagVerbose          bool
 	flagOutputFormat     string
+	flagYes              bool
 )
 
 func init() {
@@ -99,6 +100,7 @@ func init() {
 	createCmd.Flags().BoolVar(&flagNonInteractive, "non-interactive", false, "Run in non-interactive mode")
 	createCmd.Flags().BoolVarP(&flagVerbose, "verbose", "v", false, "Enable verbose output")
 	createCmd.Flags().StringVarP(&flagOutputFormat, "output", "o", "human", "Output format (human, json, env, mattermost)")
+	createCmd.Flags().BoolVarP(&flagYes, "yes", "y", false, "Skip confirmation prompt and proceed with changes")
 
 	_ = createCmd.MarkFlagRequired("site-url")
 
@@ -113,7 +115,8 @@ func init() {
 // runCreate executes the create command
 func runCreate(cmd *cobra.Command, args []string) error {
 	// Set a reasonable timeout for the entire operation
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	// 10 minutes allows sufficient time for device code flows with MFA
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	// Build configuration
@@ -127,6 +130,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		NonInteractive:    flagNonInteractive,
 		Verbose:           flagVerbose,
 		OutputFormat:      flagOutputFormat,
+		SkipConfirmation:  flagYes,
 		ctx:               ctx,
 		rollback:          []func() error{},
 	}
@@ -170,6 +174,13 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	existingApp, err := checkExistingApp(ctx, client, config.AppName, config.ClientID, config.Verbose)
 	if err != nil {
 		return errors.Wrap(err, "failed to check for existing application")
+	}
+
+	// Show pre-flight confirmation unless skipped
+	if !config.DryRun && !config.SkipConfirmation && !config.NonInteractive {
+		if err := showPreflightConfirmation(config, existingApp); err != nil {
+			return err
+		}
 	}
 
 	// Execute setup with rollback on error

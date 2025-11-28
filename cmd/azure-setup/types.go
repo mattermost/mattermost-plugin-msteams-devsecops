@@ -57,6 +57,12 @@ const (
 	ScopeUserConsent = "Admins and users"
 )
 
+// Plugin configuration
+const (
+	// PluginID must match the id field in plugin.json
+	PluginID = "com.mattermost.plugin-msteams-devsecops"
+)
+
 // SetupConfig holds the configuration for the Azure setup process
 type SetupConfig struct {
 	// User inputs
@@ -67,10 +73,11 @@ type SetupConfig struct {
 	SecretExpiration  int    // Duration in months (default: 12)
 
 	// Flags
-	DryRun         bool
-	NonInteractive bool
-	Verbose        bool
-	OutputFormat   string // "human", "json", "env"
+	DryRun           bool
+	NonInteractive   bool
+	Verbose          bool
+	OutputFormat     string // "human", "json", "env"
+	SkipConfirmation bool   // Skip pre-flight confirmation prompt
 
 	// Internal state
 	ctx        context.Context

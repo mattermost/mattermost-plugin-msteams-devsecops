@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // OutputResult displays the setup result in the requested format
@@ -21,7 +23,7 @@ func OutputResult(result *SetupResult, format string) error {
 	case "human", "":
 		return outputHuman(result)
 	default:
-		return fmt.Errorf("unknown output format: %s", format)
+		return errors.Errorf("unknown output format: %s", format)
 	}
 }
 
@@ -100,7 +102,7 @@ func outputJSON(result *SetupResult) error {
 // outputEnv outputs results as environment variables
 func outputEnv(result *SetupResult) error {
 	if !result.Success {
-		return fmt.Errorf("setup failed: %s", result.Message)
+		return errors.Errorf("setup failed: %s", result.Message)
 	}
 
 	fmt.Println("# Azure AD / Microsoft 365 Configuration")
@@ -124,13 +126,13 @@ func outputEnv(result *SetupResult) error {
 // outputMattermostConfig outputs results in Mattermost config.json format
 func outputMattermostConfig(result *SetupResult) error {
 	if !result.Success {
-		return fmt.Errorf("setup failed: %s", result.Message)
+		return errors.Errorf("setup failed: %s", result.Message)
 	}
 
 	config := map[string]any{
 		"PluginSettings": map[string]any{
 			"Plugins": map[string]any{
-				"com.mattermost.msteams-sync": map[string]any{
+				PluginID: map[string]any{
 					"m365_tenant_id":     result.TenantID,
 					"m365_client_id":     result.ApplicationClientID,
 					"m365_client_secret": result.ClientSecret,

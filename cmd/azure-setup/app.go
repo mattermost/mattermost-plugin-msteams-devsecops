@@ -77,15 +77,47 @@ func updateApplication(ctx context.Context, client *msgraphsdk.GraphServiceClien
 		return existingApp, nil
 	}
 
-	// For updates, we'll mainly be updating the API configuration
-	// The basic app properties can remain as-is
-	if config.Verbose {
-		fmt.Printf("✅ Using existing application: %s\n", *existingApp.GetDisplayName())
-		fmt.Printf("   Client ID: %s\n", *existingApp.GetAppId())
-		fmt.Printf("   Object ID: %s\n", *existingApp.GetId())
+	// Check if the application needs updates for idempotency
+	needsUpdate := false
+	appUpdate := models.NewApplication()
+
+	// Check sign-in audience
+	expectedAudience := "AzureADMyOrg"
+	if existingApp.GetSignInAudience() == nil || *existingApp.GetSignInAudience() != expectedAudience {
+		appUpdate.SetSignInAudience(&expectedAudience)
+		needsUpdate = true
+		if config.Verbose {
+			fmt.Printf("   ⚙️  Will update sign-in audience to: %s\n", expectedAudience)
+		}
 	}
 
-	return existingApp, nil
+	// If no updates needed, return the existing app as-is
+	if !needsUpdate {
+		if config.Verbose {
+			fmt.Printf("✅ Existing application is already configured correctly: %s\n", *existingApp.GetDisplayName())
+			fmt.Printf("   Client ID: %s\n", *existingApp.GetAppId())
+			fmt.Printf("   Object ID: %s\n", *existingApp.GetId())
+		}
+		return existingApp, nil
+	}
+
+	// Apply updates
+	if config.Verbose {
+		fmt.Printf("📝 Updating application configuration: %s\n", *existingApp.GetDisplayName())
+	}
+
+	updatedApp, err := client.Applications().ByApplicationId(*existingApp.GetId()).Patch(ctx, appUpdate, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to update application")
+	}
+
+	if config.Verbose {
+		fmt.Printf("✅ Application updated: %s\n", *updatedApp.GetDisplayName())
+		fmt.Printf("   Client ID: %s\n", *updatedApp.GetAppId())
+		fmt.Printf("   Object ID: %s\n", *updatedApp.GetId())
+	}
+
+	return updatedApp, nil
 }
 
 // deleteApplication deletes an application (used for rollback)
