@@ -149,7 +149,7 @@ func TestOutputMattermostConfig(t *testing.T) {
 
 	// Verify it contains JSON config
 	assert.Contains(t, output, "PluginSettings")
-	assert.Contains(t, output, "com.mattermost.msteams-sync")
+	assert.Contains(t, output, PluginID)
 	assert.Contains(t, output, "m365_tenant_id")
 	assert.Contains(t, output, "m365_client_id")
 	assert.Contains(t, output, "m365_client_secret")
