@@ -247,6 +247,11 @@ func (p *Plugin) stop(isRestart bool) {
 			p.cancelKeyFunc = nil
 		}
 		p.cancelKeyFuncLock.Unlock()
+
+		// Clean up the Teams app client so it gets recreated on restart
+		p.msteamsAppClientMutex.Lock()
+		p.msteamsAppClient = nil
+		p.msteamsAppClientMutex.Unlock()
 	}
 }
 
