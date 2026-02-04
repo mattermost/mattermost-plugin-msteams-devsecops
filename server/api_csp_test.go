@@ -17,7 +17,7 @@ func TestSanitizeForLog(t *testing.T) {
 		assert.NotContains(t, out, "\n")
 		assert.NotContains(t, out, "\r")
 		assert.NotContains(t, out, "\t")
-		assert.Equal(t, "line1 line2 line3   tab", out)
+		assert.Equal(t, "line1 line2 line3  tab", out)
 	})
 
 	t.Run("truncates at maxCSPReportFieldLen runes and appends ellipsis", func(t *testing.T) {
