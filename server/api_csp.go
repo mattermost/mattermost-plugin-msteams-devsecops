@@ -5,12 +5,39 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"unicode"
 )
 
 const (
 	DefaultCSPConnectSrc = "https://*.microsoft.com https://*.teams.microsoft.com https://*.cdn.office.net"
 	DefaultCSPScriptSrc  = "https://res.cdn.office.net https://cdn.jsdelivr.net"
+
+	// maxCSPReportFieldLen limits logged CSP report string fields to prevent log injection and size abuse.
+	maxCSPReportFieldLen = 500
 )
+
+// sanitizeForLog replaces newlines and tabs with spaces and truncates to maxCSPReportFieldLen
+// to prevent log injection from attacker-controlled CSP report body fields.
+func sanitizeForLog(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		switch {
+		case r == '\n' || r == '\r' || r == '\t':
+			b.WriteRune(' ')
+		case unicode.IsPrint(r) || r == ' ':
+			b.WriteRune(r)
+		default:
+			b.WriteRune(' ')
+		}
+	}
+	out := b.String()
+	runes := []rune(out)
+	if len(runes) <= maxCSPReportFieldLen {
+		return out
+	}
+	return string(runes[:maxCSPReportFieldLen]) + "..."
+}
 
 // return returnCSPHeaderssets and returns the Content Security Policy headers for the iframe context.
 func (a *API) returnCSPHeaders(w http.ResponseWriter, iFrameCtx iFrameContext) {
@@ -83,7 +110,7 @@ func (a *API) cspReport(w http.ResponseWriter, r *http.Request) {
 
 	// Parse the report
 	if err := json.Unmarshal(body, &reportArray); err != nil {
-		a.p.API.LogError("Failed to parse CSP report", "error", err.Error(), "body", string(body))
+		a.p.API.LogError("Failed to parse CSP report", "error", err.Error(), "body", sanitizeForLog(string(body)))
 		http.Error(w, "Failed to parse report", http.StatusBadRequest)
 		return
 	}
@@ -96,39 +123,39 @@ func (a *API) cspReport(w http.ResponseWriter, r *http.Request) {
 			"age":   report.Age,
 		}
 
-		// Add non-null fields to the map
+		// Add non-null fields to the map; sanitize strings to prevent log injection.
 		if report.Body.BlockedURL != nil {
-			fields["blocked-url"] = *report.Body.BlockedURL
+			fields["blocked-url"] = sanitizeForLog(*report.Body.BlockedURL)
 		}
 		if report.Body.ColumnNumber != nil {
 			fields["column-number"] = *report.Body.ColumnNumber
 		}
 		if report.Body.Disposition != nil {
-			fields["disposition"] = *report.Body.Disposition
+			fields["disposition"] = sanitizeForLog(*report.Body.Disposition)
 		}
 		if report.Body.DocumentURL != nil {
-			fields["document-url"] = *report.Body.DocumentURL
+			fields["document-url"] = sanitizeForLog(*report.Body.DocumentURL)
 		}
 		if report.Body.EffectiveDirective != nil {
-			fields["effective-directive"] = *report.Body.EffectiveDirective
+			fields["effective-directive"] = sanitizeForLog(*report.Body.EffectiveDirective)
 		}
 		if report.Body.LineNumber != nil {
 			fields["line-number"] = *report.Body.LineNumber
 		}
 		if report.Body.OriginalPolicy != nil {
-			fields["original-policy"] = *report.Body.OriginalPolicy
+			fields["original-policy"] = sanitizeForLog(*report.Body.OriginalPolicy)
 		}
 		if report.Body.Referrer != nil {
-			fields["referrer"] = *report.Body.Referrer
+			fields["referrer"] = sanitizeForLog(*report.Body.Referrer)
 		}
 		if report.Body.ScriptSample != nil {
-			fields["script-sample"] = *report.Body.ScriptSample
+			fields["script-sample"] = sanitizeForLog(*report.Body.ScriptSample)
 		}
 		if report.Body.SourceFile != nil {
-			fields["source-file"] = *report.Body.SourceFile
+			fields["source-file"] = sanitizeForLog(*report.Body.SourceFile)
 		}
 		if report.Body.ViolatedDirective != nil {
-			fields["violated-directive"] = *report.Body.ViolatedDirective
+			fields["violated-directive"] = sanitizeForLog(*report.Body.ViolatedDirective)
 		}
 
 		// Log the CSP violation with only the non-null fields
