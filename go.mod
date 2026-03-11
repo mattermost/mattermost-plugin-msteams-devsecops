@@ -8,7 +8,7 @@ require (
 	github.com/MicahParks/jwkset v0.11.0
 	github.com/MicahParks/keyfunc/v3 v3.8.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/mattermost/mattermost/server/public v0.1.21
+	github.com/mattermost/mattermost/server/public v0.2.1
 	github.com/mattermost/mattermost/server/v8 v8.0.0-20251014075701-833e0125320d
 	github.com/microsoft/kiota-abstractions-go v1.9.3
 	github.com/microsoft/kiota-http-go v1.5.4
@@ -77,6 +77,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-resty/resty/v2 v2.16.5 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.18.3 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
