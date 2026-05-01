@@ -10,8 +10,8 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/mattermost/mattermost/server/public v0.2.1
 	github.com/mattermost/mattermost/server/v8 v8.0.0-20251014075701-833e0125320d
-	github.com/microsoft/kiota-abstractions-go v1.9.3
-	github.com/microsoft/kiota-http-go v1.5.4
+	github.com/microsoft/kiota-abstractions-go v1.9.4
+	github.com/microsoft/kiota-http-go v1.5.6
 	github.com/microsoftgraph/msgraph-sdk-go v1.96.0
 	github.com/microsoftgraph/msgraph-sdk-go-core v1.4.0
 	github.com/pkg/errors v0.9.1
@@ -167,11 +167,11 @@ require (
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/yuin/goldmark v1.7.11 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
+	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0 // indirect
-	go.opentelemetry.io/otel v1.37.0 // indirect
-	go.opentelemetry.io/otel/metric v1.37.0 // indirect
-	go.opentelemetry.io/otel/trace v1.37.0 // indirect
+	go.opentelemetry.io/otel v1.43.0 // indirect
+	go.opentelemetry.io/otel/metric v1.43.0 // indirect
+	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
 	golang.org/x/image v0.27.0 // indirect
