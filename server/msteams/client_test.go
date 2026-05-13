@@ -203,3 +203,69 @@ func TestGetResourceIds(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckGroupChat(t *testing.T) {
+	makeMember := func(userID, email any) models.ConversationMemberable {
+		m := models.NewConversationMember()
+		_ = m.GetBackingStore().Set("userId", userID)
+		_ = m.GetBackingStore().Set("email", email)
+		return m
+	}
+	makeChat := func(id *string, members ...models.ConversationMemberable) models.Chatable {
+		c := models.NewChat()
+		c.SetId(id)
+		c.SetMembers(members)
+		return c
+	}
+
+	chatID := "chat-1"
+	u1, e1 := "u1", "a@example.com"
+	u2, e2 := "u2", "b@example.com"
+
+	t.Run("nil chat ID returns nil", func(t *testing.T) {
+		c := makeChat(nil, makeMember(&u1, &e1))
+		assert.Nil(t, checkGroupChat(c, []string{"u1"}))
+	})
+
+	t.Run("member count mismatch returns nil", func(t *testing.T) {
+		c := makeChat(&chatID, makeMember(&u1, &e1))
+		assert.Nil(t, checkGroupChat(c, []string{"u1", "u2"}))
+	})
+
+	t.Run("all members match returns chat", func(t *testing.T) {
+		c := makeChat(&chatID, makeMember(&u1, &e1), makeMember(&u2, &e2))
+		got := checkGroupChat(c, []string{"u1", "u2"})
+		assert.NotNil(t, got)
+		assert.Equal(t, chatID, got.ID)
+		assert.Equal(t, "G", got.Type)
+		assert.Len(t, got.Members, 2)
+	})
+
+	t.Run("non-*string userId does not panic", func(t *testing.T) {
+		// userId stored as a plain string instead of *string would panic the
+		// unguarded type assertion before the fix.
+		c := makeChat(&chatID, makeMember("u1", &e1), makeMember(&u2, &e2))
+		var got *clientmodels.Chat
+		assert.NotPanics(t, func() { got = checkGroupChat(c, []string{"u1", "u2"}) })
+		assert.Nil(t, got)
+	})
+
+	t.Run("non-*string email skips member but does not panic", func(t *testing.T) {
+		// userId matches; email is the wrong type. The matching member is
+		// dropped from the result but the call must not panic.
+		c := makeChat(&chatID, makeMember(&u1, "not-a-pointer"), makeMember(&u2, &e2))
+		var got *clientmodels.Chat
+		assert.NotPanics(t, func() { got = checkGroupChat(c, []string{"u1", "u2"}) })
+		assert.NotNil(t, got)
+		assert.Len(t, got.Members, 1)
+		assert.Equal(t, u2, got.Members[0].UserID)
+	})
+
+	t.Run("nil *string userId is skipped", func(t *testing.T) {
+		var nilStr *string
+		c := makeChat(&chatID, makeMember(nilStr, &e1), makeMember(&u2, &e2))
+		var got *clientmodels.Chat
+		assert.NotPanics(t, func() { got = checkGroupChat(c, []string{"u1", "u2"}) })
+		assert.Nil(t, got)
+	})
+}

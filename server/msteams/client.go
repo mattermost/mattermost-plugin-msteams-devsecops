@@ -1498,8 +1498,13 @@ func (tc *ClientImpl) GetFileSizeAndDownloadURL(weburl string) (int64, string, e
 	}
 
 	resultDownloadURL := ""
-	if ptr, ok := downloadURL.(*string); ok && ptr != nil {
-		resultDownloadURL = *ptr
+	switch v := downloadURL.(type) {
+	case *string:
+		if v != nil {
+			resultDownloadURL = *v
+		}
+	case string:
+		resultDownloadURL = v
 	}
 
 	fileSize := item.GetSize()
@@ -2209,20 +2214,30 @@ func checkGroupChat(c models.Chatable, userIDs []string) *clientmodels.Chat {
 		matches := map[string]bool{}
 		members := []clientmodels.ChatMember{}
 		for _, m := range c.GetMembers() {
+			userIDRaw, userErr := m.GetBackingStore().Get("userId")
+			if userErr != nil {
+				continue
+			}
+			userIDPtr, ok := userIDRaw.(*string)
+			if !ok || userIDPtr == nil {
+				continue
+			}
 			for _, u := range userIDs {
-				userID, userErr := m.GetBackingStore().Get("userId")
-				if userErr == nil && userID != nil && userID.(*string) != nil && *userID.(*string) == u {
-					matches[u] = true
-					userEmail, emailErr := m.GetBackingStore().Get("email")
-					if emailErr == nil && userEmail != nil && userEmail.(*string) != nil {
-						members = append(members, clientmodels.ChatMember{
-							Email:  *userEmail.(*string),
-							UserID: *userID.(*string),
-						})
-					}
-
+				if *userIDPtr != u {
+					continue
+				}
+				matches[u] = true
+				userEmailRaw, emailErr := m.GetBackingStore().Get("email")
+				if emailErr != nil {
 					break
 				}
+				if userEmailPtr, emailOK := userEmailRaw.(*string); emailOK && userEmailPtr != nil {
+					members = append(members, clientmodels.ChatMember{
+						Email:  *userEmailPtr,
+						UserID: *userIDPtr,
+					})
+				}
+				break
 			}
 		}
 
