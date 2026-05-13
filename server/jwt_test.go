@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -487,6 +488,29 @@ func TestValidateToken(t *testing.T) {
 				require.NotNil(t, validationErr)
 				assert.Equal(t, http.StatusUnauthorized, validationErr.StatusCode)
 			}
+		})
+
+		// Security: alg "none" must always be rejected (algorithm confusion attack).
+		t.Run("alg none token rejected", func(t *testing.T) {
+			_, _, jwtKeyFunc := makeKeySet(t)
+			siteURL, _ := url.Parse(TestSiteURL)
+			expectedAud := fmt.Sprintf(ExpectedAudienceFmt, siteURL.Host, TestClientID)
+			header := []byte(`{"alg":"none","typ":"JWT"}`)
+			payload, _ := json.Marshal(map[string]any{
+				"aud": expectedAud,
+				"exp": future(),
+				"iat": past(),
+				"nbf": past(),
+				"tid": "test-tenant-id",
+			})
+			b64Header := base64.RawURLEncoding.EncodeToString(header)
+			b64Payload := base64.RawURLEncoding.EncodeToString(payload)
+			tokenNone := b64Header + "." + b64Payload + "." // empty signature for alg "none"
+
+			params := makeValidateTokenParams(jwtKeyFunc, tokenNone, []string{"test-tenant-id"}, false)
+			_, validationErr := validateToken(params)
+			require.NotNil(t, validationErr, "alg none token must be rejected")
+			assert.Equal(t, http.StatusUnauthorized, validationErr.StatusCode)
 		})
 	})
 }

@@ -47,7 +47,8 @@ func setupJWKSet() (keyfunc.Keyfunc, context.CancelFunc) {
 
 	k, err := keyfunc.NewDefaultCtx(ctx, []string{MicrosoftOnlineJWKSURL})
 	if err != nil {
-		logrus.WithError(err).WithField("jwks_url", MicrosoftOnlineJWKSURL).Error("Failed to create a keyfunc.Keyfunc")
+		logrus.WithError(err).WithField("jwks_url", MicrosoftOnlineJWKSURL).Error("Failed to create a keyfunc.Keyfunc - JWT authentication will not work")
+		return nil, cancelCtx
 	}
 	logrus.Info("Started JWKS monitor")
 

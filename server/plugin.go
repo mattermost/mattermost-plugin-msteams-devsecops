@@ -201,6 +201,7 @@ func (p *Plugin) start(isRestart bool) {
 	// connect to the Microsoft Teams API
 	err := p.connectTeamsAppClient()
 	if err != nil {
+		p.API.LogError("Plugin startup failed: unable to connect Teams app client", "error", err)
 		return
 	}
 
@@ -212,7 +213,7 @@ func (p *Plugin) start(isRestart bool) {
 			p.checkCredentials,
 		)
 		if jobErr != nil {
-			p.API.LogError("error in scheduling the check credentials job", "error", jobErr)
+			p.API.LogError("Plugin startup failed: error scheduling check credentials job", "error", jobErr)
 			return
 		}
 		p.checkCredentialsJob = checkCredentialsJob
@@ -232,6 +233,11 @@ func (p *Plugin) stop(isRestart bool) {
 		p.checkCredentialsJob = nil
 	}
 
+	// Clean up the Teams app client so it gets recreated on restart
+	p.msteamsAppClientMutex.Lock()
+	p.msteamsAppClient = nil
+	p.msteamsAppClientMutex.Unlock()
+
 	// Cancel the client reconnection context if not restarting
 	if !isRestart {
 		p.clientReconnectLock.Lock()
@@ -248,11 +254,6 @@ func (p *Plugin) stop(isRestart bool) {
 			p.cancelKeyFunc = nil
 		}
 		p.cancelKeyFuncLock.Unlock()
-
-		// Clean up the Teams app client so it gets recreated on restart
-		p.msteamsAppClientMutex.Lock()
-		p.msteamsAppClient = nil
-		p.msteamsAppClientMutex.Unlock()
 	}
 }
 
@@ -289,9 +290,9 @@ func (p *Plugin) connectTeamsAppClient() error {
 		appID, err := p.msteamsAppClient.GetTeamsAppIDByExternalID(p.getConfiguration().AppID)
 		if err != nil {
 			p.API.LogError("Unable to retrieve Teams application ID", "error", err)
-			// Continue even if we couldn't retrieve the app ID, it's not essential for all operations
+			// App ID is required for activity feed notifications but not for basic functionality
 		} else {
-			if err := p.pluginStore.StoreAppID(p.configuration.M365TenantID, appID); err != nil {
+			if err := p.pluginStore.StoreAppID(p.msteamsAppClient.GetTenantID(), appID); err != nil {
 				p.API.LogError("Unable to store Teams internal application ID", "error", err)
 			} else {
 				p.API.LogDebug("Retrieved Teams internal application ID", "appID", appID)
