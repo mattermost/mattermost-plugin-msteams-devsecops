@@ -101,12 +101,12 @@ func TestUpdateApplication_Idempotency(t *testing.T) {
 	}{
 		{
 			name:                "correct_audience_no_update_needed",
-			existingAudience:    stringPtr("AzureADMyOrg"),
+			existingAudience:    new("AzureADMyOrg"),
 			expectedNeedsUpdate: false,
 		},
 		{
 			name:                "wrong_audience_needs_update",
-			existingAudience:    stringPtr("AzureADMultipleOrgs"),
+			existingAudience:    new("AzureADMultipleOrgs"),
 			expectedNeedsUpdate: true,
 		},
 		{
@@ -150,9 +150,4 @@ func TestDeleteApplication_Rollback(t *testing.T) {
 		objectID := "test-object-id"
 		assert.NotEmpty(t, objectID)
 	})
-}
-
-// Helper function to create string pointers
-func stringPtr(s string) *string {
-	return &s
 }
