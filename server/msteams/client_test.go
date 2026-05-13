@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
 )
 
 func TestConvertToMessage(t *testing.T) {
@@ -65,7 +66,7 @@ func TestConvertToMessage(t *testing.T) {
 				identity.SetId(&teamsUserID)
 				identity.SetDisplayName(&teamsUserDisplayName)
 
-				additionalData := map[string]interface{}{
+				additionalData := map[string]any{
 					"userIdentityType": "aadUser",
 				}
 

@@ -44,7 +44,7 @@ func (mt *mainT) Done() {
 	}
 }
 
-func (mt *mainT) Errorf(format string, args ...interface{}) {
+func (mt *mainT) Errorf(format string, args ...any) {
 	fmt.Printf(format, args...)
 	mt.FailNow()
 }
@@ -57,7 +57,8 @@ func (mt *mainT) FailNow() {
 // use with tests.
 func setupDatabase(mt *mainT) error {
 	// Setup a Postgres testcontainer for all tests.
-	pgContainer, err := postgres.Run(context.TODO(), "docker.io/postgres:15.2-alpine",
+	pgContainer, err := postgres.Run(
+		context.TODO(), "docker.io/postgres:15.2-alpine",
 		postgres.WithDatabase("mattermost_test"),
 		postgres.WithUsername("mmuser"),
 		postgres.WithPassword("mostest"),
@@ -65,7 +66,8 @@ func setupDatabase(mt *mainT) error {
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
 				WithOccurrence(2).
-				WithStartupTimeout(5*time.Second)),
+				WithStartupTimeout(5*time.Second),
+		),
 	)
 	if err != nil {
 		return err

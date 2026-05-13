@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/MicahParks/keyfunc/v3"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	"github.com/mattermost/mattermost/server/public/pluginapi"
 	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 	"github.com/sirupsen/logrus"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams"
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 )
 
 const (

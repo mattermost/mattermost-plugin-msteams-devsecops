@@ -91,7 +91,7 @@ func (a *API) cspReport(w http.ResponseWriter, r *http.Request) {
 	// Process each report in the array
 	for i, report := range reportArray {
 		// Create a map to store the fields that are not null
-		fields := map[string]interface{}{
+		fields := map[string]any{
 			"index": i,
 			"age":   report.Age,
 		}

@@ -148,7 +148,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	config.credential = cred
 
 	// Validate Azure connection
-	if err := validateAzureConnection(ctx, cred, config.Verbose); err != nil {
+	if err = validateAzureConnection(ctx, cred, config.Verbose); err != nil {
 		return errors.Wrap(err, "Azure connection validation failed")
 	}
 
@@ -166,7 +166,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	client := msgraphsdk.NewGraphServiceClient(adapter)
 
 	// Validate permissions
-	if err := validatePermissions(ctx, client, config.Verbose); err != nil {
+	if err = validatePermissions(ctx, client, config.Verbose); err != nil {
 		return errors.Wrap(err, "permission validation failed")
 	}
 
@@ -178,7 +178,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 
 	// Show pre-flight confirmation unless skipped
 	if !config.DryRun && !config.SkipConfirmation && !config.NonInteractive {
-		if err := showPreflightConfirmation(config, existingApp); err != nil {
+		if err = showPreflightConfirmation(config, existingApp); err != nil {
 			return err
 		}
 	}
@@ -211,7 +211,7 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate Azure connection
-	if err := validateAzureConnection(ctx, cred, flagVerbose); err != nil {
+	if err = validateAzureConnection(ctx, cred, flagVerbose); err != nil {
 		return errors.Wrap(err, "Azure connection validation failed")
 	}
 
@@ -229,7 +229,7 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	client := msgraphsdk.NewGraphServiceClient(adapter)
 
 	// Validate permissions
-	if err := validatePermissions(ctx, client, flagVerbose); err != nil {
+	if err = validatePermissions(ctx, client, flagVerbose); err != nil {
 		return errors.Wrap(err, "permission validation failed")
 	}
 
@@ -250,12 +250,12 @@ func executeSetup(ctx context.Context, client *msgraphsdk.GraphServiceClient, co
 	}
 
 	// Configure API permissions
-	if err := configureAPIPermissions(ctx, client, config, app); err != nil {
+	if err = configureAPIPermissions(ctx, client, config, app); err != nil {
 		return nil, errors.Wrap(err, "failed to configure API permissions")
 	}
 
 	// Configure API exposure
-	if err := configureAPIExposure(ctx, client, config, app); err != nil {
+	if err = configureAPIExposure(ctx, client, config, app); err != nil {
 		return nil, errors.Wrap(err, "failed to configure API exposure")
 	}
 

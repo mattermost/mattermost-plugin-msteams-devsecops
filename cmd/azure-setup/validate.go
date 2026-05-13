@@ -140,7 +140,7 @@ func isApplicationAdminRole(roleTemplateID string) bool {
 
 // escapeODataString escapes a string for use in OData filter expressions
 // OData escaping rules:
-// - Single quotes must be doubled: ' -> ''
+// - Single quotes must be doubled (e.g. "it's" becomes "it''s")
 // Note: Other special characters are generally handled by the Graph SDK
 func escapeODataString(s string) string {
 	return strings.ReplaceAll(s, "'", "''")

@@ -16,13 +16,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	pluginapi "github.com/mattermost/mattermost/server/public/pluginapi"
 	"github.com/mattermost/mattermost/server/v8/channels/utils"
 	"github.com/sirupsen/logrus"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 )
 
 type iFrameContext struct {
@@ -468,8 +469,7 @@ func getCookieDomain(config *model.Config) string {
 // This is used to redirect the user to the correct URL when they click on a notification in Microsoft Teams.
 func (p *Plugin) getRedirectPathFromUser(logger logrus.FieldLogger, user *model.User, subEntityID string) string {
 	if subEntityID != "" {
-		if strings.HasPrefix(subEntityID, "post_preview_") {
-			postID := strings.TrimPrefix(subEntityID, "post_preview_")
+		if postID, ok := strings.CutPrefix(subEntityID, "post_preview_"); ok {
 			return fmt.Sprintf("/plugins/%s/iframe/notification_preview?post_id=%s", url.PathEscape(manifest.Id), url.QueryEscape(postID))
 		} else if strings.HasPrefix(subEntityID, "post_") {
 			var team *model.Team
@@ -489,8 +489,12 @@ func (p *Plugin) getRedirectPathFromUser(logger logrus.FieldLogger, user *model.
 			if channel.TeamId == "" {
 				var teams []*model.Team
 				teams, appErr = p.API.GetTeamsForUser(user.Id)
-				if appErr != nil || len(teams) == 0 {
+				if appErr != nil {
 					logger.WithError(appErr).Error("Failed to get teams for user to generate redirect path from subEntityId")
+					return "/"
+				}
+				if len(teams) == 0 {
+					logger.Warn("User has no teams to generate redirect path from subEntityId")
 					return "/"
 				}
 				team = teams[0]

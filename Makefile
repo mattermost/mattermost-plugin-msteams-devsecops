@@ -44,7 +44,12 @@ endif
 # Used for semver bumping
 PROTECTED_BRANCH := master
 APP_NAME    := $(shell basename -s .git `git config --get remote.origin.url`)
-CURRENT_VERSION := $(shell git describe --abbrev=0 --tags)
+CURRENT_VERSION := $(strip $(shell git describe --abbrev=0 --tags))
+LATEST_RELEASE_TAG_RAW := $(shell git tag -l "v*" --sort=-v:refname | grep -v '\-rc' | head -n 1 || true)
+LATEST_RELEASE_TAG := $(strip $(LATEST_RELEASE_TAG_RAW))
+ifeq ($(LATEST_RELEASE_TAG),)
+LATEST_RELEASE_TAG := $(CURRENT_VERSION)
+endif
 VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(CURRENT_VERSION))))
 MAJOR := $(word 1,$(VERSION_PARTS))
 MINOR := $(word 2,$(VERSION_PARTS))
@@ -82,6 +87,11 @@ endef
 patch: ## to bump patch version (semver)
 	$(call check_protected_branch)
 	$(call check_pending_pulls)
+	@$(eval BASE_VERSION := $(strip $(LATEST_RELEASE_TAG)))
+	@$(eval BASE_VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(BASE_VERSION)))))
+	@$(eval MAJOR := $(word 1,$(BASE_VERSION_PARTS)))
+	@$(eval MINOR := $(word 2,$(BASE_VERSION_PARTS)))
+	@$(eval PATCH := $(word 3,$(BASE_VERSION_PARTS)))
 	@$(eval PATCH := $(shell echo $$(($(PATCH)+1))))
 	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH))
 	@echo Bumping $(APP_NAME) to Patch version $(MAJOR).$(MINOR).$(PATCH)
@@ -92,6 +102,11 @@ patch: ## to bump patch version (semver)
 minor: ## to bump minor version (semver)
 	$(call check_protected_branch)
 	$(call check_pending_pulls)
+	@$(eval BASE_VERSION := $(strip $(LATEST_RELEASE_TAG)))
+	@$(eval BASE_VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(BASE_VERSION)))))
+	@$(eval MAJOR := $(word 1,$(BASE_VERSION_PARTS)))
+	@$(eval MINOR := $(word 2,$(BASE_VERSION_PARTS)))
+	@$(eval PATCH := $(word 3,$(BASE_VERSION_PARTS)))
 	@$(eval MINOR := $(shell echo $$(($(MINOR)+1))))
 	@$(eval PATCH := 0)
 	$(call prompt_approval,$(MAJOR).$(MINOR).$(PATCH))
@@ -103,6 +118,11 @@ minor: ## to bump minor version (semver)
 major: ## to bump major version (semver)
 	$(call check_protected_branch)
 	$(call check_pending_pulls)
+	@$(eval BASE_VERSION := $(strip $(LATEST_RELEASE_TAG)))
+	@$(eval BASE_VERSION_PARTS := $(subst ., ,$(subst v,,$(subst -rc, ,$(BASE_VERSION)))))
+	@$(eval MAJOR := $(word 1,$(BASE_VERSION_PARTS)))
+	@$(eval MINOR := $(word 2,$(BASE_VERSION_PARTS)))
+	@$(eval PATCH := $(word 3,$(BASE_VERSION_PARTS)))
 	$(eval MAJOR := $(shell echo $$(($(MAJOR)+1))))
 	$(eval MINOR := 0)
 	$(eval PATCH := 0)
@@ -162,13 +182,14 @@ apply:
 	./build/bin/manifest apply
 
 ## Install go tools
+.PHONY: install-go-tools
 install-go-tools:
 	@echo Installing go tools
-	$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.6.0
-	$(GO) install gotest.tools/gotestsum@v1.7.0
+	$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.9.0
+	$(GO) install gotest.tools/gotestsum@v1.13.0
 
 ## Runs eslint and golangci-lint
-.PHONY: check-style install-go-tools
+.PHONY: check-style
 check-style: manifest-check apply webapp/node_modules install-go-tools
 	@echo Checking for style guide compliance
 
@@ -193,13 +214,17 @@ ifneq ($(HAS_SERVER),)
 ifneq ($(MM_DEBUG),)
 	$(info DEBUG mode is on; to disable, unset MM_DEBUG)
 endif
+	rm -rf server/dist;
 	mkdir -p server/dist;
 ifneq ($(MM_SERVICESETTINGS_ENABLEDEVELOPER),)
 	@echo Building plugin only for $(DEFAULT_GOOS)-$(DEFAULT_GOARCH) because MM_SERVICESETTINGS_ENABLEDEVELOPER is enabled
-	cd server && env CGO_ENABLED=0 GOOS=$(DEFAULT_GOOS) GOARCH=$(DEFAULT_GOARCH) $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-$(DEFAULT_GOOS)-$(DEFAULT_GOARCH);
+	cd server && env CGO_ENABLED=0 $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-$(DEFAULT_GOOS)-$(DEFAULT_GOARCH);
 else
 	cd server && env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-linux-amd64;
 	cd server && env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-linux-arm64;
+	cd server && env CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-darwin-amd64;
+	cd server && env CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-darwin-arm64;
+	cd server && env CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) $(GO_BUILD_GCFLAGS) -trimpath -o dist/plugin-windows-amd64.exe;
 endif
 endif
 
@@ -239,12 +264,6 @@ bundle:
 	rm -rf dist/
 	mkdir -p dist/$(PLUGIN_ID)
 	./build/bin/manifest dist
-ifneq ($(wildcard LICENSE.txt),)
-	cp -r LICENSE.txt dist/$(PLUGIN_ID)/
-endif
-ifneq ($(wildcard NOTICE.txt),)
-	cp -r NOTICE.txt dist/$(PLUGIN_ID)/
-endif
 ifneq ($(wildcard $(ASSETS_DIR)/.),)
 	cp -r $(ASSETS_DIR) dist/$(PLUGIN_ID)/
 	rm -f dist/$(PLUGIN_ID)/$(ASSETS_DIR)/assets.go
@@ -265,6 +284,7 @@ ifeq ($(shell uname),Darwin)
 else
 	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_ID)
 endif
+
 	@echo plugin built at: dist/$(BUNDLE_NAME)
 
 ## Builds and bundles the plugin.
@@ -430,6 +450,6 @@ help:
 
 mock:
 ifneq ($(HAS_SERVER),)
-	go install github.com/golang/mock/mockgen@v1.6.0
+	go install go.uber.org/mock/mockgen@v0.6.0
 	mockgen -destination=server/command/mocks/mock_commands.go -package=mocks github.com/mattermost/mattermost-plugin-msteams-devsecops/server/command Command
 endif

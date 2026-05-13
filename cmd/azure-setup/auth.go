@@ -78,16 +78,12 @@ func tryAuthenticationMethods(ctx context.Context, tenantID string, verbose bool
 	return nil, "", errors.New("all authentication methods failed")
 }
 
-// tryEnvironmentCredential attempts to authenticate using environment variables
-func tryEnvironmentCredential(tenantID string) (azcore.TokenCredential, error) {
-	opts := &azidentity.ClientSecretCredentialOptions{}
-	if tenantID != "" {
-		opts.AdditionallyAllowedTenants = []string{tenantID}
-	}
-
-	cred, err := azidentity.NewEnvironmentCredential(&azidentity.EnvironmentCredentialOptions{
-		ClientOptions: opts.ClientOptions,
-	})
+// tryEnvironmentCredential attempts to authenticate using environment variables.
+// EnvironmentCredential reads tenant configuration from AZURE_TENANT_ID and does
+// not expose AdditionallyAllowedTenants via options, so the tenantID parameter
+// is intentionally unused here.
+func tryEnvironmentCredential(_ string) (azcore.TokenCredential, error) {
+	cred, err := azidentity.NewEnvironmentCredential(nil)
 	if err != nil {
 		return nil, err
 	}

@@ -9,9 +9,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 
 	"github.com/stretchr/testify/require"
 )
