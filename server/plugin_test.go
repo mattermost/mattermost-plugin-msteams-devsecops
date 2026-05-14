@@ -141,7 +141,7 @@ func TestUpdateFrameAncestors(t *testing.T) {
 		},
 		{
 			name:             "With existing ancestors",
-			initialAncestors: new("example.com test.com"),
+			initialAncestors: model.NewPointer("example.com test.com"),
 			expectedDomains: []string{
 				"example.com", "test.com", "*.cloud.microsoft",
 				"*.microsoft365.com", "*.office.com", "*.teams.microsoft.com",
@@ -150,7 +150,7 @@ func TestUpdateFrameAncestors(t *testing.T) {
 		},
 		{
 			name:             "With duplicate ancestors",
-			initialAncestors: new("teams.microsoft.com example.com"),
+			initialAncestors: model.NewPointer("teams.microsoft.com example.com"),
 			expectedDomains:  []string{"teams.microsoft.com", "example.com"},
 			shouldContainAll: true,
 		},

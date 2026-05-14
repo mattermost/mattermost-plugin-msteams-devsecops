@@ -493,16 +493,18 @@ func TestValidateToken(t *testing.T) {
 		// Security: alg "none" must always be rejected (algorithm confusion attack).
 		t.Run("alg none token rejected", func(t *testing.T) {
 			_, _, jwtKeyFunc := makeKeySet(t)
-			siteURL, _ := url.Parse(TestSiteURL)
+			siteURL, err := url.Parse(TestSiteURL)
+			require.NoError(t, err)
 			expectedAud := fmt.Sprintf(ExpectedAudienceFmt, siteURL.Host, TestClientID)
 			header := []byte(`{"alg":"none","typ":"JWT"}`)
-			payload, _ := json.Marshal(map[string]any{
+			payload, err := json.Marshal(map[string]any{
 				"aud": expectedAud,
 				"exp": future(),
 				"iat": past(),
 				"nbf": past(),
 				"tid": "test-tenant-id",
 			})
+			require.NoError(t, err)
 			b64Header := base64.RawURLEncoding.EncodeToString(header)
 			b64Payload := base64.RawURLEncoding.EncodeToString(payload)
 			tokenNone := b64Header + "." + b64Payload + "." // empty signature for alg "none"
