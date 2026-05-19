@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
 )
 

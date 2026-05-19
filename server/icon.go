@@ -15,10 +15,11 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/sirupsen/logrus"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 )
 
 type IconType string
@@ -126,7 +127,7 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
+	response := map[string]any{
 		"success":  true,
 		"iconPath": fmt.Sprintf("/plugins/com.mattermost.plugin-msteams-devsecops/icons/%s", iconType),
 	}
@@ -202,7 +203,7 @@ func (a *API) deleteIcon(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
+	response := map[string]any{
 		"success": true,
 		"message": "Icon deleted successfully",
 	}
@@ -226,7 +227,7 @@ func (a *API) iconExists(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
+	response := map[string]any{
 		"exists": exists,
 	}
 	_ = json.NewEncoder(w).Encode(response)

@@ -133,7 +133,6 @@ func TestBuildRequiredResourceAccess(t *testing.T) {
 	})
 }
 
-
 // TestEnsureServicePrincipalExists tests service principal creation logic
 func TestEnsureServicePrincipalExists(t *testing.T) {
 	t.Run("validates_client_id_format", func(t *testing.T) {
@@ -148,7 +147,6 @@ func TestEnsureServicePrincipalExists(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
-
 
 // TestConfigureAPIPermissions_VerboseOutput tests verbose mode
 func TestConfigureAPIPermissions_VerboseOutput(t *testing.T) {

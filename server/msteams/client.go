@@ -24,7 +24,6 @@ import (
 	mmModel "github.com/mattermost/mattermost/server/public/model"
 
 	azidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
 	pluginapi "github.com/mattermost/mattermost/server/public/pluginapi"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
@@ -43,6 +42,8 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/teamwork"
 	"github.com/microsoftgraph/msgraph-sdk-go/users"
 	"golang.org/x/oauth2"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
 )
 
 const (
@@ -622,7 +623,7 @@ func (tc *ClientImpl) UploadFile(teamID, channelID, filename string, filesize in
 			folderRequestBody.SetName(&folderName)
 			folder := models.NewFolder()
 			folderRequestBody.SetFolder(folder)
-			additionalData := map[string]interface{}{
+			additionalData := map[string]any{
 				"microsoftGraphConflictBehavior": "fail",
 			}
 
@@ -1121,20 +1122,23 @@ func (tc *ClientImpl) GetChat(chatID string) (*clientmodels.Chat, error) {
 		if member.GetDisplayName() != nil {
 			displayName = *member.GetDisplayName()
 		}
-		emptyString := ""
-		userID, err := member.GetBackingStore().Get("userId")
-		if err != nil || userID == nil {
-			userID = &emptyString
+		userIDStr := ""
+		if userID, err := member.GetBackingStore().Get("userId"); err == nil {
+			if ptr, ok := userID.(*string); ok && ptr != nil {
+				userIDStr = *ptr
+			}
 		}
-		email, err := member.GetBackingStore().Get("email")
-		if err != nil || email == nil {
-			email = &emptyString
+		emailStr := ""
+		if email, err := member.GetBackingStore().Get("email"); err == nil {
+			if ptr, ok := email.(*string); ok && ptr != nil {
+				emailStr = *ptr
+			}
 		}
 
 		members = append(members, clientmodels.ChatMember{
 			DisplayName: displayName,
-			UserID:      *(userID.(*string)),
-			Email:       *(email.(*string)),
+			UserID:      userIDStr,
+			Email:       emailStr,
 		})
 	}
 
@@ -1494,8 +1498,13 @@ func (tc *ClientImpl) GetFileSizeAndDownloadURL(weburl string) (int64, string, e
 	}
 
 	resultDownloadURL := ""
-	if downloadURL.(*string) != nil {
-		resultDownloadURL = *(downloadURL.(*string))
+	switch v := downloadURL.(type) {
+	case *string:
+		if v != nil {
+			resultDownloadURL = *v
+		}
+	case string:
+		resultDownloadURL = v
 	}
 
 	fileSize := item.GetSize()
@@ -1663,7 +1672,7 @@ func (tc *ClientImpl) CreateChat(chatType models.ChatType, userIDs []string) (*c
 		conversationMember := models.NewConversationMember()
 		odataType := "#microsoft.graph.aadUserConversationMember"
 		conversationMember.SetOdataType(&odataType)
-		conversationMember.SetAdditionalData(map[string]interface{}{
+		conversationMember.SetAdditionalData(map[string]any{
 			"user@odata.bind": "https://graph.microsoft.com/v1.0/users('" + userID + "')",
 		})
 		conversationMember.SetRoles([]string{"owner"})
@@ -2186,7 +2195,8 @@ func GetAuthURL(redirectURL string, tenantID string, clientID string, clientSecr
 	_, _ = io.WriteString(sha2, codeVerifier)
 	codeChallenge := base64.RawURLEncoding.EncodeToString(sha2.Sum(nil))
 
-	return conf.AuthCodeURL(state,
+	return conf.AuthCodeURL(
+		state,
 		oauth2.AccessTypeOffline,
 		oauth2.SetAuthURLParam("prompt", "select_account"),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
@@ -2204,20 +2214,30 @@ func checkGroupChat(c models.Chatable, userIDs []string) *clientmodels.Chat {
 		matches := map[string]bool{}
 		members := []clientmodels.ChatMember{}
 		for _, m := range c.GetMembers() {
+			userIDRaw, userErr := m.GetBackingStore().Get("userId")
+			if userErr != nil {
+				continue
+			}
+			userIDPtr, ok := userIDRaw.(*string)
+			if !ok || userIDPtr == nil {
+				continue
+			}
 			for _, u := range userIDs {
-				userID, userErr := m.GetBackingStore().Get("userId")
-				if userErr == nil && userID != nil && userID.(*string) != nil && *(userID.(*string)) == u {
-					matches[u] = true
-					userEmail, emailErr := m.GetBackingStore().Get("email")
-					if emailErr == nil && userEmail != nil && userEmail.(*string) != nil {
-						members = append(members, clientmodels.ChatMember{
-							Email:  *(userEmail.(*string)),
-							UserID: *(userID.(*string)),
-						})
-					}
-
+				if *userIDPtr != u {
+					continue
+				}
+				matches[u] = true
+				userEmailRaw, emailErr := m.GetBackingStore().Get("email")
+				if emailErr != nil {
 					break
 				}
+				if userEmailPtr, emailOK := userEmailRaw.(*string); emailOK && userEmailPtr != nil {
+					members = append(members, clientmodels.ChatMember{
+						Email:  *userEmailPtr,
+						UserID: *userIDPtr,
+					})
+				}
+				break
 			}
 		}
 

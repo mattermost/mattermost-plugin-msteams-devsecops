@@ -8,11 +8,12 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 )
 
 func TestIFrameAuthenticate(t *testing.T) {

@@ -13,13 +13,14 @@ import (
 	"time"
 
 	goPlugin "github.com/hashicorp/go-plugin"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/mocks"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/mocks"
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 )
 
 type testHelper struct {

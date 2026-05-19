@@ -14,10 +14,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
 )
 
 // Embed test PNG files for dimension validation tests

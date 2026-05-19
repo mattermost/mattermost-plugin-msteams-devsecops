@@ -125,7 +125,7 @@ func (p *Plugin) validateConfiguration(configuration *configuration) error {
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
 // your configuration has reference types.
 func (c *configuration) Clone() *configuration {
-	var clone = *c
+	clone := *c
 	return &clone
 }
 
@@ -201,7 +201,7 @@ func (p *Plugin) setConfiguration(configuration *configuration) {
 // OnConfigurationChange is invoked when configuration changes may have been made.
 func (p *Plugin) OnConfigurationChange() error {
 	// Create a new configuration to hold the new settings
-	var newConfig = new(configuration)
+	newConfig := new(configuration)
 
 	// Load the public configuration fields from the Mattermost server configuration.
 	if err := p.API.LoadPluginConfiguration(newConfig); err != nil {

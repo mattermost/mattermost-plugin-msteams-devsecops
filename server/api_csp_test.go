@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -23,7 +24,7 @@ func TestSanitizeForLog(t *testing.T) {
 	t.Run("truncates at maxCSPReportFieldLen runes and appends ellipsis", func(t *testing.T) {
 		in := strings.Repeat("a", maxCSPReportFieldLen+100)
 		out := sanitizeForLog(in)
-		assert.Equal(t, maxCSPReportFieldLen+3, len([]rune(out)), "output should be 500 runes + \"...\"")
+		assert.Equal(t, maxCSPReportFieldLen+3, len([]rune(out)), fmt.Sprintf("output should be %d runes + \"...\"", maxCSPReportFieldLen))
 		assert.True(t, strings.HasSuffix(out, "..."))
 	})
 

@@ -424,17 +424,7 @@ func TestOrchestrationContextHandling(t *testing.T) {
 	defer cancel()
 
 	config := &SetupConfig{
-		TenantID:          "tenant-123",
-		MattermostSiteURL: "https://mattermost.example.com",
-		AppName:           "Test App",
-		ClientID:          "",
-		SecretExpiration:  12,
-		DryRun:            true,
-		NonInteractive:    true,
-		Verbose:           false,
-		OutputFormat:      "json",
-		ctx:               ctx,
-		rollback:          []func() error{},
+		ctx: ctx,
 	}
 
 	// Verify context is set

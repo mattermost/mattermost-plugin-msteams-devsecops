@@ -10,10 +10,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams"
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
 )
 
 const (

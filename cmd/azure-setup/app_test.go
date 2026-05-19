@@ -95,23 +95,23 @@ func TestUpdateApplication_DryRun(t *testing.T) {
 // TestUpdateApplication_Idempotency tests idempotency checks
 func TestUpdateApplication_Idempotency(t *testing.T) {
 	tests := []struct {
-		name              string
-		existingAudience  *string
+		name                string
+		existingAudience    *string
 		expectedNeedsUpdate bool
 	}{
 		{
-			name:              "correct_audience_no_update_needed",
-			existingAudience:  stringPtr("AzureADMyOrg"),
+			name:                "correct_audience_no_update_needed",
+			existingAudience:    new("AzureADMyOrg"),
 			expectedNeedsUpdate: false,
 		},
 		{
-			name:              "wrong_audience_needs_update",
-			existingAudience:  stringPtr("AzureADMultipleOrgs"),
+			name:                "wrong_audience_needs_update",
+			existingAudience:    new("AzureADMultipleOrgs"),
 			expectedNeedsUpdate: true,
 		},
 		{
-			name:              "nil_audience_needs_update",
-			existingAudience:  nil,
+			name:                "nil_audience_needs_update",
+			existingAudience:    nil,
 			expectedNeedsUpdate: true,
 		},
 	}
@@ -150,9 +150,4 @@ func TestDeleteApplication_Rollback(t *testing.T) {
 		objectID := "test-object-id"
 		assert.NotEmpty(t, objectID)
 	})
-}
-
-// Helper function to create string pointers
-func stringPtr(s string) *string {
-	return &s
 }
