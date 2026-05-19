@@ -1,7 +1,7 @@
 {
-   "$schema":"https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
-   "version":"1.0.8",
-   "manifestVersion":"1.19",
+   "$schema":"https://developer.microsoft.com/en-us/json-schemas/teams/v1.22/MicrosoftTeams.schema.json",
+   "version":"1.0.9",
+   "manifestVersion":"1.22",
    "id":"b5f44ca1-af3f-4928-892f-63aa09d3527a",
    "name":{
       "short":"Community for Mattermost",
