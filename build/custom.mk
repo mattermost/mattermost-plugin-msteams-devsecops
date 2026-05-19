@@ -7,6 +7,7 @@ APPSTORE_DIST_DIR ?= dist/appstore
 ## where <version> is read from each folder's manifest.json `.version` field.
 .PHONY: appstore-bundles
 appstore-bundles:
+	@command -v jq >/dev/null 2>&1 || { echo "appstore-bundles requires jq to be installed"; exit 1; }
 	@mkdir -p "$(APPSTORE_DIST_DIR)"
 	@find "$(APPSTORE_DIST_DIR)" -maxdepth 1 -type f -name '*.zip' -delete
 	@find "$(APPSTORE_DIR)" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r dir; do \
@@ -16,7 +17,7 @@ appstore-bundles:
 			echo "Skipping $$name: missing manifest.json"; \
 			continue; \
 		fi; \
-		version=$$(sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$$manifest" | head -1); \
+		version=$$(jq -r '.version // empty' "$$manifest"); \
 		if [ -z "$$version" ]; then \
 			echo "Skipping $$name: no .version in manifest.json"; \
 			continue; \
