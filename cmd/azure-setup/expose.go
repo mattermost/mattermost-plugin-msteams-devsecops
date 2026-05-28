@@ -36,14 +36,6 @@ func configureAPIExposure(ctx context.Context, client *msgraphsdk.GraphServiceCl
 		return nil
 	}
 
-	// Create the api configuration
-	api := models.NewApiApplication()
-
-	// Set the Application ID URI (identifier)
-	identifierUris := []string{appIDURI}
-	appUpdate := models.NewApplication()
-	appUpdate.SetIdentifierUris(identifierUris)
-
 	// Create the access_as_user scope
 	scopeID := uuid.New()
 	scope := models.NewPermissionScope()
@@ -71,21 +63,44 @@ func configureAPIExposure(ctx context.Context, client *msgraphsdk.GraphServiceCl
 	scope.SetIsEnabled(&isEnabled)
 
 	oauth2PermissionScopes := []models.PermissionScopeable{scope}
-	api.SetOauth2PermissionScopes(oauth2PermissionScopes)
 
-	// Add pre-authorized applications
+	// PATCH 1: Set the Application ID URI and the OAuth2 permission scope.
+	// Microsoft Graph validates preAuthorizedApplications.delegatedPermissionIds
+	// against the application's existing OAuth2PermissionScopes (the pre-PATCH
+	// state), so the scope must exist on the application BEFORE we can reference
+	// it in preAuthorizedApplications. Doing this in a single PATCH triggers:
+	// "Property api.preAuthorizedApplications.delegatedPermissionIds has a
+	// Permission Id that cannot be found in the AppPermissions sets."
+	identifierUris := []string{appIDURI}
+	apiStep1 := models.NewApiApplication()
+	apiStep1.SetOauth2PermissionScopes(oauth2PermissionScopes)
+
+	appUpdateStep1 := models.NewApplication()
+	appUpdateStep1.SetIdentifierUris(identifierUris)
+	appUpdateStep1.SetApi(apiStep1)
+
+	if _, err = client.Applications().ByApplicationId(*app.GetId()).Patch(ctx, appUpdateStep1, nil); err != nil {
+		return errors.Wrapf(err, "failed to configure API scope (scope ID: %s, value: %s)", scopeID.String(), ScopeName)
+	}
+
+	// PATCH 2: Add pre-authorized applications referencing the scope created above.
+	// We re-send oauth2PermissionScopes to preserve it — PATCH semantics on the
+	// nested `api` complex type can otherwise wipe the scopes we just set.
 	preAuthorizedApps, err := buildPreAuthorizedApplications(scopeID)
 	if err != nil {
 		return err
 	}
-	api.SetPreAuthorizedApplications(preAuthorizedApps)
 
-	appUpdate.SetApi(api)
+	apiStep2 := models.NewApiApplication()
+	apiStep2.SetOauth2PermissionScopes(oauth2PermissionScopes)
+	apiStep2.SetPreAuthorizedApplications(preAuthorizedApps)
 
-	// Update the application
-	_, err = client.Applications().ByApplicationId(*app.GetId()).Patch(ctx, appUpdate, nil)
-	if err != nil {
-		return errors.Wrap(err, "failed to configure API exposure")
+	appUpdateStep2 := models.NewApplication()
+	appUpdateStep2.SetApi(apiStep2)
+
+	if _, err = client.Applications().ByApplicationId(*app.GetId()).Patch(ctx, appUpdateStep2, nil); err != nil {
+		preAuthClientIDs := getPreAuthorizedClients()
+		return errors.Wrapf(err, "failed to configure pre-authorized applications (delegated permission scope ID: %s, value: %s, pre-authorized client IDs: %v)", scopeID.String(), ScopeName, preAuthClientIDs)
 	}
 
 	if config.Verbose {

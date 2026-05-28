@@ -39,6 +39,8 @@ func createApplication(ctx context.Context, client *msgraphsdk.GraphServiceClien
 		mockApp.SetDisplayName(&displayName)
 		appID := "00000000-0000-0000-0000-000000000000"
 		mockApp.SetAppId(&appID)
+		objectID := "00000000-0000-0000-0000-000000000000"
+		mockApp.SetId(&objectID)
 		return mockApp, nil
 	}
 
