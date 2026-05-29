@@ -11,10 +11,10 @@ function errorToString(error) {
         return error;
     }
     if (error.message) {
-        return error.message;
+        return String(error.message);
     }
     try {
-        return JSON.stringify(error);
+        return String(JSON.stringify(error));
     } catch (_) {
         return String(error);
     }
