@@ -59,9 +59,6 @@
         }
     },
     "devicePermissions": ["media"],
-    "defaultGroupCapability": {
-        "team": "tab"
-    },
     "activities": {
         "activityTypes": [
             {
