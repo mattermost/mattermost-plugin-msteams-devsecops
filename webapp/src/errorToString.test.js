@@ -1,10 +1,23 @@
+// Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
+// See LICENSE.txt for license information.
+
 // Tests for the errorToString utility used in assets/iframe.html.tmpl.
 // The function is inlined in the template (no module system); keep both in sync.
 function errorToString(error) {
-    if (!error) return 'Unknown error';
-    if (typeof error === 'string') return error;
-    if (error.message) return error.message;
-    try { return JSON.stringify(error); } catch (_) { return String(error); }
+    if (!error) {
+        return 'Unknown error';
+    }
+    if (typeof error === 'string') {
+        return error;
+    }
+    if (error.message) {
+        return error.message;
+    }
+    try {
+        return JSON.stringify(error);
+    } catch (_) {
+        return String(error);
+    }
 }
 
 describe('errorToString', () => {
@@ -47,6 +60,7 @@ describe('errorToString', () => {
 
         test('Error with empty message falls through to JSON.stringify', () => {
             const e = new Error('');
+
             // Error.message is '' which is falsy, so falls through to JSON.stringify.
             // JSON.stringify(new Error('')) returns '{}'.
             expect(errorToString(e)).toBe('{}');
@@ -55,11 +69,11 @@ describe('errorToString', () => {
 
     describe('plain objects', () => {
         test('object with message property returns the message', () => {
-            expect(errorToString({ message: 'auth failed', code: 42 })).toBe('auth failed');
+            expect(errorToString({message: 'auth failed', code: 42})).toBe('auth failed');
         });
 
         test('object without message is JSON-serialised', () => {
-            expect(errorToString({ code: 'TOKEN_EXPIRED' })).toBe('{"code":"TOKEN_EXPIRED"}');
+            expect(errorToString({code: 'TOKEN_EXPIRED'})).toBe('{"code":"TOKEN_EXPIRED"}');
         });
 
         test('empty object returns {}', () => {
@@ -71,6 +85,7 @@ describe('errorToString', () => {
         test('circular-reference object falls back to String()', () => {
             const circular = {};
             circular.self = circular;
+
             // JSON.stringify throws; String({}) => '[object Object]'
             expect(errorToString(circular)).toBe('[object Object]');
         });
