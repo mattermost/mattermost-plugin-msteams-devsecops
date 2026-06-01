@@ -114,7 +114,7 @@ describe('sync with assets/iframe.html.tmpl', () => {
 
         // Extract from template: function ends at the first `}` that sits at
         // the 6-space indentation level (the function's own closing brace).
-        const tmplMatch = tmpl.match(/function errorToString\(error\) \{[\s\S]*?\n      \}/);
+        const tmplMatch = tmpl.match(/function errorToString\(error\) \{[\s\S]*?\n {6}\}/);
 
         // Extract from this file: function ends at the first `}` at column 0.
         const testMatch = testSrc.match(/^function errorToString\(error\) \{[\s\S]*?^\}/m);
