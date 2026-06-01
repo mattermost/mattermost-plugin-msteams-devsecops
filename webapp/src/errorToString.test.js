@@ -1,6 +1,9 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+const fs = require('fs');
+const path = require('path');
+
 // Tests for the errorToString utility used in assets/iframe.html.tmpl.
 // The function is inlined in the template (no module system); keep both in sync.
 function errorToString(error) {
@@ -89,5 +92,35 @@ describe('errorToString', () => {
             // JSON.stringify throws; String({}) => '[object Object]'
             expect(errorToString(circular)).toBe('[object Object]');
         });
+    });
+});
+
+describe('sync with assets/iframe.html.tmpl', () => {
+    // Collapse all whitespace so indentation differences between the template
+    // (6-space indent) and this file (4-space indent) do not cause false failures.
+    function normalize(src) {
+        return src.replace(/\s+/g, ' ').trim();
+    }
+
+    test('errorToString body matches the copy inlined in the template', () => {
+        const tmpl = fs.readFileSync(
+            path.resolve(__dirname, '../../assets/iframe.html.tmpl'),
+            'utf8',
+        );
+
+        // Read the source of this file directly so we compare raw text,
+        // not the Babel-transpiled output of Function.prototype.toString().
+        const testSrc = fs.readFileSync(__filename, 'utf8');
+
+        // Extract from template: function ends at the first `}` that sits at
+        // the 6-space indentation level (the function's own closing brace).
+        const tmplMatch = tmpl.match(/function errorToString\(error\) \{[\s\S]*?\n      \}/);
+
+        // Extract from this file: function ends at the first `}` at column 0.
+        const testMatch = testSrc.match(/^function errorToString\(error\) \{[\s\S]*?^\}/m);
+
+        expect(tmplMatch).not.toBeNull();
+        expect(testMatch).not.toBeNull();
+        expect(normalize(tmplMatch[0])).toBe(normalize(testMatch[0]));
     });
 });

@@ -33,10 +33,20 @@
       const iframe = document.querySelector('iframe');
 
       function errorToString(error) {
-        if (!error) return 'Unknown error';
-        if (typeof error === 'string') return error;
-        if (error.message) return String(error.message);
-        try { return String(JSON.stringify(error)); } catch (_) { return String(error); }
+        if (!error) {
+          return 'Unknown error';
+        }
+        if (typeof error === 'string') {
+          return error;
+        }
+        if (error.message) {
+          return String(error.message);
+        }
+        try {
+          return String(JSON.stringify(error));
+        } catch (_) {
+          return String(error);
+        }
       }
 
       function isValidOrigin(eventOrigin, expectedOrigin) {
