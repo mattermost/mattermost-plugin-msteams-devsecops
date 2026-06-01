@@ -125,7 +125,7 @@
               if (retries < maxRetries) {
                 console.log("Retrying...");
                 retries++;
-                setTimeout(getToken, 250 + (250 * retries^2)); // Exponential backoff
+                setTimeout(getToken, 250 + (250 * retries * retries)); // Exponential backoff
               } else {
                 reject(errorToString(error));
               }
