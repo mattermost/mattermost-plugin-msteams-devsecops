@@ -6,8 +6,8 @@
   <title>Mattermost DevSecOps</title>
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
   <script
-    src="https://res.cdn.office.net/teams-js/2.34.0/js/MicrosoftTeams.min.js"
-    integrity="sha384-brW9AazbKR2dYw2DucGgWCCcmrm2oBFV4HQidyuyZRI/TnAkmOOnTARSTdps3Hwt"
+    src="https://res.cdn.office.net/teams-js/2.53.0/js/MicrosoftTeams.min.js"
+    integrity="sha384-UFKwOGC8ix6vOFFC4vH8hSpjwkQXZmSjCx8aaxwhbtm+6joQdNvD7b4pPk82cYAD"
     crossorigin="anonymous"
   ></script>
 </head>
@@ -32,6 +32,23 @@
       const domainRoot = '{{.SiteURL}}';
       const iframe = document.querySelector('iframe');
 
+      function errorToString(error) {
+        if (!error) {
+          return 'Unknown error';
+        }
+        if (typeof error === 'string') {
+          return error;
+        }
+        if (error.message) {
+          return String(error.message);
+        }
+        try {
+          return String(JSON.stringify(error));
+        } catch (_) {
+          return String(error);
+        }
+      }
+
       function isValidOrigin(eventOrigin, expectedOrigin) {
         try {
           const eventUrl = new URL(eventOrigin);
@@ -41,7 +58,7 @@
           eventUrl.hostname === expectedUrl.hostname &&
           eventUrl.port === expectedUrl.port;
         } catch (e) {
-          console.error('Invalid origin URL:', e);
+          console.error('Invalid origin URL:', errorToString(e));
           return false;
         }
       }
@@ -82,7 +99,7 @@
           }).catch((error) => {
             waitIframeWindow.postMessage({
               type: 'auth_error',
-              error: error ? (error.message || String(error)) : 'Authentication failed'
+              error: errorToString(error) || 'Authentication failed'
             }, domainRoot);
           })
         }
@@ -103,13 +120,14 @@
             microsoftTeams.authentication.getAuthToken().then((token) => {
               resolve(token);
             }).catch((error) => {
-              console.error("Failed to get token:", error);
+              console.error("Failed to get token:", errorToString(error));
+              console.error(error); // Fallback to regular console.error in case the error coming from teams it's not a string
               if (retries < maxRetries) {
                 console.log("Retrying...");
                 retries++;
-                setTimeout(getToken, 250 + (250 * retries^2)); // Exponential backoff
+                setTimeout(getToken, 250 + (250 * retries * retries)); // Exponential backoff
               } else {
-                reject(error);
+                reject(errorToString(error));
               }
             });
           };
@@ -121,7 +139,8 @@
       microsoftTeams.app.initialize(['{{.SiteURL}}']).then(() => {
         microsoftTeams.app.notifySuccess();
       }).catch((error) => {
-        console.error('Failed to initialize Microsoft Teams SDK:', error);
+        console.error('Failed to initialize Microsoft Teams SDK:', errorToString(error));
+        console.error(error);
         iframe.src = '{{.SiteURL}}';
       });
 
@@ -148,7 +167,7 @@
               iframe.src = `${domainRoot}/plugins/{{.PluginID}}/iframe/authenticate?${params.toString()}`;
             })
             .catch((error) => {
-              console.error('Failed to get auth token:', error);
+              console.error('Failed to get auth token:', errorToString(error));
               iframe.src = domainRoot;
             });
         } else {
@@ -160,7 +179,7 @@
       }).catch((error) => {
         // User appears to not be logged into Microsoft Teams, or the context is not available.
         // Just redirect to the SITE_URL and the user will have to log in without SSO.
-        console.error('Failed to get context:', error);
+        console.error('Failed to get context:', errorToString(error));
         iframe.src = '{{.SiteURL}}';
       });
     })(microsoftTeams);

@@ -26,7 +26,7 @@
     "staticTabs": [
         {
             "entityId": "Mattermost",
-            "name": "Mattermost",
+            "name": "{{.AppName}}",
             "contentUrl": "https://{{.SiteDomainPath}}/plugins/{{.PluginID}}/iframe/mattermostTab",
             "scopes": ["personal"]
         },
@@ -63,9 +63,6 @@
     "devicePermissions": [
         "media"
     ],
-    "defaultGroupCapability": {
-        "team": "tab"
-    },
     "activities": {
         "activityTypes": [
             {
