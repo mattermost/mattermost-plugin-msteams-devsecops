@@ -36,8 +36,12 @@ func configureAPIExposure(ctx context.Context, client *msgraphsdk.GraphServiceCl
 		return nil
 	}
 
-	// Create the access_as_user scope
-	scopeID := uuid.New()
+	// Reuse the existing scope ID to keep re-runs idempotent; only mint a new
+	// UUID when no access_as_user scope exists yet.
+	scopeID := findExistingScopeID(app)
+	if scopeID == uuid.Nil {
+		scopeID = uuid.New()
+	}
 	scope := models.NewPermissionScope()
 	scope.SetId(&scopeID)
 
@@ -115,6 +119,21 @@ func configureAPIExposure(ctx context.Context, client *msgraphsdk.GraphServiceCl
 	}
 
 	return nil
+}
+
+// findExistingScopeID returns the UUID of the existing access_as_user scope on the
+// app, or uuid.Nil if none is found. Used to avoid generating a duplicate scope ID
+// when configureAPIExposure is called against an already-configured application.
+func findExistingScopeID(app models.Applicationable) uuid.UUID {
+	if app.GetApi() == nil {
+		return uuid.Nil
+	}
+	for _, scope := range app.GetApi().GetOauth2PermissionScopes() {
+		if scope.GetValue() != nil && *scope.GetValue() == ScopeName && scope.GetId() != nil {
+			return *scope.GetId()
+		}
+	}
+	return uuid.Nil
 }
 
 // buildPreAuthorizedApplications creates the list of pre-authorized applications

@@ -185,6 +185,64 @@ func TestConfigureAPIExposure_VerboseOutput(t *testing.T) {
 	require.NoError(t, err, "Verbose mode should not affect success")
 }
 
+// TestFindExistingScopeID tests scope ID lookup on existing app objects
+func TestFindExistingScopeID(t *testing.T) {
+	t.Run("returns_nil_when_api_is_nil", func(t *testing.T) {
+		app := models.NewApplication()
+		assert.Equal(t, uuid.Nil, findExistingScopeID(app))
+	})
+
+	t.Run("returns_nil_when_no_scopes", func(t *testing.T) {
+		app := models.NewApplication()
+		api := models.NewApiApplication()
+		api.SetOauth2PermissionScopes([]models.PermissionScopeable{})
+		app.SetApi(api)
+		assert.Equal(t, uuid.Nil, findExistingScopeID(app))
+	})
+
+	t.Run("returns_nil_when_scope_name_does_not_match", func(t *testing.T) {
+		app := models.NewApplication()
+		api := models.NewApiApplication()
+		scope := models.NewPermissionScope()
+		otherName := "other_scope"
+		otherID := uuid.New()
+		scope.SetValue(&otherName)
+		scope.SetId(&otherID)
+		api.SetOauth2PermissionScopes([]models.PermissionScopeable{scope})
+		app.SetApi(api)
+		assert.Equal(t, uuid.Nil, findExistingScopeID(app))
+	})
+
+	t.Run("returns_existing_scope_id", func(t *testing.T) {
+		existingID := uuid.New()
+		app := models.NewApplication()
+		api := models.NewApiApplication()
+		scope := models.NewPermissionScope()
+		scopeName := ScopeName
+		scope.SetValue(&scopeName)
+		scope.SetId(&existingID)
+		api.SetOauth2PermissionScopes([]models.PermissionScopeable{scope})
+		app.SetApi(api)
+		assert.Equal(t, existingID, findExistingScopeID(app))
+	})
+
+	t.Run("reuses_id_not_uuid_nil_when_scope_present", func(t *testing.T) {
+		existingID := uuid.New()
+		app := models.NewApplication()
+		api := models.NewApiApplication()
+		scope := models.NewPermissionScope()
+		scopeName := ScopeName
+		scope.SetValue(&scopeName)
+		scope.SetId(&existingID)
+		api.SetOauth2PermissionScopes([]models.PermissionScopeable{scope})
+		app.SetApi(api)
+
+		result := findExistingScopeID(app)
+		assert.NotEqual(t, uuid.Nil, result)
+		assert.Equal(t, existingID, result)
+	})
+}
+
 // TestBuildPreAuthorizedApplications_ErrorHandling tests error scenarios
 func TestBuildPreAuthorizedApplications_ErrorHandling(t *testing.T) {
 	t.Run("valid_uuid_scope", func(t *testing.T) {
