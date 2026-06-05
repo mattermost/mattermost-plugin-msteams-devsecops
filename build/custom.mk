@@ -52,5 +52,5 @@ appstore-bundles: appstore-icons
 		fi; \
 		out="$$PWD/$(APPSTORE_DIST_DIR)/$$name-$$version.zip"; \
 		echo "Bundling $$name-$$version.zip"; \
-		(cd "$$dir" && zip -qr "$$out" . -x "assets/*" -x "marketplace/*") || exit 1; \
+		(cd "$$dir" && zip -qr "$$out" . -x "assets/*" -x "marketplace/*" -x "*.DS_Store") || exit 1; \
 	done

@@ -55,3 +55,40 @@ This is likely due to re-installing the app in your app store, and a new interna
 
 Outlook for Mac (native client) does not support apps currently. MS Teams on Mac (native client) is supported as are web clients for Outlook, MS Teams and Microsoft 365.
 
+## App Store Packages
+
+The `appstore/` directory contains one subdirectory per Teams app store submission (Community for Mattermost, Corpus, HUB). Each follows this layout:
+
+```
+appstore/<AppName>/
+  assets/            # Source images — edit these; never commit directly as submission icons
+    logo-color.png   # Full-resolution color source (any size, square)
+    logo-outline.png # Full-resolution outline source (any size, square)
+  marketplace/       # Store screenshots (not included in submission zip)
+  logo-color.png     # Generated 192×192 color icon — committed, bundled
+  logo-outline.png   # Generated 32×32 outline icon — committed, bundled
+  manifest.json      # Teams app manifest — bundled
+```
+
+### Generating icons
+
+After editing any file under `assets/`, regenerate and commit the submission icons:
+
+```bash
+make appstore-icons   # requires sips (macOS) or ImageMagick (magick/convert)
+git add appstore/*/logo-*.png
+git commit -m "Regenerate appstore icons"
+```
+
+### Building submission bundles
+
+```bash
+make appstore-bundles   # requires jq; produces dist/appstore/<AppName>-<version>.zip
+```
+
+Each zip contains only `manifest.json`, `logo-color.png`, and `logo-outline.png`. The `assets/`, `marketplace/`, and `.DS_Store` files are excluded automatically.
+
+### Auditing for store compliance
+
+Run `/appstore-review` in Claude Code to fetch the current Microsoft Teams Store guidelines and validate every app package against them.
+

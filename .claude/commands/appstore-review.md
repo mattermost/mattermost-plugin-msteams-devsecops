@@ -48,7 +48,7 @@ do not invent one.
 
 List all subdirectories of `appstore/` (each is one app package):
 
-```
+```bash
 find appstore -mindepth 1 -maxdepth 1 -type d | sort
 ```
 
@@ -99,7 +99,9 @@ requirements you extracted in step 1a.
 
 ## Step 4 — Produce the report
 
-Print a single consolidated report:
+**Before printing, call the `advisor` tool.** The advisor will review your findings against
+the fetched guidelines and correct any misinterpretations. Incorporate its feedback, then
+print the consolidated report:
 
 ---
 
@@ -155,12 +157,6 @@ _(repeat for each app)_
 | <name> | ✅ / ❌ N issues | ✅ / ❌ N issues | Yes / No |
 
 ---
-
-## Step 5 — Advisor review (uses claude-opus-4-8)
-
-Before printing the final report, call the `advisor` tool. The advisor will review your
-findings against the fetched guidelines and correct any misinterpretations. Incorporate
-its feedback into the report before outputting it.
 
 ## Notes
 
