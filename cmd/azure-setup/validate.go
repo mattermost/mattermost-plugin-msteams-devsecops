@@ -169,6 +169,7 @@ func checkExistingApp(ctx context.Context, client *msgraphsdk.GraphServiceClient
 	apps, err := client.Applications().Get(ctx, &applications.ApplicationsRequestBuilderGetRequestConfiguration{
 		QueryParameters: &applications.ApplicationsRequestBuilderGetQueryParameters{
 			Filter: &filter,
+			Select: []string{"id", "appId", "displayName", "api", "identifierUris", "signInAudience"},
 		},
 	})
 	if err != nil {
