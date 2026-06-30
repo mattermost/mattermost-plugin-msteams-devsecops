@@ -6,6 +6,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -130,7 +131,7 @@ func (p *NotificationsParser) isGroupMention(mention string) *model.Group {
 func (p *NotificationsParser) SendNotifications() error {
 	for _, userNotification := range p.Notifications {
 		if err := p.SendNotification(userNotification); err != nil {
-			p.PAPI.LogError("Failed to send notification", "error", err.Error())
+			p.PAPI.LogError("Failed to send notification", "post_id", userNotification.Post.Id, "channel_id", userNotification.Post.ChannelId, "error", err.Error())
 		}
 	}
 	return nil
@@ -172,6 +173,9 @@ func (p *NotificationsParser) sendUserNotification(un *UserNotification) error {
 
 	channelMembership, err := p.PAPI.GetChannelMember(un.Post.ChannelId, un.User.Id)
 	if err != nil {
+		if err.StatusCode == http.StatusNotFound {
+			return nil
+		}
 		return err
 	}
 	if channelMembership == nil {
@@ -204,6 +208,9 @@ func (p *NotificationsParser) sendGroupNotification(un *UserNotification) error 
 		// only send notification if the user belongs to the channel the group was mentioned in
 		channelMembership, err := p.PAPI.GetChannelMember(un.Post.ChannelId, user.Id)
 		if err != nil {
+			if err.StatusCode == http.StatusNotFound {
+				continue
+			}
 			return err
 		}
 		if channelMembership == nil {
