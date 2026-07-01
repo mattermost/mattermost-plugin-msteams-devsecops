@@ -1,6 +1,6 @@
 module github.com/mattermost/mattermost-plugin-msteams-devsecops
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.1
@@ -8,7 +8,7 @@ require (
 	github.com/MicahParks/jwkset v0.11.0
 	github.com/MicahParks/keyfunc/v3 v3.8.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/mattermost/mattermost/server/public v0.4.1-0.20260512201720-8a8a4ac8b14f
+	github.com/mattermost/mattermost/server/public v0.4.3
 	github.com/mattermost/mattermost/server/v8 v8.0.0-20260512201720-8a8a4ac8b14f
 	github.com/microsoft/kiota-abstractions-go v1.9.4
 	github.com/microsoft/kiota-http-go v1.5.6
