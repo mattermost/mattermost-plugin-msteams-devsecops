@@ -78,6 +78,7 @@ type SetupConfig struct {
 	Verbose          bool
 	OutputFormat     string // "human", "json", "env"
 	SkipConfirmation bool   // Skip pre-flight confirmation prompt
+	Cloud            string // Microsoft national cloud: "commercial" (default), "gcchigh", or "dod"
 
 	// Internal state
 	ctx        context.Context
@@ -100,6 +101,10 @@ type SetupResult struct {
 	ApplicationID    string
 	ApplicationName  string
 	ApplicationIDURI string
+
+	// PortalHost is the Azure portal host for the selected national cloud,
+	// used to render the admin-consent link (e.g. portal.azure.com).
+	PortalHost string
 
 	// Operation Details
 	Created bool // true if created new, false if updated existing

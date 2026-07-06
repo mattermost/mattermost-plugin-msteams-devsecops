@@ -22,7 +22,6 @@ import (
 const (
 	pluginID                = "com.mattermost.plugin-msteams-devsecops"
 	checkCredentialsJobName = "check_credentials" //#nosec G101 -- This is a false positive
-	allowedFrameAncestors   = "*.cloud.microsoft teams.microsoft.com *.teams.microsoft.com *.microsoft365.com *.office.com outlook.office.com outlook.office365.com outlook-sdf.office.com outlook-sdf.office365.com"
 )
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
@@ -122,8 +121,8 @@ func (p *Plugin) updateFrameAncestors() error {
 		currentAncestors = strings.Fields(currentAncestorsStr)
 	}
 
-	// Parse the allowed frame ancestors from our constant
-	allowedDomains := strings.Fields(allowedFrameAncestors)
+	// Parse the allowed frame ancestors for the configured national cloud.
+	allowedDomains := p.getConfiguration().CloudEnvironment().FrameAncestors
 
 	// Create a map to track unique domains and preserve existing ones
 	uniqueDomains := make(map[string]bool)
@@ -187,7 +186,7 @@ func (p *Plugin) start(isRestart bool) {
 	// set up JWK for verifying JWTs from Microsoft Teams
 	p.cancelKeyFuncLock.Lock()
 	if !isRestart && p.cancelKeyFunc == nil {
-		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet()
+		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet(p.getConfiguration().CloudEnvironment().JWKSURL)
 	}
 	p.cancelKeyFuncLock.Unlock()
 
@@ -273,6 +272,7 @@ func (p *Plugin) connectTeamsAppClient() error {
 	}
 
 	p.msteamsAppClient = msteams.NewApp(
+		p.getConfiguration().CloudEnvironment(),
 		p.getConfiguration().M365TenantID,
 		p.getConfiguration().M365ClientID,
 		p.getConfiguration().M365ClientSecret,

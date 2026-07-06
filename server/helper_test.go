@@ -48,7 +48,7 @@ func setupTestHelper(t *testing.T) *testHelper {
 	// Set up JWK to validate JWTs from Microsoft Teams.
 	p.cancelKeyFuncLock.Lock()
 	if p.cancelKeyFunc == nil {
-		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet()
+		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet(p.getConfiguration().CloudEnvironment().JWKSURL)
 	}
 	p.cancelKeyFuncLock.Unlock()
 

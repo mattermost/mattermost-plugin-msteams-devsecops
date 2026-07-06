@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
 // configuration captures the plugin's external configuration as exposed in the Mattermost server
@@ -28,6 +30,11 @@ type configuration struct {
 	// Plugin Settings
 	DisableUserActivityNotifications bool `json:"disable_user_activity_notifications"`
 	DisableCheckCredentials          bool `json:"internal_disable_check_credentials"`
+
+	// NationalCloud selects the Microsoft national cloud to target: "commercial"
+	// (default, also covers GCC moderate), "gcchigh", or "dod". An empty or
+	// unrecognized value resolves to the commercial cloud.
+	NationalCloud string `json:"national_cloud"`
 
 	// Manifest Settings
 	AppVersion string `json:"app_version"`
@@ -120,6 +127,12 @@ func (p *Plugin) validateConfiguration(configuration *configuration) error {
 		return errors.New("app name should not be empty")
 	}
 	return nil
+}
+
+// CloudEnvironment resolves the Microsoft national cloud endpoints for the
+// configured NationalCloud value, defaulting to the commercial cloud.
+func (c *configuration) CloudEnvironment() cloudenv.Environment {
+	return cloudenv.EnvironmentFor(c.NationalCloud)
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if

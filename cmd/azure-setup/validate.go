@@ -7,12 +7,15 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/applications"
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/pkg/errors"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
 // validateInputs validates all user inputs before proceeding
@@ -51,6 +54,14 @@ func validateInputs(config *SetupConfig) error {
 
 	if config.SecretExpiration > 24 {
 		return errors.New("secret expiration cannot exceed 24 months")
+	}
+
+	// Validate national cloud
+	if config.Cloud == "" {
+		config.Cloud = cloudenv.Commercial
+	}
+	if !slices.Contains(cloudenv.Names(), config.Cloud) {
+		return errors.Errorf("invalid --cloud value %q: must be one of %v", config.Cloud, cloudenv.Names())
 	}
 
 	return nil

@@ -18,8 +18,7 @@ import (
 )
 
 const (
-	MicrosoftOnlineJWKSURL = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
-	ExpectedAudienceFmt    = "api://%s/%s"
+	ExpectedAudienceFmt = "api://%s/%s"
 )
 
 type validationError struct {
@@ -41,13 +40,13 @@ type validateTokenParams struct {
 	clientID            string
 }
 
-func setupJWKSet() (keyfunc.Keyfunc, context.CancelFunc) {
+func setupJWKSet(jwksURL string) (keyfunc.Keyfunc, context.CancelFunc) {
 	// Setup JWK set to assist in verifying JWTs passed from Microsoft Teams.
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
-	k, err := keyfunc.NewDefaultCtx(ctx, []string{MicrosoftOnlineJWKSURL})
+	k, err := keyfunc.NewDefaultCtx(ctx, []string{jwksURL})
 	if err != nil {
-		logrus.WithError(err).WithField("jwks_url", MicrosoftOnlineJWKSURL).Error("Failed to create a keyfunc.Keyfunc - JWT authentication will not work")
+		logrus.WithError(err).WithField("jwks_url", jwksURL).Error("Failed to create a keyfunc.Keyfunc - JWT authentication will not work")
 		return nil, cancelCtx
 	}
 	logrus.Info("Started JWKS monitor")

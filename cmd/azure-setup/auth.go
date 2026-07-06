@@ -11,17 +11,19 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/pkg/errors"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
 // authenticateToAzure establishes authentication to Azure using available methods
 // Priority order: Environment variables -> Azure CLI -> Interactive browser
-func authenticateToAzure(ctx context.Context, tenantID string, verbose bool) (azcore.TokenCredential, error) {
+func authenticateToAzure(ctx context.Context, env cloudenv.Environment, tenantID string, verbose bool) (azcore.TokenCredential, error) {
 	if verbose {
 		fmt.Println("🔐 Authenticating to Azure...")
 	}
 
 	// Try multiple authentication methods in order of preference
-	credential, method, err := tryAuthenticationMethods(ctx, tenantID, verbose)
+	credential, method, err := tryAuthenticationMethods(ctx, env, tenantID, verbose)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to authenticate to Azure")
 	}
@@ -34,13 +36,13 @@ func authenticateToAzure(ctx context.Context, tenantID string, verbose bool) (az
 }
 
 // tryAuthenticationMethods attempts different authentication methods
-func tryAuthenticationMethods(ctx context.Context, tenantID string, verbose bool) (azcore.TokenCredential, string, error) {
+func tryAuthenticationMethods(ctx context.Context, env cloudenv.Environment, tenantID string, verbose bool) (azcore.TokenCredential, string, error) {
 	// Method 1: Try environment variables (service principal)
 	if verbose {
 		fmt.Println("   Trying: Environment variables (Service Principal)...")
 	}
-	if cred, err := tryEnvironmentCredential(tenantID); err == nil {
-		if err := testCredential(ctx, cred); err == nil {
+	if cred, err := tryEnvironmentCredential(env); err == nil {
+		if err := testCredential(ctx, env, cred); err == nil {
 			return cred, "Environment Variables (Service Principal)", nil
 		}
 	}
@@ -50,7 +52,7 @@ func tryAuthenticationMethods(ctx context.Context, tenantID string, verbose bool
 		fmt.Println("   Trying: Azure CLI...")
 	}
 	if cred, err := tryAzureCLICredential(tenantID); err == nil {
-		if err := testCredential(ctx, cred); err == nil {
+		if err := testCredential(ctx, env, cred); err == nil {
 			return cred, "Azure CLI", nil
 		}
 	}
@@ -59,8 +61,8 @@ func tryAuthenticationMethods(ctx context.Context, tenantID string, verbose bool
 	if verbose {
 		fmt.Println("   Trying: Interactive browser...")
 	}
-	if cred, err := tryInteractiveBrowserCredential(tenantID); err == nil {
-		if err := testCredential(ctx, cred); err == nil {
+	if cred, err := tryInteractiveBrowserCredential(env, tenantID); err == nil {
+		if err := testCredential(ctx, env, cred); err == nil {
 			return cred, "Interactive Browser", nil
 		}
 	}
@@ -69,8 +71,8 @@ func tryAuthenticationMethods(ctx context.Context, tenantID string, verbose bool
 	if verbose {
 		fmt.Println("   Trying: Device code flow...")
 	}
-	if cred, err := tryDeviceCodeCredential(tenantID); err == nil {
-		if err := testCredential(ctx, cred); err == nil {
+	if cred, err := tryDeviceCodeCredential(env, tenantID); err == nil {
+		if err := testCredential(ctx, env, cred); err == nil {
 			return cred, "Device Code Flow", nil
 		}
 	}
@@ -80,10 +82,13 @@ func tryAuthenticationMethods(ctx context.Context, tenantID string, verbose bool
 
 // tryEnvironmentCredential attempts to authenticate using environment variables.
 // EnvironmentCredential reads tenant configuration from AZURE_TENANT_ID and does
-// not expose AdditionallyAllowedTenants via options, so the tenantID parameter
-// is intentionally unused here.
-func tryEnvironmentCredential(_ string) (azcore.TokenCredential, error) {
-	cred, err := azidentity.NewEnvironmentCredential(nil)
+// not expose AdditionallyAllowedTenants via options, so no tenantID parameter is
+// accepted here. The national cloud is applied via ClientOptions.Cloud.
+func tryEnvironmentCredential(env cloudenv.Environment) (azcore.TokenCredential, error) {
+	opts := &azidentity.EnvironmentCredentialOptions{}
+	opts.Cloud = env.AzureCloud
+
+	cred, err := azidentity.NewEnvironmentCredential(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +96,10 @@ func tryEnvironmentCredential(_ string) (azcore.TokenCredential, error) {
 	return cred, nil
 }
 
-// tryAzureCLICredential attempts to authenticate using Azure CLI
+// tryAzureCLICredential attempts to authenticate using Azure CLI.
+// AzureCLICredentialOptions does not expose a cloud setting: the Azure CLI
+// credential inherits whatever cloud the operator has selected via
+// `az cloud set` (e.g. `az cloud set --name AzureUSGovernment` for GCC High/DoD).
 func tryAzureCLICredential(tenantID string) (azcore.TokenCredential, error) {
 	opts := &azidentity.AzureCLICredentialOptions{}
 	if tenantID != "" {
@@ -107,8 +115,9 @@ func tryAzureCLICredential(tenantID string) (azcore.TokenCredential, error) {
 }
 
 // tryInteractiveBrowserCredential attempts to authenticate using interactive browser
-func tryInteractiveBrowserCredential(tenantID string) (azcore.TokenCredential, error) {
+func tryInteractiveBrowserCredential(env cloudenv.Environment, tenantID string) (azcore.TokenCredential, error) {
 	opts := &azidentity.InteractiveBrowserCredentialOptions{}
+	opts.Cloud = env.AzureCloud
 	if tenantID != "" {
 		opts.TenantID = tenantID
 	}
@@ -122,13 +131,14 @@ func tryInteractiveBrowserCredential(tenantID string) (azcore.TokenCredential, e
 }
 
 // tryDeviceCodeCredential attempts to authenticate using device code flow
-func tryDeviceCodeCredential(tenantID string) (azcore.TokenCredential, error) {
+func tryDeviceCodeCredential(env cloudenv.Environment, tenantID string) (azcore.TokenCredential, error) {
 	opts := &azidentity.DeviceCodeCredentialOptions{
 		UserPrompt: func(ctx context.Context, message azidentity.DeviceCodeMessage) error {
 			fmt.Println("\n" + message.Message)
 			return nil
 		},
 	}
+	opts.Cloud = env.AzureCloud
 	if tenantID != "" {
 		opts.TenantID = tenantID
 	}
@@ -142,23 +152,23 @@ func tryDeviceCodeCredential(tenantID string) (azcore.TokenCredential, error) {
 }
 
 // testCredential verifies that a credential can obtain a token
-func testCredential(ctx context.Context, cred azcore.TokenCredential) error {
+func testCredential(ctx context.Context, env cloudenv.Environment, cred azcore.TokenCredential) error {
 	// Try to get a token for Microsoft Graph
 	_, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{"https://graph.microsoft.com/.default"},
+		Scopes: []string{env.GraphScope},
 	})
 	return err
 }
 
 // validateAzureConnection ensures we can connect to Azure and get basic info
-func validateAzureConnection(ctx context.Context, cred azcore.TokenCredential, verbose bool) error {
+func validateAzureConnection(ctx context.Context, env cloudenv.Environment, cred azcore.TokenCredential, verbose bool) error {
 	if verbose {
 		fmt.Println("🔍 Validating Azure connection...")
 	}
 
 	// Try to get a token to verify the connection works
 	token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes: []string{"https://graph.microsoft.com/.default"},
+		Scopes: []string{env.GraphScope},
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to obtain access token from Azure")

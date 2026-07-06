@@ -12,6 +12,8 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals"
 	"github.com/pkg/errors"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
 // configureAPIPermissions adds the required API permissions to the application
@@ -170,7 +172,7 @@ func ensureServicePrincipalExists(ctx context.Context, client *msgraphsdk.GraphS
 		// Validate UUID before constructing URL
 		if _, err := uuid.Parse(appID); err == nil {
 			fmt.Printf("✅ Admin consent must be granted manually\n")
-			fmt.Printf("   Visit: https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnAPI/appId/%s\n", appID)
+			fmt.Printf("   Visit: https://%s/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnAPI/appId/%s\n", cloudenv.EnvironmentFor(config.Cloud).PortalHost, appID)
 		}
 	}
 

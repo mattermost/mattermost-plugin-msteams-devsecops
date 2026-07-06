@@ -54,6 +54,27 @@
                         "type": "bool",
                         "help_text": "Disables notifications from Mattermost as activities in Microsoft Teams.",
                         "default": false
+                    },
+                    {
+                        "key": "national_cloud",
+                        "display_name": "Microsoft National Cloud",
+                        "type": "dropdown",
+                        "help_text": "The Microsoft national cloud your tenant belongs to. Use Commercial for standard Microsoft 365 and GCC. Changing this requires re-running azure-setup with the matching --cloud value and re-uploading the app to the correct cloud's tenant catalog.",
+                        "default": "commercial",
+                        "options": [
+                            {
+                                "display_name": "Commercial (also GCC)",
+                                "value": "commercial"
+                            },
+                            {
+                                "display_name": "GCC High (US Gov L4)",
+                                "value": "gcchigh"
+                            },
+                            {
+                                "display_name": "DoD (US Gov L5)",
+                                "value": "dod"
+                            }
+                        ]
                     }
                 ]
             },

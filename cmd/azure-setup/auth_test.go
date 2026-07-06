@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
 // TestAuthenticationMethods tests the authentication method priority
@@ -29,24 +31,28 @@ func TestAuthenticationMethods(t *testing.T) {
 // TestTryEnvironmentCredential tests environment credential creation
 func TestTryEnvironmentCredential(t *testing.T) {
 	tests := []struct {
-		name     string
-		tenantID string
+		name  string
+		cloud string
 	}{
 		{
-			name:     "with_tenant_id",
-			tenantID: "test-tenant-123",
+			name:  "commercial",
+			cloud: cloudenv.Commercial,
 		},
 		{
-			name:     "without_tenant_id",
-			tenantID: "",
+			name:  "gcchigh",
+			cloud: cloudenv.GCCHigh,
+		},
+		{
+			name:  "dod",
+			cloud: cloudenv.DoD,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// tryEnvironmentCredential will fail without env vars set
-			// but we can verify it doesn't panic
-			_, err := tryEnvironmentCredential(tt.tenantID)
+			// but we can verify it doesn't panic for any cloud.
+			_, err := tryEnvironmentCredential(cloudenv.EnvironmentFor(tt.cloud))
 			// Expected to fail without env vars
 			assert.Error(t, err)
 		})
@@ -86,7 +92,7 @@ func TestTryAzureCLICredential(t *testing.T) {
 func TestTryInteractiveBrowserCredential(t *testing.T) {
 	t.Run("creates_credential_object", func(t *testing.T) {
 		tenantID := "test-tenant-123"
-		cred, err := tryInteractiveBrowserCredential(tenantID)
+		cred, err := tryInteractiveBrowserCredential(cloudenv.EnvironmentFor(cloudenv.Commercial), tenantID)
 
 		// Should create credential object even without authentication
 		assert.NoError(t, err)
@@ -94,9 +100,17 @@ func TestTryInteractiveBrowserCredential(t *testing.T) {
 	})
 
 	t.Run("without_tenant_id", func(t *testing.T) {
-		cred, err := tryInteractiveBrowserCredential("")
+		cred, err := tryInteractiveBrowserCredential(cloudenv.EnvironmentFor(cloudenv.Commercial), "")
 
 		// Should create credential object even without tenant ID
+		assert.NoError(t, err)
+		assert.NotNil(t, cred)
+	})
+
+	t.Run("gcchigh_cloud", func(t *testing.T) {
+		cred, err := tryInteractiveBrowserCredential(cloudenv.EnvironmentFor(cloudenv.GCCHigh), "test-tenant-123")
+
+		// Should create a credential object for the gov cloud too.
 		assert.NoError(t, err)
 		assert.NotNil(t, cred)
 	})
@@ -106,7 +120,7 @@ func TestTryInteractiveBrowserCredential(t *testing.T) {
 func TestTryDeviceCodeCredential(t *testing.T) {
 	t.Run("creates_credential_object", func(t *testing.T) {
 		tenantID := "test-tenant-123"
-		cred, err := tryDeviceCodeCredential(tenantID)
+		cred, err := tryDeviceCodeCredential(cloudenv.EnvironmentFor(cloudenv.Commercial), tenantID)
 
 		// Should create credential object even without authentication
 		assert.NoError(t, err)
@@ -114,7 +128,7 @@ func TestTryDeviceCodeCredential(t *testing.T) {
 	})
 
 	t.Run("without_tenant_id", func(t *testing.T) {
-		cred, err := tryDeviceCodeCredential("")
+		cred, err := tryDeviceCodeCredential(cloudenv.EnvironmentFor(cloudenv.Commercial), "")
 
 		// Should create credential object even without tenant ID
 		assert.NoError(t, err)
