@@ -40,6 +40,10 @@ type validateTokenParams struct {
 	clientID            string
 }
 
+// jwksSetup builds the JWKS keyfunc for the given URL. It is a package variable
+// so tests can substitute a fake that avoids network access.
+var jwksSetup = setupJWKSet
+
 func setupJWKSet(jwksURL string) (keyfunc.Keyfunc, context.CancelFunc) {
 	// Setup JWK set to assist in verifying JWTs passed from Microsoft Teams.
 	ctx, cancelCtx := context.WithCancel(context.Background())

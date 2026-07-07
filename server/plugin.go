@@ -52,6 +52,10 @@ type Plugin struct {
 	tabAppJWTKeyFunc  keyfunc.Keyfunc
 	cancelKeyFunc     context.CancelFunc
 	cancelKeyFuncLock sync.Mutex
+	// activeJWKSURL is the JWKS URL the current tabAppJWTKeyFunc was built for.
+	// It is guarded by cancelKeyFuncLock and used to detect when a national_cloud
+	// change requires rebuilding the keyfunc against a different authority.
+	activeJWKSURL string
 
 	// checkCredentialsJob is a job that periodically checks credentials and permissions against the MS Graph API
 	checkCredentialsJob     *cluster.Job
@@ -83,11 +87,9 @@ func (p *Plugin) OnActivate() error {
 		return errors.New("this plugin requires an enterprise license")
 	}
 
-	// Update frame ancestors configuration
-	if err := p.updateFrameAncestors(); err != nil {
-		p.API.LogWarn("Failed to update frame ancestors", "error", err.Error())
-		// Continue activation even if this fails
-	}
+	// Frame ancestors are configured in start() (which OnActivate invokes below
+	// and which also runs on every restart), so a national_cloud change refreshes
+	// them rather than leaving them frozen at first activation.
 
 	p.apiHandler = NewAPI(p)
 
@@ -98,8 +100,18 @@ func (p *Plugin) OnActivate() error {
 	return nil
 }
 
-// updateFrameAncestors updates the ServiceSettings.FrameAncestors configuration
-// to include domains required by this plugin while preserving existing values.
+// updateFrameAncestors adds the configured national cloud's embedding domains to
+// ServiceSettings.FrameAncestors, preserving any existing values.
+//
+// This is intentionally union-only: it adds the current cloud's domains but does
+// not prune domains previously added for another cloud. ServiceSettings.FrameAncestors
+// is shared, server-wide configuration that administrators and other plugins may
+// also modify, and there is no reliable way to tell which entries this plugin
+// owns, so pruning risks removing domains that are legitimately configured. A
+// leftover domain from a previously selected cloud is a benign over-permission
+// (it only permits embedding in a Microsoft cloud the tenant is not using) and
+// does not affect the selected cloud, so the union approach is preferred over
+// risky removal.
 func (p *Plugin) updateFrameAncestors() error {
 	p.API.LogDebug("Updating frame ancestors configuration")
 
@@ -182,13 +194,47 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 	p.apiHandler.ServeHTTP(w, r)
 }
 
-func (p *Plugin) start(isRestart bool) {
-	// set up JWK for verifying JWTs from Microsoft Teams
+// ensureJWKS makes sure the JWKS keyfunc used to verify Microsoft Teams JWTs
+// matches the JWKS authority of the configured national cloud. It builds the
+// keyfunc on first use and rebuilds it if the configured cloud's JWKS URL
+// changes (for example when national_cloud is switched from commercial to
+// gcchigh after the plugin was first activated on the commercial default). When
+// the URL is unchanged it does nothing, preserving the common no-change case.
+func (p *Plugin) ensureJWKS() {
+	jwksURL := p.getConfiguration().CloudEnvironment().JWKSURL
+
 	p.cancelKeyFuncLock.Lock()
-	if !isRestart && p.cancelKeyFunc == nil {
-		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet(p.getConfiguration().CloudEnvironment().JWKSURL)
+	defer p.cancelKeyFuncLock.Unlock()
+
+	if p.cancelKeyFunc != nil && p.activeJWKSURL == jwksURL {
+		return
 	}
-	p.cancelKeyFuncLock.Unlock()
+
+	// Tear down the previous keyfunc (if any) before building the new one so we
+	// do not leak its background refresh goroutine.
+	if p.cancelKeyFunc != nil {
+		p.cancelKeyFunc()
+		p.cancelKeyFunc = nil
+		p.tabAppJWTKeyFunc = nil
+	}
+
+	p.tabAppJWTKeyFunc, p.cancelKeyFunc = jwksSetup(jwksURL)
+	p.activeJWKSURL = jwksURL
+}
+
+func (p *Plugin) start(isRestart bool) {
+	// Set up (or rebuild) the JWK set used to verify JWTs from Microsoft Teams.
+	// This runs on every start, including restarts, so that changing the
+	// national_cloud setting switches to the new cloud's JWKS authority.
+	p.ensureJWKS()
+
+	// Keep the server's frame-ancestors in sync with the configured cloud. This
+	// runs on restarts too, so a national_cloud change adds the new cloud's
+	// embedding domains (see updateFrameAncestors for the union behavior).
+	if err := p.updateFrameAncestors(); err != nil {
+		p.API.LogWarn("Failed to update frame ancestors", "error", err.Error())
+		// Continue startup even if this fails.
+	}
 
 	// Initialize context for client reconnection
 	p.clientReconnectLock.Lock()
@@ -265,6 +311,7 @@ func (p *Plugin) stop(isRestart bool) {
 			p.cancelKeyFunc()
 			p.cancelKeyFunc = nil
 		}
+		p.activeJWKSURL = ""
 		p.cancelKeyFuncLock.Unlock()
 	}
 }

@@ -218,6 +218,11 @@ func NewApp(cloudEnv cloudenv.Environment, tenantID, clientID, clientSecret stri
 	}
 }
 
+// NewManualClient wraps a pre-built Graph client (the caller supplies the client
+// and therefore its endpoint), so the cloud environment here is only used for any
+// incidental cloud-derived values. It intentionally hardcodes the commercial
+// cloud: it has no in-repo callers today, so no national cloud is threaded in. If
+// it gains a caller for a gov tenant, thread the cloud environment through.
 func NewManualClient(tenantID, clientID string, logService *pluginapi.LogService, client *msgraphsdk.GraphServiceClient) Client {
 	return &ClientImpl{
 		ctx:        context.Background(),
@@ -230,6 +235,10 @@ func NewManualClient(tenantID, clientID string, logService *pluginapi.LogService
 	}
 }
 
+// NewTokenClient builds a delegated (user token) client. Its cloud wiring is
+// unverified: there are no in-repo callers of the delegated OAuth flow today, so
+// the per-cloud OAuth endpoints below have not been exercised end to end. Verify
+// against a gov tenant before relying on this path.
 func NewTokenClient(cloudEnv cloudenv.Environment, redirectURL, tenantID, clientID, clientSecret string, token *oauth2.Token, logService *pluginapi.LogService) Client {
 	client := &ClientImpl{
 		ctx:          context.Background(),
@@ -2190,6 +2199,9 @@ func (tc *ClientImpl) GetPresencesForUsers(userIDs []string) (map[string]clientm
 	return presences, nil
 }
 
+// GetAuthURL builds the delegated OAuth authorize URL. Like NewTokenClient, its
+// per-cloud wiring is unverified: there are no in-repo callers of the delegated
+// flow today, so verify against a gov tenant before relying on this path.
 func GetAuthURL(cloudEnv cloudenv.Environment, redirectURL string, tenantID string, clientID string, clientSecret string, state string, codeVerifier string) string {
 	conf := &oauth2.Config{
 		ClientID:     clientID,
