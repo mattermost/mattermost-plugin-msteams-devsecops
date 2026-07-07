@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
 // Microsoft Graph API Permission IDs and Types
@@ -84,6 +86,13 @@ type SetupConfig struct {
 	ctx        context.Context
 	credential azcore.TokenCredential
 	rollback   []func() error
+}
+
+// cloudEnvironment resolves the Microsoft national cloud endpoints for the
+// configured Cloud value. It is the single resolution point used across the
+// setup flow so every step targets the same, consistent cloud.
+func (c *SetupConfig) cloudEnvironment() cloudenv.Environment {
+	return cloudenv.EnvironmentFor(c.Cloud)
 }
 
 // SetupResult contains the results of the Azure setup operation

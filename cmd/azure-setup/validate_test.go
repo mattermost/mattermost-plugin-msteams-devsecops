@@ -8,7 +8,41 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
+
+func TestResolveCloud(t *testing.T) {
+	t.Run("valid values resolve", func(t *testing.T) {
+		cases := map[string]string{
+			"commercial": cloudenv.Commercial,
+			"gcchigh":    cloudenv.GCCHigh,
+			"dod":        cloudenv.DoD,
+		}
+		for input, want := range cases {
+			env, err := resolveCloud(input)
+			require.NoError(t, err)
+			assert.Equal(t, want, env.Name)
+		}
+	})
+
+	t.Run("empty defaults to commercial", func(t *testing.T) {
+		env, err := resolveCloud("")
+		require.NoError(t, err)
+		assert.Equal(t, cloudenv.Commercial, env.Name)
+	})
+
+	t.Run("normalizes case and whitespace like EnvironmentFor", func(t *testing.T) {
+		env, err := resolveCloud("  GCCHigh  ")
+		require.NoError(t, err)
+		assert.Equal(t, cloudenv.GCCHigh, env.Name)
+	})
+
+	t.Run("rejects unknown values instead of defaulting", func(t *testing.T) {
+		_, err := resolveCloud("sovereign-cloud")
+		require.Error(t, err)
+	})
+}
 
 func TestValidateInputs(t *testing.T) {
 	tests := []struct {
