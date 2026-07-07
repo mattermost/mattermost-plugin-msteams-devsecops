@@ -135,6 +135,13 @@ func (c *configuration) CloudEnvironment() cloudenv.Environment {
 	return cloudenv.EnvironmentFor(c.NationalCloud)
 }
 
+// isM365Configured reports whether the credentials required to connect to the
+// Microsoft Graph API are all present. Until they are, connecting is skipped so
+// an unconfigured install stays quiet.
+func (c *configuration) isM365Configured() bool {
+	return c.M365TenantID != "" && c.M365ClientID != "" && c.M365ClientSecret != ""
+}
+
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
 // your configuration has reference types.
 func (c *configuration) Clone() *configuration {

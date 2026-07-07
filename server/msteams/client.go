@@ -292,6 +292,10 @@ func (tc *ClientImpl) RefreshToken(token *oauth2.Token) (*oauth2.Token, error) {
 }
 
 func (tc *ClientImpl) GetApp(applicationID string) (*clientmodels.App, error) {
+	if tc.client == nil {
+		return nil, errors.New("MS Teams Graph client is not connected: verify the M365 tenant ID, client ID, and client secret are set in the plugin configuration")
+	}
+
 	application, err := tc.client.ApplicationsWithAppId(&applicationID).Get(tc.ctx, nil)
 	if err != nil {
 		return nil, err

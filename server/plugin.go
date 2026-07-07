@@ -197,6 +197,19 @@ func (p *Plugin) start(isRestart bool) {
 	}
 	p.clientReconnectLock.Unlock()
 
+	// Without M365 credentials there is nothing to connect to. This is the
+	// expected state for a freshly installed, not-yet-configured plugin, so we
+	// skip the connection (and the credentials check) rather than logging
+	// connection errors. A later OnConfigurationChange restarts the plugin once
+	// credentials are set. Only log on the initial start (not on restarts) to
+	// avoid duplicate messages, matching the JWKS setup guard above.
+	if !p.getConfiguration().isM365Configured() {
+		if !isRestart {
+			p.API.LogInfo("MS Teams integration is not configured yet; set the M365 tenant ID, client ID, and client secret in the System Console to enable it")
+		}
+		return
+	}
+
 	// connect to the Microsoft Teams API
 	err := p.connectTeamsAppClient()
 	if err != nil {
@@ -281,6 +294,11 @@ func (p *Plugin) connectTeamsAppClient() error {
 
 	err := p.msteamsAppClient.Connect()
 	if err != nil {
+		// Connect failed, so the client is only partially initialized (its
+		// internal Graph client is nil). Clear it so GetClientForApp reports
+		// no client rather than handing out an unusable one, and so a later
+		// attempt (for example after credentials are configured) retries.
+		p.msteamsAppClient = nil
 		p.API.LogError("Unable to connect to the app client", "error", err)
 		return err
 	}
