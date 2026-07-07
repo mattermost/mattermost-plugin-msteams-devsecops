@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/MicahParks/keyfunc/v3"
-	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin/plugintest"
 	"github.com/mattermost/mattermost/server/public/pluginapi"
 	"github.com/stretchr/testify/assert"
@@ -70,14 +69,10 @@ func TestStartSkipsWhenUnconfigured(t *testing.T) {
 	defer func() { jwksSetup = orig }()
 
 	api := &plugintest.API{}
-	api.On("GetConfig").Return(&model.Config{})
-	api.On("SaveConfig", mock.Anything).Return(nil)
-	api.On("LogDebug", mock.Anything).Return().Maybe()
 	api.On("LogInfo", mock.Anything).Return()
 
 	p := &Plugin{}
 	p.API = api
-	p.client = pluginapi.NewClient(api, nil)
 	p.setConfiguration(&configuration{})
 
 	assert.NotPanics(t, func() { p.start(false) })

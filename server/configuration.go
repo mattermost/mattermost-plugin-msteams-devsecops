@@ -246,8 +246,23 @@ func (p *Plugin) OnConfigurationChange() error {
 		}
 	*/
 
+	// Detect a national cloud change so we can refresh frame ancestors below.
+	// (The initial value is applied by OnActivate.)
+	cloudChanged := p.getConfiguration().NationalCloud != newConfig.NationalCloud
+
 	// Apply the new configuration
 	p.setConfiguration(newConfig)
+
+	// If the national cloud changed after activation, refresh the server's
+	// frame ancestors so the new cloud's embedding domains are allowed. Guarded
+	// by p.client (set in OnActivate) since OnConfigurationChange can run before
+	// activation. updateFrameAncestors is union-only and idempotent, so the
+	// SaveConfig it may issue converges without looping.
+	if p.client != nil && cloudChanged {
+		if err := p.updateFrameAncestors(); err != nil {
+			p.API.LogWarn("Failed to update frame ancestors", "error", err.Error())
+		}
+	}
 
 	// Only restart the application if the OnActivate is already executed
 	if p.pluginStore != nil {

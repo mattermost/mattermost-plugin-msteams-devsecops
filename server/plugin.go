@@ -87,9 +87,14 @@ func (p *Plugin) OnActivate() error {
 		return errors.New("this plugin requires an enterprise license")
 	}
 
-	// Frame ancestors are configured in start() (which OnActivate invokes below
-	// and which also runs on every restart), so a national_cloud change refreshes
-	// them rather than leaving them frozen at first activation.
+	// Configure frame ancestors for the current cloud. This runs before
+	// pluginStore is set below so the resulting SaveConfig (which fires
+	// OnConfigurationChange) does not trigger a restart. A later national_cloud
+	// change is handled in OnConfigurationChange.
+	if err := p.updateFrameAncestors(); err != nil {
+		p.API.LogWarn("Failed to update frame ancestors", "error", err.Error())
+		// Continue activation even if this fails.
+	}
 
 	p.apiHandler = NewAPI(p)
 
@@ -228,14 +233,6 @@ func (p *Plugin) start(isRestart bool) {
 	// national_cloud setting switches to the new cloud's JWKS authority.
 	p.ensureJWKS()
 
-	// Keep the server's frame-ancestors in sync with the configured cloud. This
-	// runs on restarts too, so a national_cloud change adds the new cloud's
-	// embedding domains (see updateFrameAncestors for the union behavior).
-	if err := p.updateFrameAncestors(); err != nil {
-		p.API.LogWarn("Failed to update frame ancestors", "error", err.Error())
-		// Continue startup even if this fails.
-	}
-
 	// Initialize context for client reconnection
 	p.clientReconnectLock.Lock()
 	if p.clientReconnectCtx == nil {
@@ -369,6 +366,13 @@ func (p *Plugin) connectTeamsAppClient() error {
 	p.clientReconnectLock.Lock()
 	ctx := p.clientReconnectCtx
 	p.clientReconnectLock.Unlock()
+
+	// If the reconnection context is gone, the plugin is stopping (a concurrent
+	// stop() cleared it). Skip starting the goroutine rather than dereferencing a
+	// nil context in the select below.
+	if ctx == nil {
+		return nil
+	}
 
 	// Start a goroutine to periodically reconnect the client to refresh the token
 	go func(ctx context.Context) {
