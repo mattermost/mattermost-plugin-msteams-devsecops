@@ -18,12 +18,6 @@ import (
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
-// TestCanaryTemporary is a temporary canary to prove package-main tests execute
-// in this harness (stdout is swallowed by mlog). It must be removed.
-func TestCanaryTemporary(t *testing.T) {
-	t.Fatal("canary: this failure proves the test ran")
-}
-
 // TestEnsureJWKSRebuildsOnCloudChange is the Issue 1 regression test: changing the
 // national_cloud setting must switch the JWKS URL the keyfunc validates against.
 // Before the fix the keyfunc was built once on first activation and never rebuilt
