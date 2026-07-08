@@ -57,7 +57,7 @@ func (a *API) handleSSOComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	iFrameCtx.CSPConnectSrc = DefaultCSPConnectSrc
+	iFrameCtx.CSPConnectSrc = a.p.getConfiguration().CloudEnvironment().CSPConnectSrc
 	iFrameCtx.CSPScriptSrc = DefaultCSPScriptSrc
 
 	a.returnCSPHeaders(w, iFrameCtx)

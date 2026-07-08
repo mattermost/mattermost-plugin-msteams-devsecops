@@ -7,12 +7,15 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/applications"
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/pkg/errors"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
 // validateInputs validates all user inputs before proceeding
@@ -53,7 +56,30 @@ func validateInputs(config *SetupConfig) error {
 		return errors.New("secret expiration cannot exceed 24 months")
 	}
 
+	// Validate and normalize the national cloud.
+	env, err := resolveCloud(config.Cloud)
+	if err != nil {
+		return err
+	}
+	config.Cloud = env.Name
+
 	return nil
+}
+
+// resolveCloud normalizes and validates a national cloud name supplied via the
+// --cloud flag and returns the resolved environment. Normalization (trim and
+// lowercase) matches cloudenv.EnvironmentFor so validation and resolution agree,
+// an empty value defaults to the commercial cloud, and any value not in
+// cloudenv.Names() is rejected so typos fail fast instead of silently defaulting.
+func resolveCloud(name string) (cloudenv.Environment, error) {
+	normalized := strings.ToLower(strings.TrimSpace(name))
+	if normalized == "" {
+		normalized = cloudenv.Commercial
+	}
+	if !slices.Contains(cloudenv.Names(), normalized) {
+		return cloudenv.Environment{}, errors.Errorf("invalid --cloud value %q: must be one of %v", name, cloudenv.Names())
+	}
+	return cloudenv.EnvironmentFor(normalized), nil
 }
 
 // validatePermissions checks if the authenticated user has the necessary permissions

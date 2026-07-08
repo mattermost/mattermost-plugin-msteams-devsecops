@@ -9,8 +9,11 @@ import (
 )
 
 const (
-	DefaultCSPConnectSrc = "https://*.microsoft.com https://*.teams.microsoft.com https://*.cdn.office.net"
-	DefaultCSPScriptSrc  = "https://res.cdn.office.net https://cdn.jsdelivr.net"
+	// DefaultCSPScriptSrc is the script-src for the iframe CSP. It is not
+	// per-cloud: the Microsoft Teams JS SDK is served from the same
+	// res.cdn.office.net CDN across all national clouds. Per-cloud connect-src
+	// values come from cloudenv.Environment.CSPConnectSrc.
+	DefaultCSPScriptSrc = "https://res.cdn.office.net https://cdn.jsdelivr.net"
 
 	// maxCSPReportFieldLen limits logged CSP report string fields to prevent log injection and size abuse.
 	maxCSPReportFieldLen = 500

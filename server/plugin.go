@@ -22,7 +22,6 @@ import (
 const (
 	pluginID                = "com.mattermost.plugin-msteams-devsecops"
 	checkCredentialsJobName = "check_credentials" //#nosec G101 -- This is a false positive
-	allowedFrameAncestors   = "*.cloud.microsoft teams.microsoft.com *.teams.microsoft.com *.microsoft365.com *.office.com outlook.office.com outlook.office365.com outlook-sdf.office.com outlook-sdf.office365.com"
 )
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
@@ -53,6 +52,10 @@ type Plugin struct {
 	tabAppJWTKeyFunc  keyfunc.Keyfunc
 	cancelKeyFunc     context.CancelFunc
 	cancelKeyFuncLock sync.Mutex
+	// activeJWKSURL is the JWKS URL the current tabAppJWTKeyFunc was built for.
+	// It is guarded by cancelKeyFuncLock and used to detect when a national_cloud
+	// change requires rebuilding the keyfunc against a different authority.
+	activeJWKSURL string
 
 	// checkCredentialsJob is a job that periodically checks credentials and permissions against the MS Graph API
 	checkCredentialsJob     *cluster.Job
@@ -84,10 +87,13 @@ func (p *Plugin) OnActivate() error {
 		return errors.New("this plugin requires an enterprise license")
 	}
 
-	// Update frame ancestors configuration
+	// Configure frame ancestors for the current cloud. This runs before
+	// pluginStore is set below so the resulting SaveConfig (which fires
+	// OnConfigurationChange) does not trigger a restart. A later national_cloud
+	// change is handled in OnConfigurationChange.
 	if err := p.updateFrameAncestors(); err != nil {
 		p.API.LogWarn("Failed to update frame ancestors", "error", err.Error())
-		// Continue activation even if this fails
+		// Continue activation even if this fails.
 	}
 
 	p.apiHandler = NewAPI(p)
@@ -99,8 +105,18 @@ func (p *Plugin) OnActivate() error {
 	return nil
 }
 
-// updateFrameAncestors updates the ServiceSettings.FrameAncestors configuration
-// to include domains required by this plugin while preserving existing values.
+// updateFrameAncestors adds the configured national cloud's embedding domains to
+// ServiceSettings.FrameAncestors, preserving any existing values.
+//
+// This is intentionally union-only: it adds the current cloud's domains but does
+// not prune domains previously added for another cloud. ServiceSettings.FrameAncestors
+// is shared, server-wide configuration that administrators and other plugins may
+// also modify, and there is no reliable way to tell which entries this plugin
+// owns, so pruning risks removing domains that are legitimately configured. A
+// leftover domain from a previously selected cloud is a benign over-permission
+// (it only permits embedding in a Microsoft cloud the tenant is not using) and
+// does not affect the selected cloud, so the union approach is preferred over
+// risky removal.
 func (p *Plugin) updateFrameAncestors() error {
 	p.API.LogDebug("Updating frame ancestors configuration")
 
@@ -122,8 +138,8 @@ func (p *Plugin) updateFrameAncestors() error {
 		currentAncestors = strings.Fields(currentAncestorsStr)
 	}
 
-	// Parse the allowed frame ancestors from our constant
-	allowedDomains := strings.Fields(allowedFrameAncestors)
+	// Parse the allowed frame ancestors for the configured national cloud.
+	allowedDomains := p.getConfiguration().CloudEnvironment().FrameAncestors
 
 	// Create a map to track unique domains and preserve existing ones
 	uniqueDomains := make(map[string]bool)
@@ -183,13 +199,39 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 	p.apiHandler.ServeHTTP(w, r)
 }
 
-func (p *Plugin) start(isRestart bool) {
-	// set up JWK for verifying JWTs from Microsoft Teams
+// ensureJWKS makes sure the JWKS keyfunc used to verify Microsoft Teams JWTs
+// matches the JWKS authority of the configured national cloud. It builds the
+// keyfunc on first use and rebuilds it if the configured cloud's JWKS URL
+// changes (for example when national_cloud is switched from commercial to
+// gcchigh after the plugin was first activated on the commercial default). When
+// the URL is unchanged it does nothing, preserving the common no-change case.
+func (p *Plugin) ensureJWKS() {
+	jwksURL := p.getConfiguration().CloudEnvironment().JWKSURL
+
 	p.cancelKeyFuncLock.Lock()
-	if !isRestart && p.cancelKeyFunc == nil {
-		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet()
+	defer p.cancelKeyFuncLock.Unlock()
+
+	if p.cancelKeyFunc != nil && p.activeJWKSURL == jwksURL {
+		return
 	}
-	p.cancelKeyFuncLock.Unlock()
+
+	// Tear down the previous keyfunc (if any) before building the new one so we
+	// do not leak its background refresh goroutine.
+	if p.cancelKeyFunc != nil {
+		p.cancelKeyFunc()
+		p.cancelKeyFunc = nil
+		p.tabAppJWTKeyFunc = nil
+	}
+
+	p.tabAppJWTKeyFunc, p.cancelKeyFunc = jwksSetup(jwksURL)
+	p.activeJWKSURL = jwksURL
+}
+
+func (p *Plugin) start(isRestart bool) {
+	// Set up (or rebuild) the JWK set used to verify JWTs from Microsoft Teams.
+	// This runs on every start, including restarts, so that changing the
+	// national_cloud setting switches to the new cloud's JWKS authority.
+	p.ensureJWKS()
 
 	// Initialize context for client reconnection
 	p.clientReconnectLock.Lock()
@@ -197,6 +239,19 @@ func (p *Plugin) start(isRestart bool) {
 		p.clientReconnectCtx, p.clientReconnectCancel = context.WithCancel(context.Background())
 	}
 	p.clientReconnectLock.Unlock()
+
+	// Without M365 credentials there is nothing to connect to. This is the
+	// expected state for a freshly installed, not-yet-configured plugin, so we
+	// skip the connection (and the credentials check) rather than logging
+	// connection errors. A later OnConfigurationChange restarts the plugin once
+	// credentials are set. Only log on the initial start (not on restarts) to
+	// avoid duplicate messages, matching the JWKS setup guard above.
+	if !p.getConfiguration().isM365Configured() {
+		if !isRestart {
+			p.API.LogInfo("MS Teams integration is not configured yet; set the M365 tenant ID, client ID, and client secret in the System Console to enable it")
+		}
+		return
+	}
 
 	// connect to the Microsoft Teams API
 	err := p.connectTeamsAppClient()
@@ -253,6 +308,7 @@ func (p *Plugin) stop(isRestart bool) {
 			p.cancelKeyFunc()
 			p.cancelKeyFunc = nil
 		}
+		p.activeJWKSURL = ""
 		p.cancelKeyFuncLock.Unlock()
 	}
 }
@@ -273,6 +329,7 @@ func (p *Plugin) connectTeamsAppClient() error {
 	}
 
 	p.msteamsAppClient = msteams.NewApp(
+		p.getConfiguration().CloudEnvironment(),
 		p.getConfiguration().M365TenantID,
 		p.getConfiguration().M365ClientID,
 		p.getConfiguration().M365ClientSecret,
@@ -281,6 +338,11 @@ func (p *Plugin) connectTeamsAppClient() error {
 
 	err := p.msteamsAppClient.Connect()
 	if err != nil {
+		// Connect failed, so the client is only partially initialized (its
+		// internal Graph client is nil). Clear it so GetClientForApp reports
+		// no client rather than handing out an unusable one, and so a later
+		// attempt (for example after credentials are configured) retries.
+		p.msteamsAppClient = nil
 		p.API.LogError("Unable to connect to the app client", "error", err)
 		return err
 	}
@@ -304,6 +366,13 @@ func (p *Plugin) connectTeamsAppClient() error {
 	p.clientReconnectLock.Lock()
 	ctx := p.clientReconnectCtx
 	p.clientReconnectLock.Unlock()
+
+	// If the reconnection context is gone, the plugin is stopping (a concurrent
+	// stop() cleared it). Skip starting the goroutine rather than dereferencing a
+	// nil context in the select below.
+	if ctx == nil {
+		return nil
+	}
 
 	// Start a goroutine to periodically reconnect the client to refresh the token
 	go func(ctx context.Context) {

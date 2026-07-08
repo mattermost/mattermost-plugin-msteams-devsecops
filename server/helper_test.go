@@ -46,11 +46,7 @@ func setupTestHelper(t *testing.T) *testHelper {
 	}
 
 	// Set up JWK to validate JWTs from Microsoft Teams.
-	p.cancelKeyFuncLock.Lock()
-	if p.cancelKeyFunc == nil {
-		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet()
-	}
-	p.cancelKeyFuncLock.Unlock()
+	p.ensureJWKS()
 
 	// ctx, and specifically cancel, gives us control over the plugin lifecycle
 	ctx, cancel := context.WithCancel(context.Background())

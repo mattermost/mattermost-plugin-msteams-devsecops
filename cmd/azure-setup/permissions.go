@@ -170,7 +170,7 @@ func ensureServicePrincipalExists(ctx context.Context, client *msgraphsdk.GraphS
 		// Validate UUID before constructing URL
 		if _, err := uuid.Parse(appID); err == nil {
 			fmt.Printf("✅ Admin consent must be granted manually\n")
-			fmt.Printf("   Visit: https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnAPI/appId/%s\n", appID)
+			fmt.Printf("   Visit: https://%s/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnAPI/appId/%s\n", config.cloudEnvironment().PortalHost, appID)
 		}
 	}
 

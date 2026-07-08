@@ -38,13 +38,15 @@ type NotificationsParser struct {
 	pluginStore      pluginstore.Store
 	Notifications    []*UserNotification
 	msteamsAppClient msteams.Client
+	teamsDomain      string
 }
 
-func NewNotificationsParser(api plugin.API, pluginStore pluginstore.Store, msteamsAppClient msteams.Client) *NotificationsParser {
+func NewNotificationsParser(api plugin.API, pluginStore pluginstore.Store, msteamsAppClient msteams.Client, teamsDomain string) *NotificationsParser {
 	return &NotificationsParser{
 		PAPI:             api,
 		pluginStore:      pluginStore,
 		msteamsAppClient: msteamsAppClient,
+		teamsDomain:      teamsDomain,
 	}
 }
 
@@ -318,7 +320,7 @@ func (p *NotificationsParser) sendUserActivity(userActivity *UserActivity) error
 
 	if err := p.msteamsAppClient.SendUserActivity(msteamsUserIDs, "mattermost_mention_with_name", message, url.URL{
 		Scheme:   "https",
-		Host:     "teams.microsoft.com",
+		Host:     p.teamsDomain,
 		Path:     "/l/entity/" + appID + "/notification_preview",
 		RawQuery: urlParams.Encode(),
 	}, map[string]string{

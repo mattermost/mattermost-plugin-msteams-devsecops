@@ -14,6 +14,8 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
 var version = "dev"
@@ -87,6 +89,7 @@ var (
 	flagVerbose          bool
 	flagOutputFormat     string
 	flagYes              bool
+	flagCloud            string
 )
 
 func init() {
@@ -101,12 +104,14 @@ func init() {
 	createCmd.Flags().BoolVarP(&flagVerbose, "verbose", "v", false, "Enable verbose output")
 	createCmd.Flags().StringVarP(&flagOutputFormat, "output", "o", "human", "Output format (human, json, env, mattermost)")
 	createCmd.Flags().BoolVarP(&flagYes, "yes", "y", false, "Skip confirmation prompt and proceed with changes")
+	createCmd.Flags().StringVar(&flagCloud, "cloud", cloudenv.Commercial, "Microsoft national cloud (commercial, gcchigh, dod)")
 
 	_ = createCmd.MarkFlagRequired("site-url")
 
 	// Validate command flags
 	validateCmd.Flags().StringVar(&flagTenantID, "tenant-id", "", "Azure AD Tenant ID (optional)")
 	validateCmd.Flags().BoolVarP(&flagVerbose, "verbose", "v", false, "Enable verbose output")
+	validateCmd.Flags().StringVar(&flagCloud, "cloud", cloudenv.Commercial, "Microsoft national cloud (commercial, gcchigh, dod)")
 
 	rootCmd.AddCommand(createCmd)
 	rootCmd.AddCommand(validateCmd)
@@ -131,6 +136,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		Verbose:           flagVerbose,
 		OutputFormat:      flagOutputFormat,
 		SkipConfirmation:  flagYes,
+		Cloud:             flagCloud,
 		ctx:               ctx,
 		rollback:          []func() error{},
 	}
@@ -140,20 +146,23 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		return errors.Wrap(err, "invalid input")
 	}
 
+	env := config.cloudEnvironment()
+
 	// Authenticate to Azure
-	cred, err := authenticateToAzure(ctx, config.TenantID, config.Verbose)
+	cred, err := authenticateToAzure(ctx, env, config.TenantID, config.Verbose)
 	if err != nil {
 		return errors.Wrap(err, "authentication failed")
 	}
 	config.credential = cred
 
 	// Validate Azure connection
-	if err = validateAzureConnection(ctx, cred, config.Verbose); err != nil {
+	if err = validateAzureConnection(ctx, env, cred, config.Verbose); err != nil {
 		return errors.Wrap(err, "Azure connection validation failed")
 	}
 
-	// Create Graph client
-	authProvider, err := authentication.NewAzureIdentityAuthenticationProvider(cred)
+	// Create Graph client. Use the selected cloud's Graph scope so the token
+	// audience matches the cloud's Graph endpoint (for example graph.microsoft.us).
+	authProvider, err := authentication.NewAzureIdentityAuthenticationProviderWithScopes(cred, []string{env.GraphScope})
 	if err != nil {
 		return errors.Wrap(err, "failed to create auth provider")
 	}
@@ -162,6 +171,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create Graph adapter")
 	}
+	adapter.SetBaseUrl(env.GraphBaseURL)
 
 	client := msgraphsdk.NewGraphServiceClient(adapter)
 
@@ -204,19 +214,25 @@ func runValidate(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("🔍 Validating Azure credentials and permissions...")
 
+	env, err := resolveCloud(flagCloud)
+	if err != nil {
+		return errors.Wrap(err, "invalid input")
+	}
+
 	// Authenticate to Azure
-	cred, err := authenticateToAzure(ctx, flagTenantID, flagVerbose)
+	cred, err := authenticateToAzure(ctx, env, flagTenantID, flagVerbose)
 	if err != nil {
 		return errors.Wrap(err, "authentication failed")
 	}
 
 	// Validate Azure connection
-	if err = validateAzureConnection(ctx, cred, flagVerbose); err != nil {
+	if err = validateAzureConnection(ctx, env, cred, flagVerbose); err != nil {
 		return errors.Wrap(err, "Azure connection validation failed")
 	}
 
-	// Create Graph client
-	authProvider, err := authentication.NewAzureIdentityAuthenticationProvider(cred)
+	// Create Graph client. Use the selected cloud's Graph scope so the token
+	// audience matches the cloud's Graph endpoint (for example graph.microsoft.us).
+	authProvider, err := authentication.NewAzureIdentityAuthenticationProviderWithScopes(cred, []string{env.GraphScope})
 	if err != nil {
 		return errors.Wrap(err, "failed to create auth provider")
 	}
@@ -225,6 +241,7 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create Graph adapter")
 	}
+	adapter.SetBaseUrl(env.GraphBaseURL)
 
 	client := msgraphsdk.NewGraphServiceClient(adapter)
 
@@ -299,6 +316,7 @@ func executeSetup(ctx context.Context, client *msgraphsdk.GraphServiceClient, co
 		ApplicationID:       *app.GetId(),
 		ApplicationName:     *app.GetDisplayName(),
 		ApplicationIDURI:    appIDURI,
+		PortalHost:          config.cloudEnvironment().PortalHost,
 		Created:             created,
 		DryRun:              config.DryRun,
 	}

@@ -43,6 +43,7 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/users"
 	"golang.org/x/oauth2"
 
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
 )
 
@@ -84,6 +85,7 @@ type ClientImpl struct {
 	token        *oauth2.Token
 	logService   *pluginapi.LogService
 	redirectURL  string
+	cloudEnv     cloudenv.Environment
 }
 
 type Activity struct {
@@ -204,9 +206,7 @@ func (at AccessToken) GetToken(_ context.Context, _ policy.TokenRequestOptions) 
 	}, nil
 }
 
-var TeamsDefaultScopes = []string{"https://graph.microsoft.com/.default"}
-
-func NewApp(tenantID, clientID, clientSecret string, logService *pluginapi.LogService) Client {
+func NewApp(cloudEnv cloudenv.Environment, tenantID, clientID, clientSecret string, logService *pluginapi.LogService) Client {
 	return &ClientImpl{
 		ctx:          context.Background(),
 		clientType:   "app",
@@ -214,9 +214,15 @@ func NewApp(tenantID, clientID, clientSecret string, logService *pluginapi.LogSe
 		clientID:     clientID,
 		clientSecret: clientSecret,
 		logService:   logService,
+		cloudEnv:     cloudEnv,
 	}
 }
 
+// NewManualClient wraps a pre-built Graph client (the caller supplies the client
+// and therefore its endpoint), so the cloud environment here is only used for any
+// incidental cloud-derived values. It intentionally hardcodes the commercial
+// cloud: it has no in-repo callers today, so no national cloud is threaded in. If
+// it gains a caller for a gov tenant, thread the cloud environment through.
 func NewManualClient(tenantID, clientID string, logService *pluginapi.LogService, client *msgraphsdk.GraphServiceClient) Client {
 	return &ClientImpl{
 		ctx:        context.Background(),
@@ -225,10 +231,15 @@ func NewManualClient(tenantID, clientID string, logService *pluginapi.LogService
 		clientID:   clientID,
 		logService: logService,
 		client:     client,
+		cloudEnv:   cloudenv.EnvironmentFor(cloudenv.Commercial),
 	}
 }
 
-func NewTokenClient(redirectURL, tenantID, clientID, clientSecret string, token *oauth2.Token, logService *pluginapi.LogService) Client {
+// NewTokenClient builds a delegated (user token) client. Its cloud wiring is
+// unverified: there are no in-repo callers of the delegated OAuth flow today, so
+// the per-cloud OAuth endpoints below have not been exercised end to end. Verify
+// against a gov tenant before relying on this path.
+func NewTokenClient(cloudEnv cloudenv.Environment, redirectURL, tenantID, clientID, clientSecret string, token *oauth2.Token, logService *pluginapi.LogService) Client {
 	client := &ClientImpl{
 		ctx:          context.Background(),
 		clientType:   "token",
@@ -238,15 +249,17 @@ func NewTokenClient(redirectURL, tenantID, clientID, clientSecret string, token 
 		token:        token,
 		logService:   logService,
 		redirectURL:  redirectURL,
+		cloudEnv:     cloudEnv,
 	}
 
+	scopes := []string{cloudEnv.GraphScope, "offline_access"}
 	conf := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		Scopes:       append(TeamsDefaultScopes, "offline_access"),
+		Scopes:       scopes,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/authorize", tenantID),
-			TokenURL: fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tenantID),
+			AuthURL:  fmt.Sprintf("https://%s/%s/oauth2/v2.0/authorize", cloudEnv.LoginAuthorityHost, tenantID),
+			TokenURL: fmt.Sprintf("https://%s/%s/oauth2/v2.0/token", cloudEnv.LoginAuthorityHost, tenantID),
 		},
 		RedirectURL: redirectURL,
 	}
@@ -255,7 +268,7 @@ func NewTokenClient(redirectURL, tenantID, clientID, clientSecret string, token 
 
 	accessToken := AccessToken{tokenSource: conf.TokenSource(context.Background(), client.token)}
 
-	auth, err := a.NewAzureIdentityAuthenticationProviderWithScopes(accessToken, append(TeamsDefaultScopes, "offline_access"))
+	auth, err := a.NewAzureIdentityAuthenticationProviderWithScopes(accessToken, scopes)
 	if err != nil {
 		logService.Error("Unable to create the client from the token", "error", err)
 		return nil
@@ -266,6 +279,7 @@ func NewTokenClient(redirectURL, tenantID, clientID, clientSecret string, token 
 		logService.Error("Unable to create the client from the token", "error", err)
 		return nil
 	}
+	adapter.SetBaseUrl(cloudEnv.GraphBaseURL)
 
 	client.client = msgraphsdk.NewGraphServiceClient(&ConcurrentGraphRequestAdapter{GraphRequestAdapter: *adapter})
 
@@ -276,10 +290,10 @@ func (tc *ClientImpl) RefreshToken(token *oauth2.Token) (*oauth2.Token, error) {
 	conf := &oauth2.Config{
 		ClientID:     tc.clientID,
 		ClientSecret: tc.clientSecret,
-		Scopes:       append(TeamsDefaultScopes, "offline_access"),
+		Scopes:       []string{tc.cloudEnv.GraphScope, "offline_access"},
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/authorize", tc.tenantID),
-			TokenURL: fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tc.tenantID),
+			AuthURL:  fmt.Sprintf("https://%s/%s/oauth2/v2.0/authorize", tc.cloudEnv.LoginAuthorityHost, tc.tenantID),
+			TokenURL: fmt.Sprintf("https://%s/%s/oauth2/v2.0/token", tc.cloudEnv.LoginAuthorityHost, tc.tenantID),
 		},
 		RedirectURL: tc.redirectURL,
 	}
@@ -287,6 +301,10 @@ func (tc *ClientImpl) RefreshToken(token *oauth2.Token) (*oauth2.Token, error) {
 }
 
 func (tc *ClientImpl) GetApp(applicationID string) (*clientmodels.App, error) {
+	if tc.client == nil {
+		return nil, errors.New("MS Teams Graph client is not connected: verify the M365 tenant ID, client ID, and client secret are set in the plugin configuration")
+	}
+
 	application, err := tc.client.ApplicationsWithAppId(&applicationID).Get(tc.ctx, nil)
 	if err != nil {
 		return nil, err
@@ -329,6 +347,7 @@ func (tc *ClientImpl) Connect() error {
 			tc.clientSecret,
 			&azidentity.ClientSecretCredentialOptions{
 				ClientOptions: azcore.ClientOptions{
+					Cloud: tc.cloudEnv.AzureCloud,
 					Retry: policy.RetryOptions{
 						MaxRetries:    3,
 						RetryDelay:    4 * time.Second,
@@ -348,7 +367,7 @@ func (tc *ClientImpl) Connect() error {
 
 	httpClient := getHTTPClient()
 
-	auth, err := a.NewAzureIdentityAuthenticationProviderWithScopes(cred, append(TeamsDefaultScopes, "offline_access"))
+	auth, err := a.NewAzureIdentityAuthenticationProviderWithScopes(cred, []string{tc.cloudEnv.GraphScope, "offline_access"})
 	if err != nil {
 		return err
 	}
@@ -357,6 +376,7 @@ func (tc *ClientImpl) Connect() error {
 	if err != nil {
 		return err
 	}
+	adapter.SetBaseUrl(tc.cloudEnv.GraphBaseURL)
 
 	clientMutex.Lock()
 	defer clientMutex.Unlock()
@@ -1673,7 +1693,7 @@ func (tc *ClientImpl) CreateChat(chatType models.ChatType, userIDs []string) (*c
 		odataType := "#microsoft.graph.aadUserConversationMember"
 		conversationMember.SetOdataType(&odataType)
 		conversationMember.SetAdditionalData(map[string]any{
-			"user@odata.bind": "https://graph.microsoft.com/v1.0/users('" + userID + "')",
+			"user@odata.bind": tc.cloudEnv.GraphBaseURL + "/users('" + userID + "')",
 		})
 		conversationMember.SetRoles([]string{"owner"})
 
@@ -2179,14 +2199,17 @@ func (tc *ClientImpl) GetPresencesForUsers(userIDs []string) (map[string]clientm
 	return presences, nil
 }
 
-func GetAuthURL(redirectURL string, tenantID string, clientID string, clientSecret string, state string, codeVerifier string) string {
+// GetAuthURL builds the delegated OAuth authorize URL. Like NewTokenClient, its
+// per-cloud wiring is unverified: there are no in-repo callers of the delegated
+// flow today, so verify against a gov tenant before relying on this path.
+func GetAuthURL(cloudEnv cloudenv.Environment, redirectURL string, tenantID string, clientID string, clientSecret string, state string, codeVerifier string) string {
 	conf := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		Scopes:       append(TeamsDefaultScopes, "offline_access"),
+		Scopes:       []string{cloudEnv.GraphScope, "offline_access"},
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/authorize", tenantID),
-			TokenURL: fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tenantID),
+			AuthURL:  fmt.Sprintf("https://%s/%s/oauth2/v2.0/authorize", cloudEnv.LoginAuthorityHost, tenantID),
+			TokenURL: fmt.Sprintf("https://%s/%s/oauth2/v2.0/token", cloudEnv.LoginAuthorityHost, tenantID),
 		},
 		RedirectURL: redirectURL,
 	}

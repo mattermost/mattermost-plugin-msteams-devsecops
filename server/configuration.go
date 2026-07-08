@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
 )
 
 // configuration captures the plugin's external configuration as exposed in the Mattermost server
@@ -28,6 +30,11 @@ type configuration struct {
 	// Plugin Settings
 	DisableUserActivityNotifications bool `json:"disable_user_activity_notifications"`
 	DisableCheckCredentials          bool `json:"internal_disable_check_credentials"`
+
+	// NationalCloud selects the Microsoft national cloud to target: "commercial"
+	// (default, also covers GCC moderate), "gcchigh", or "dod". An empty or
+	// unrecognized value resolves to the commercial cloud.
+	NationalCloud string `json:"national_cloud"`
 
 	// Manifest Settings
 	AppVersion string `json:"app_version"`
@@ -120,6 +127,19 @@ func (p *Plugin) validateConfiguration(configuration *configuration) error {
 		return errors.New("app name should not be empty")
 	}
 	return nil
+}
+
+// CloudEnvironment resolves the Microsoft national cloud endpoints for the
+// configured NationalCloud value, defaulting to the commercial cloud.
+func (c *configuration) CloudEnvironment() cloudenv.Environment {
+	return cloudenv.EnvironmentFor(c.NationalCloud)
+}
+
+// isM365Configured reports whether the credentials required to connect to the
+// Microsoft Graph API are all present. Until they are, connecting is skipped so
+// an unconfigured install stays quiet.
+func (c *configuration) isM365Configured() bool {
+	return c.M365TenantID != "" && c.M365ClientID != "" && c.M365ClientSecret != ""
 }
 
 // Clone shallow copies the configuration. Your implementation may require a deep copy if
@@ -226,8 +246,23 @@ func (p *Plugin) OnConfigurationChange() error {
 		}
 	*/
 
+	// Detect a national cloud change so we can refresh frame ancestors below.
+	// (The initial value is applied by OnActivate.)
+	cloudChanged := p.getConfiguration().NationalCloud != newConfig.NationalCloud
+
 	// Apply the new configuration
 	p.setConfiguration(newConfig)
+
+	// If the national cloud changed after activation, refresh the server's
+	// frame ancestors so the new cloud's embedding domains are allowed. Guarded
+	// by p.client (set in OnActivate) since OnConfigurationChange can run before
+	// activation. updateFrameAncestors is union-only and idempotent, so the
+	// SaveConfig it may issue converges without looping.
+	if p.client != nil && cloudChanged {
+		if err := p.updateFrameAncestors(); err != nil {
+			p.API.LogWarn("Failed to update frame ancestors", "error", err.Error())
+		}
+	}
 
 	// Only restart the application if the OnActivate is already executed
 	if p.pluginStore != nil {

@@ -75,8 +75,12 @@ func outputHuman(result *SetupResult) error {
 
 	fmt.Println("\n📝 NEXT STEPS")
 	fmt.Println(strings.Repeat("-", 70))
+	portalHost := result.PortalHost
+	if portalHost == "" {
+		portalHost = "portal.azure.com"
+	}
 	fmt.Println("1. Grant admin consent for API permissions:")
-	fmt.Printf("   https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnAPI/appId/%s\n", result.ApplicationClientID)
+	fmt.Printf("   https://%s/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnAPI/appId/%s\n", portalHost, result.ApplicationClientID)
 	fmt.Println("\n2. Configure the Mattermost plugin with these values:")
 	fmt.Println("   - System Console > Plugins > MS Teams DevSecOps")
 	fmt.Println("   - Enter the Tenant ID, Client ID, and Client Secret above")

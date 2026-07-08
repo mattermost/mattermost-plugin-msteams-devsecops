@@ -269,3 +269,13 @@ func TestCheckGroupChat(t *testing.T) {
 		assert.Nil(t, got)
 	})
 }
+
+func TestGetAppReturnsErrorWhenNotConnected(t *testing.T) {
+	// A client whose Connect() failed (or was never called) has a nil Graph
+	// client. GetApp must return an error rather than panicking on the nil
+	// dereference (regression guard for the credentials-check job crash).
+	c := &ClientImpl{}
+	app, err := c.GetApp("some-app-id")
+	assert.Nil(t, app)
+	assert.Error(t, err)
+}
