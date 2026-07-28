@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/cloudenv"
 )
 
 // configuration captures the plugin's external configuration as exposed in the Mattermost server
@@ -273,9 +273,9 @@ func (p *Plugin) OnConfigurationChange() error {
 }
 
 // shouldSkipTokenValidation returns true if the token validation should be skipped based on
-// the MM_DEVSECOPS_SKIP_TOKEN_VALIDATION environment var is set to true.
+// the MM_MS_EMBEDDED_SKIP_TOKEN_VALIDATION environment var is set to true.
 func shouldSkipTokenValidation() bool {
-	if skipTokenValidation, ok := os.LookupEnv("MM_DEVSECOPS_SKIP_TOKEN_VALIDATION"); ok {
+	if skipTokenValidation, ok := os.LookupEnv("MM_MS_EMBEDDED_SKIP_TOKEN_VALIDATION"); ok {
 		switch strings.ToLower(skipTokenValidation) {
 		case "1", "true", "yes":
 			return true

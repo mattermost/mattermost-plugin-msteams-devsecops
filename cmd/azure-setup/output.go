@@ -82,7 +82,7 @@ func outputHuman(result *SetupResult) error {
 	fmt.Println("1. Grant admin consent for API permissions:")
 	fmt.Printf("   https://%s/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/CallAnAPI/appId/%s\n", portalHost, result.ApplicationClientID)
 	fmt.Println("\n2. Configure the Mattermost plugin with these values:")
-	fmt.Println("   - System Console > Plugins > MS Teams DevSecOps")
+	fmt.Println("   - System Console > Plugins > Microsoft Embedded")
 	fmt.Println("   - Enter the Tenant ID, Client ID, and Client Secret above")
 	fmt.Println("\n3. Download and install the Teams app manifest:")
 	fmt.Println("   - In Mattermost, go to the plugin settings")

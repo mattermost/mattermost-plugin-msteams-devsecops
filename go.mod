@@ -1,4 +1,4 @@
-module github.com/mattermost/mattermost-plugin-msteams-devsecops
+module github.com/mattermost/mattermost-plugin-msteams-embedded
 
 go 1.26.2
 

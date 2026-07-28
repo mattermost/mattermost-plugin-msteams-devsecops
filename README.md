@@ -1,11 +1,11 @@
 # Mattermost Mission Collaboration for Microsoft 365
 
-[![Build Status](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/actions/workflows/ci.yml/badge.svg)](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/actions/workflows/ci.yml)
+[![Build Status](https://github.com/mattermost/mattermost-plugin-msteams-embedded/actions/workflows/ci.yml/badge.svg)](https://github.com/mattermost/mattermost-plugin-msteams-embedded/actions/workflows/ci.yml)
 
-**Mattermost Mission Collaboration for Microsoft** is a plugin that embeds Mattermost directly inside Microsoft 365, Teams, and Outlook clients. This integration extends Microsoft 365, Teams, and Outlook for mission-critical coordination, command and control, incident response, and DevSecOps workflows in demanding environments, including air-gapped and classified networks. 
+**Mattermost Mission Collaboration for Microsoft** is a plugin that embeds Mattermost directly inside Microsoft 365, Teams, and Outlook clients. This integration extends Microsoft 365, Teams, and Outlook for mission-critical coordination, command and control, incident response, and embedded collaboration workflows in demanding environments, including air-gapped and classified networks. 
 
 > [!NOTE]  
-> This product is currently in **Beta**. We're excited to share it with you and welcome your feedback to help us improve. While the core features are ready for use, you may encounter minor issues as we continue to refine the experience. Please share your thoughts and suggestions in the [~user-feedback](https://community.mattermost.com/core/channels/user-feedback) channel or submit an issue on [GitHub](https://github.com/mattermost/mattermost-plugin-msteams-devsecops/issues).
+> This product is currently in **Beta**. We're excited to share it with you and welcome your feedback to help us improve. While the core features are ready for use, you may encounter minor issues as we continue to refine the experience. Please share your thoughts and suggestions in the [~user-feedback](https://community.mattermost.com/core/channels/user-feedback) channel or submit an issue on [GitHub](https://github.com/mattermost/mattermost-plugin-msteams-embedded/issues).
 
 ## Mattermost Mission Collaboration for Microsoft 365 and MS Teams
 
@@ -13,7 +13,7 @@
 - **External Collaboration with IT Control**: Replace non-compliant freemium personal apps with dedicated external collaboration across mobile, web, and desktop, fully controlled by IT.
 - **Intelligent, AI-Accelerated Incident Response**: Augment Microsoft Security Suite with AI-powered collaborative workflows, from detection to resolution, within secure environments. 
 - **Sovereign, Cyber-Resilient S4B Replacement for Classified Workflows**: Replace legacy Skype for Business with a self-hosted, fully sovereign solution for classified operations, tightly integrated within Microsoft ecosystems. 
-- **Embedded DevSecOps Collaboration Inside Microsoft Teams**: Maintain a unified user experience while achieving higher operational productivity for DevSecOps and mission teams.
+- **Embedded Collaboration Inside Microsoft Teams**: Maintain a unified user experience while achieving higher operational productivity for mission and collaboration teams.
 - **Mission Operations at the Tactical Edge**: Real-time command and control for joint operations, mission partner environments, and disconnected/denied environments (DDIL). 
 
 **Features:**
@@ -23,7 +23,7 @@
 - **Unified Communications**: Combine chat, meetings, workflows, and task management inside MS Teams. 
 - **Secure Data Handling**: Maintain data sovereignty with self-hosted deployment options. 
 - **AI-Powered Insights**: Use multi-agent AI, including Azure OpenAI and local LLMs, for faster decision-making and situational awareness. 
-- **Embedded DevSecOps Collaboration**: Keep developer teams productive with integrated workflows inside Microsoft Teams.
+- **Embedded Collaboration**: Keep developer teams productive with integrated workflows inside Microsoft Teams.
 - **Entra-Based SSO**: Simplify user authentication and enhance security with enterprise-grade identity management for organizations using Microsoft Entra ID.
 - **Activity Feed Notifications for Mentions in Mattermost**: Never miss critical updates, with real-time notifications in your MS Teams activity feed whenever someone mentions you in Mattermost.
 

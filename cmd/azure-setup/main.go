@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/cloudenv"
 )
 
 var version = "dev"
@@ -29,11 +29,11 @@ func main() {
 
 var rootCmd = &cobra.Command{
 	Use:   "azure-setup",
-	Short: "Automate Azure AD setup for Mattermost MS Teams plugin",
-	Long: `Azure Setup Tool for Mattermost Mission Collaboration for Microsoft
+	Short: "Automate Azure AD setup for Microsoft Embedded plugin",
+	Long: `Azure Setup Tool for Microsoft Embedded
 
 This tool automates the Azure AD application registration and configuration
-process required for the Mattermost MS Teams plugin. It handles:
+process required for the Microsoft Embedded plugin. It handles:
 
   • App registration creation/update
   • API permissions configuration
@@ -50,7 +50,7 @@ var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create or update Azure AD application registration",
 	Long: `Create a new Azure AD application or update an existing one with the
-required configuration for the Mattermost MS Teams plugin.
+required configuration for the Microsoft Embedded plugin.
 
 This command will:
   1. Authenticate to Azure

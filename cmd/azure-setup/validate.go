@@ -15,7 +15,7 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/pkg/errors"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/cloudenv"
 )
 
 // validateInputs validates all user inputs before proceeding

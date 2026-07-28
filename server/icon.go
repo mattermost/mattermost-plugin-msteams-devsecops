@@ -18,8 +18,8 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/sirupsen/logrus"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-msteams-embedded/assets"
+	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/store/pluginstore"
 )
 
 type IconType string
@@ -129,7 +129,7 @@ func (a *API) uploadIcon(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	response := map[string]any{
 		"success":  true,
-		"iconPath": fmt.Sprintf("/plugins/com.mattermost.plugin-msteams-devsecops/icons/%s", iconType),
+		"iconPath": fmt.Sprintf("/plugins/com.mattermost.ms-embedded/icons/%s", iconType),
 	}
 	_ = json.NewEncoder(w).Encode(response)
 }

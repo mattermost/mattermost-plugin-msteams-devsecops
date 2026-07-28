@@ -11,7 +11,7 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
+	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/msteams/clientmodels"
 )
 
 func TestConvertToMessage(t *testing.T) {

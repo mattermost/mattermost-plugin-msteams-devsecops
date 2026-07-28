@@ -5,7 +5,7 @@ package mocks
 import (
 	io "io"
 
-	clientmodels "github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
+	clientmodels "github.com/mattermost/mattermost-plugin-msteams-embedded/server/msteams/clientmodels"
 
 	mock "github.com/stretchr/testify/mock"
 

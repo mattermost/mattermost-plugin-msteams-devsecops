@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/cloudenv"
 )
 
 // TestEnsureJWKSRebuildsOnCloudChange is the Issue 1 regression test: changing the

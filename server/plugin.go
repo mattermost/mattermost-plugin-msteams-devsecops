@@ -15,12 +15,12 @@ import (
 	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 	"github.com/sirupsen/logrus"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/msteams"
+	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/store/pluginstore"
 )
 
 const (
-	pluginID                = "com.mattermost.plugin-msteams-devsecops"
+	pluginID                = "com.mattermost.ms-embedded"
 	checkCredentialsJobName = "check_credentials" //#nosec G101 -- This is a false positive
 )
 
