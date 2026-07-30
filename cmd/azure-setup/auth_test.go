@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/cloudenv"
 )
 
 // TestAuthenticationMethods tests the authentication method priority

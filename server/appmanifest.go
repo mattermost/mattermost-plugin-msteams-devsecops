@@ -14,7 +14,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/assets"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/assets"
 )
 
 const (

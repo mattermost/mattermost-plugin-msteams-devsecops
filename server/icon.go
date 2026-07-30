@@ -18,8 +18,8 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/sirupsen/logrus"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/assets"
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/assets"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/store/pluginstore"
 )
 
 type IconType string

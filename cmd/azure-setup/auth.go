@@ -12,7 +12,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/pkg/errors"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/cloudenv"
 )
 
 // authenticateToAzure establishes authentication to Azure using available methods

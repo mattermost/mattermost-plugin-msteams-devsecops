@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/msteams/clientmodels"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams/clientmodels"
 )
 
 const (

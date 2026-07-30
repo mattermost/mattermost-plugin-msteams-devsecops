@@ -8,7 +8,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/cloudenv"
 )
 
 // Microsoft Graph API Permission IDs and Types

@@ -1,4 +1,4 @@
-module github.com/mattermost/mattermost-plugin-msteams-embedded
+module github.com/mattermost/mattermost-plugin-ms-embedded
 
 go 1.26.2
 

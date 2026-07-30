@@ -12,7 +12,7 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"golang.org/x/oauth2"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/msteams/clientmodels"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams/clientmodels"
 )
 
 type Client interface {

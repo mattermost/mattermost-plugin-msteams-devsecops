@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/assets"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/assets"
 )
 
 // Embed test PNG files for dimension validation tests

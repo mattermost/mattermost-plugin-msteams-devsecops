@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/store/pluginstore"
 )
 
 func TestIFrameAuthenticate(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/cloudenv"
 )
 
 func TestResolveCloud(t *testing.T) {

@@ -18,9 +18,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/msteams/clientmodels"
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/msteams/mocks"
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams/clientmodels"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams/mocks"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/store/pluginstore"
 )
 
 type testHelper struct {

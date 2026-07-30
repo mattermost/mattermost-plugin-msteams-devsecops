@@ -14,8 +14,8 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/msteams"
-	"github.com/mattermost/mattermost-plugin-msteams-embedded/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/store/pluginstore"
 )
 
 const (
