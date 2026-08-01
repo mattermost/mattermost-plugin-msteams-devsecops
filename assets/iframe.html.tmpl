@@ -70,7 +70,7 @@
           // Reply the message to let Mattermost know we are going to handle the authentication flow.
           event.source.postMessage({type: 'mattermost_external_auth_login', ack: true}, domainRoot);
 
-          iframe.src = domainRoot + '/plugins/com.mattermost.ms-embedded/sso/wait';
+          iframe.src = domainRoot + '/plugins/{{.PluginID}}/sso/wait';
 
 
           // Ensure that the URL hostname is the same as domainRoot
