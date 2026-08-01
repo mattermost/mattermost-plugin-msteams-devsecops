@@ -1,7 +1,7 @@
 {
     "id": "com.mattermost.ms-embedded",
     "name": "Mattermost Embedded",
-    "description": "Access Mattermost Embedded directly within Microsoft Teams, with single sign-on using your Microsoft O365 account.",
+    "description": "Access Mattermost directly within Microsoft Teams, with single sign-on using your Microsoft O365 account.",
     "homepage_url": "https://github.com/mattermost/mattermost-plugin-ms-embedded",
     "support_url": "https://github.com/mattermost/mattermost-plugin-ms-embedded/issues",
     "icon_path": "assets/embedded.svg",
