@@ -52,7 +52,7 @@ const ManifestDownload: React.FC<Props> = (props) => {
             const {id, value} = e.detail;
 
             // Process input change from other components
-            // Extract the setting key from the ID (e.g., app_id from PluginSettings.Plugins.com.mattermost.ms-embedded.app_id)
+            // Extract the setting key from the ID (e.g., app_id from PluginSettings.Plugins.com+mattermost+ms-embedded.app_id)
             const settingKey = id.split('.').pop() || '';
 
             if (['app_id', 'app_name', 'app_version', 'icon_color_path', 'icon_outline_path'].includes(settingKey)) {
