@@ -6,6 +6,13 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 10
+    groups:
+      # server/public and server/v8 live in the same repo and are not
+      # independently versioned: server/v8 compiles against server/public's
+      # model package. Bumping one without the other breaks the build.
+      mattermost-server:
+        patterns:
+          - "github.com/mattermost/mattermost/server/*"
   # Enable version updates for github-actions
   - package-ecosystem: "github-actions"
     directory: "/"
