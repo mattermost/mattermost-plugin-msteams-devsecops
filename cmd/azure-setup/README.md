@@ -41,7 +41,7 @@ This CLI tool automates the Azure AD application registration and configuration 
   - Application Administrator
   - Cloud Application Administrator
   - Global Administrator
-- **Go 1.23+** (for building from source)
+- **Go 1.26.2+** (for building from source)
 
 ## Installation
 
@@ -340,7 +340,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23'
+          go-version: '1.26.2'
 
       - name: Build Azure Setup Tool
         run: go build -o azure-setup ./cmd/azure-setup/
