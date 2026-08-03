@@ -22,8 +22,8 @@ import (
 	"github.com/mattermost/mattermost/server/v8/channels/utils"
 	"github.com/sirupsen/logrus"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/assets"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/store/pluginstore"
 )
 
 type iFrameContext struct {
@@ -72,7 +72,7 @@ func (a *API) iFrame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	iFrameCtx.CSPScriptSrc = "https://res.cdn.office.net"
-	iFrameCtx.CSPConnectSrc = DefaultCSPConnectSrc
+	iFrameCtx.CSPConnectSrc = a.p.getConfiguration().CloudEnvironment().CSPConnectSrc
 	iFrameCtx.CSPFrameSrc = "self"
 
 	a.returnCSPHeaders(w, iFrameCtx)
@@ -135,7 +135,7 @@ func (a *API) iframeNotificationPreview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	iFrameCtx.CSPConnectSrc = DefaultCSPConnectSrc
+	iFrameCtx.CSPConnectSrc = a.p.getConfiguration().CloudEnvironment().CSPConnectSrc
 	iFrameCtx.CSPScriptSrc = DefaultCSPScriptSrc
 	a.returnCSPHeaders(w, iFrameCtx)
 	w.Header().Set("Content-Type", "text/html")
@@ -449,7 +449,7 @@ func (p *Plugin) MessageHasBeenPosted(c *plugin.Context, post *model.Post) {
 		return
 	}
 
-	parser := NewNotificationsParser(p.API, p.pluginStore, p.msteamsAppClient)
+	parser := NewNotificationsParser(p.API, p.pluginStore, p.msteamsAppClient, p.getConfiguration().CloudEnvironment().TeamsDomain)
 	if err := parser.ProcessPost(post); err != nil {
 		p.API.LogError("Failed to process mentions", "error", err.Error())
 		return

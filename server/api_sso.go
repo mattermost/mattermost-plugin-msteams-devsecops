@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/assets"
 )
 
 // serveSSO configures routes for handling SSO endpoints
@@ -57,7 +57,7 @@ func (a *API) handleSSOComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	iFrameCtx.CSPConnectSrc = DefaultCSPConnectSrc
+	iFrameCtx.CSPConnectSrc = a.p.getConfiguration().CloudEnvironment().CSPConnectSrc
 	iFrameCtx.CSPScriptSrc = DefaultCSPScriptSrc
 
 	a.returnCSPHeaders(w, iFrameCtx)

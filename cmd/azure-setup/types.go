@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/cloudenv"
 )
 
 // Microsoft Graph API Permission IDs and Types
@@ -60,7 +62,7 @@ const (
 // Plugin configuration
 const (
 	// PluginID must match the id field in plugin.json
-	PluginID = "com.mattermost.plugin-msteams-devsecops"
+	PluginID = "com.mattermost.ms-embedded"
 )
 
 // SetupConfig holds the configuration for the Azure setup process
@@ -78,11 +80,19 @@ type SetupConfig struct {
 	Verbose          bool
 	OutputFormat     string // "human", "json", "env"
 	SkipConfirmation bool   // Skip pre-flight confirmation prompt
+	Cloud            string // Microsoft national cloud: "commercial" (default), "gcchigh", or "dod"
 
 	// Internal state
 	ctx        context.Context
 	credential azcore.TokenCredential
 	rollback   []func() error
+}
+
+// cloudEnvironment resolves the Microsoft national cloud endpoints for the
+// configured Cloud value. It is the single resolution point used across the
+// setup flow so every step targets the same, consistent cloud.
+func (c *SetupConfig) cloudEnvironment() cloudenv.Environment {
+	return cloudenv.EnvironmentFor(c.Cloud)
 }
 
 // SetupResult contains the results of the Azure setup operation
@@ -100,6 +110,10 @@ type SetupResult struct {
 	ApplicationID    string
 	ApplicationName  string
 	ApplicationIDURI string
+
+	// PortalHost is the Azure portal host for the selected national cloud,
+	// used to render the admin-consent link (e.g. portal.azure.com).
+	PortalHost string
 
 	// Operation Details
 	Created bool // true if created new, false if updated existing

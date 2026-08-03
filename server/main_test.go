@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"path"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 	"github.com/mattermost/mattermost/server/public/shared/request"
@@ -22,6 +22,7 @@ import (
 	"github.com/mattermost/mattermost/server/v8/channels/app"
 	"github.com/mattermost/mattermost/server/v8/channels/store/storetest"
 	"github.com/mattermost/mattermost/server/v8/config"
+	mobynetwork "github.com/moby/moby/api/types/network"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -51,17 +52,23 @@ const (
 const testSubnetEnvVar = "MSTEAMS_TEST_DOCKER_SUBNET"
 
 // testSubnetCandidates returns the subnets to try, in order.
-func testSubnetCandidates() []string {
+func testSubnetCandidates() ([]netip.Prefix, error) {
 	if override := os.Getenv(testSubnetEnvVar); override != "" {
-		return []string{override}
+		prefix, err := netip.ParsePrefix(override)
+		if err != nil {
+			return nil, errors.Wrapf(err, "invalid %s value %q, expected CIDR notation such as 192.168.222.0/24", testSubnetEnvVar, override)
+		}
+
+		return []netip.Prefix{prefix}, nil
 	}
 
-	candidates := make([]string, 0, testSubnetCount)
+	candidates := make([]netip.Prefix, 0, testSubnetCount)
 	for i := range testSubnetCount {
-		candidates = append(candidates, fmt.Sprintf("192.168.%d.0/24", firstTestSubnetOctet+i))
+		addr := netip.AddrFrom4([4]byte{192, 168, byte(firstTestSubnetOctet + i), 0})
+		candidates = append(candidates, netip.PrefixFrom(addr, 24))
 	}
 
-	return candidates
+	return candidates, nil
 }
 
 // createTestNetwork creates the Docker network hosting the test containers, using the
@@ -74,13 +81,16 @@ func testSubnetCandidates() []string {
 // setupDatabase) and an unrecovered panic in a non-main goroutine skips deferred
 // cleanup. Walking the candidates keeps the suite runnable in both cases.
 func createTestNetwork() (*testcontainers.DockerNetwork, error) {
-	candidates := testSubnetCandidates()
+	candidates, err := testSubnetCandidates()
+	if err != nil {
+		return nil, err
+	}
 
 	var lastErr error
 	for _, subnet := range candidates {
-		nw, err := tcnetwork.New(context.TODO(), tcnetwork.WithIPAM(&dockernetwork.IPAM{
+		nw, err := tcnetwork.New(context.TODO(), tcnetwork.WithIPAM(&mobynetwork.IPAM{
 			Driver: "default",
-			Config: []dockernetwork.IPAMConfig{{Subnet: subnet}},
+			Config: []mobynetwork.IPAMConfig{{Subnet: subnet}},
 		}))
 		if err == nil {
 			return nw, nil

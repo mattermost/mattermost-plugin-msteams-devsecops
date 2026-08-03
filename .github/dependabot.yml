@@ -6,6 +6,21 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 10
+    groups:
+      # server/public and server/v8 live in the same repo and are not
+      # independently versioned: server/v8 compiles against server/public's
+      # model package. Bumping one without the other breaks the build.
+      # Version and security updates need separate entries: a group with no
+      # applies-to covers version updates only, so without the second entry a
+      # security update could still bump one module on its own.
+      mattermost-server:
+        applies-to: version-updates
+        patterns:
+          - "github.com/mattermost/mattermost/server/*"
+      mattermost-server-security:
+        applies-to: security-updates
+        patterns:
+          - "github.com/mattermost/mattermost/server/*"
   # Enable version updates for github-actions
   - package-ecosystem: "github-actions"
     directory: "/"

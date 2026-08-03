@@ -11,7 +11,7 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams/clientmodels"
 )
 
 func TestConvertToMessage(t *testing.T) {
@@ -268,4 +268,14 @@ func TestCheckGroupChat(t *testing.T) {
 		assert.NotPanics(t, func() { got = checkGroupChat(c, []string{"u1", "u2"}) })
 		assert.Nil(t, got)
 	})
+}
+
+func TestGetAppReturnsErrorWhenNotConnected(t *testing.T) {
+	// A client whose Connect() failed (or was never called) has a nil Graph
+	// client. GetApp must return an error rather than panicking on the nil
+	// dereference (regression guard for the credentials-check job crash).
+	c := &ClientImpl{}
+	app, err := c.GetApp("some-app-id")
+	assert.Nil(t, app)
+	assert.Error(t, err)
 }

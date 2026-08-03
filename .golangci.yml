@@ -61,4 +61,4 @@ formatters:
           replacement: any
     goimports:
       local-prefixes:
-        - github.com/mattermost/mattermost-plugin-msteams-devsecops
+        - github.com/mattermost/mattermost-plugin-ms-embedded

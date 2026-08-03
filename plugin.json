@@ -1,10 +1,10 @@
 {
-    "id": "com.mattermost.plugin-msteams-devsecops",
-    "name": "Mattermost DevSecOps for Microsoft Teams",
-    "description": "Access Mattermost DevSecOps directly within Microsoft Teams, with single sign-on using your Microsoft O365 account.",
-    "homepage_url": "https://github.com/mattermost/mattermost-plugin-msteams-devsecops",
-    "support_url": "https://github.com/mattermost/mattermost-plugin-msteams-devsecops/issues",
-    "icon_path": "assets/devsecops.svg",
+    "id": "com.mattermost.ms-embedded",
+    "name": "Mattermost Embedded",
+    "description": "Access Mattermost directly within Microsoft Teams, with single sign-on using your Microsoft O365 account.",
+    "homepage_url": "https://github.com/mattermost/mattermost-plugin-ms-embedded",
+    "support_url": "https://github.com/mattermost/mattermost-plugin-ms-embedded/issues",
+    "icon_path": "assets/embedded.svg",
     "min_server_version": "10.7.1",
     "server": {
         "executables": {
@@ -54,6 +54,27 @@
                         "type": "bool",
                         "help_text": "Disables notifications from Mattermost as activities in Microsoft Teams.",
                         "default": false
+                    },
+                    {
+                        "key": "national_cloud",
+                        "display_name": "Microsoft National Cloud",
+                        "type": "dropdown",
+                        "help_text": "The Microsoft national cloud your tenant belongs to. Use Commercial for standard Microsoft 365 and GCC. Changing this requires re-running azure-setup with the matching --cloud value and re-uploading the app to the correct cloud's tenant catalog.",
+                        "default": "commercial",
+                        "options": [
+                            {
+                                "display_name": "Commercial (also GCC)",
+                                "value": "commercial"
+                            },
+                            {
+                                "display_name": "GCC High (US Gov L4)",
+                                "value": "gcchigh"
+                            },
+                            {
+                                "display_name": "DoD (US Gov L5)",
+                                "value": "dod"
+                            }
+                        ]
                     }
                 ]
             },
@@ -83,7 +104,7 @@
                         "display_name": "Application Display Name",
                         "type": "text",
                         "help_text": "The name of the application as it will be displayed in your organization's app store.",
-                        "default": "Mattermost DevSecOps"
+                        "default": "Mattermost Embedded"
                     },
                     {
                         "key": "icon_color_path",

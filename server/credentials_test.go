@@ -9,7 +9,7 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams/clientmodels"
 )
 
 func TestDescribeResourceAccessType(t *testing.T) {

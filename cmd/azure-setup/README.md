@@ -1,4 +1,4 @@
-# Azure Setup Tool for Mattermost MS Teams Plugin
+# Azure Setup Tool for Mattermost Embedded Plugin
 
 This CLI tool automates the Azure AD application registration and configuration process required for the **Mattermost Mission Collaboration for Microsoft** plugin.
 
@@ -41,14 +41,14 @@ This CLI tool automates the Azure AD application registration and configuration 
   - Application Administrator
   - Cloud Application Administrator
   - Global Administrator
-- **Go 1.23+** (for building from source)
+- **Go 1.26.2+** (for building from source)
 
 ## Installation
 
 ### Build from Source
 
 ```bash
-cd /path/to/mattermost-plugin-msteams-devsecops
+cd /path/to/mattermost-plugin-ms-embedded
 go build -o azure-setup ./cmd/azure-setup/
 ```
 
@@ -340,7 +340,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23'
+          go-version: '1.26.2'
 
       - name: Build Azure Setup Tool
         run: go build -o azure-setup ./cmd/azure-setup/
@@ -373,7 +373,7 @@ Visit the Azure Portal URL provided in the output to grant admin consent for API
 ### 2. Configure Mattermost Plugin
 
 In Mattermost:
-1. Go to **System Console > Plugins > MS Teams DevSecOps**
+1. Go to **System Console > Plugins > Mattermost Embedded**
 2. Enter the credentials from the tool output:
    - Tenant ID
    - Application Client ID
@@ -398,7 +398,7 @@ In the Mattermost plugin settings:
 ## Support and Contributing
 
 For issues, questions, or contributions:
-- **GitHub Issues**: https://github.com/mattermost/mattermost-plugin-msteams-devsecops/issues
+- **GitHub Issues**: https://github.com/mattermost/mattermost-plugin-ms-embedded/issues
 - **Documentation**: https://docs.mattermost.com/integrations-guide/mattermost-mission-collaboration-for-m365.html
 - **Community**: https://community.mattermost.com/
 

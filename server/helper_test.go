@@ -18,9 +18,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/mocks"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams/clientmodels"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams/mocks"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/store/pluginstore"
 )
 
 type testHelper struct {
@@ -46,11 +46,7 @@ func setupTestHelper(t *testing.T) *testHelper {
 	}
 
 	// Set up JWK to validate JWTs from Microsoft Teams.
-	p.cancelKeyFuncLock.Lock()
-	if p.cancelKeyFunc == nil {
-		p.tabAppJWTKeyFunc, p.cancelKeyFunc = setupJWKSet()
-	}
-	p.cancelKeyFuncLock.Unlock()
+	p.ensureJWKS()
 
 	// ctx, and specifically cancel, gives us control over the plugin lifecycle
 	ctx, cancel := context.WithCancel(context.Background())
