@@ -124,8 +124,13 @@ func (mt *mainT) Errorf(format string, args ...any) {
 	mt.FailNow()
 }
 
+// FailNow aborts the run. It panics rather than calling os.Exit so that the cleanup
+// functions registered on mainT still run while the panic unwinds. os.Exit would skip
+// TestMain's deferred mt.Done and leak the Postgres container and its Docker network,
+// and nothing else reaps them because Ryuk is disabled (see setupDatabase). The panic
+// still leaves the process with a non-zero exit status, so a setup failure stays red.
 func (mt *mainT) FailNow() {
-	os.Exit(1)
+	panic("test setup failed, see the error above")
 }
 
 // setupDatabase initializes a singleton Postgres testcontainer and mattermost_test database for
