@@ -9,10 +9,12 @@ import (
 	"net"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/shared/mlog"
 	"github.com/mattermost/mattermost/server/public/shared/request"
@@ -20,11 +22,74 @@ import (
 	"github.com/mattermost/mattermost/server/v8/channels/app"
 	"github.com/mattermost/mattermost/server/v8/channels/store/storetest"
 	"github.com/mattermost/mattermost/server/v8/config"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	tcnetwork "github.com/testcontainers/testcontainers-go/network"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
+
+// The test containers run on a dedicated Docker network with an explicitly pinned
+// subnet, chosen from the candidates below.
+//
+// Docker allocates its default bridge and its default address pools out of
+// 172.16.0.0/12 and 10.0.0.0/8, which are also the ranges corporate VPNs most often
+// advertise to their clients. When a VPN route for one of those ranges is consulted
+// ahead of the host's route to the Docker bridge, containers become unreachable from
+// the host even though they start correctly: the published port still accepts a
+// connection because the host-side docker-proxy answers it, then no data ever comes
+// back. Pinning a subnet outside those ranges keeps the suite working on such a
+// machine with no change to the developer's Docker daemon or VPN.
+const (
+	firstTestSubnetOctet = 222
+	testSubnetCount      = 10
+)
+
+// testSubnetEnvVar pins the subnet explicitly, bypassing the candidates above. Use it
+// on a host where all of them are unusable.
+const testSubnetEnvVar = "MSTEAMS_TEST_DOCKER_SUBNET"
+
+// testSubnetCandidates returns the subnets to try, in order.
+func testSubnetCandidates() []string {
+	if override := os.Getenv(testSubnetEnvVar); override != "" {
+		return []string{override}
+	}
+
+	candidates := make([]string, 0, testSubnetCount)
+	for i := range testSubnetCount {
+		candidates = append(candidates, fmt.Sprintf("192.168.%d.0/24", firstTestSubnetOctet+i))
+	}
+
+	return candidates
+}
+
+// createTestNetwork creates the Docker network hosting the test containers, using the
+// first candidate subnet Docker accepts.
+//
+// Docker rejects a network whose pool overlaps an existing one, so a single pinned
+// subnet would wedge the suite whenever that range is already taken. That happens for
+// two reasons worth tolerating: the developer's own network may use it, or a previous
+// run may have leaked its network. A leak is possible because Ryuk is disabled (see
+// setupDatabase) and an unrecovered panic in a non-main goroutine skips deferred
+// cleanup. Walking the candidates keeps the suite runnable in both cases.
+func createTestNetwork() (*testcontainers.DockerNetwork, error) {
+	candidates := testSubnetCandidates()
+
+	var lastErr error
+	for _, subnet := range candidates {
+		nw, err := tcnetwork.New(context.TODO(), tcnetwork.WithIPAM(&dockernetwork.IPAM{
+			Driver: "default",
+			Config: []dockernetwork.IPAMConfig{{Subnet: subnet}},
+		}))
+		if err == nil {
+			return nw, nil
+		}
+		lastErr = err
+	}
+
+	return nil, errors.Wrapf(lastErr, "no usable subnet among %v, last error on %s (set %s to pin one explicitly, or run `docker network prune` to clear networks leaked by an interrupted run)", candidates, candidates[len(candidates)-1], testSubnetEnvVar)
+}
 
 // mainT is a testing.T-like structure that currently just mimics the t.Cleanup semantics.
 type mainT struct {
@@ -56,13 +121,31 @@ func (mt *mainT) FailNow() {
 // setupDatabase initializes a singleton Postgres testcontainer and mattermost_test database for
 // use with tests.
 func setupDatabase(mt *mainT) error {
+	// Ryuk, the testcontainers reaper, is pinned to Docker's default bridge network
+	// (reaper.go sets hc.NetworkMode = Bridge with no way to override it) and the
+	// client handshakes with it from the host. It therefore cannot be moved onto the
+	// network created below, and on a host where the default bridge is unreachable it
+	// would hang before Postgres is ever started. Disable it and rely on the explicit
+	// cleanup functions registered here, which now run even when setup panics.
+	_ = os.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+
+	nw, err := createTestNetwork()
+	if err != nil {
+		return err
+	}
+	mt.Cleanup(func() {
+		if removeErr := nw.Remove(context.TODO()); removeErr != nil {
+			panic(removeErr)
+		}
+	})
+
 	// Setup a Postgres testcontainer for all tests.
 	pgContainer, err := postgres.Run(
 		context.TODO(), "docker.io/postgres:15.2-alpine",
 		postgres.WithDatabase("mattermost_test"),
 		postgres.WithUsername("mmuser"),
 		postgres.WithPassword("mostest"),
-		// network.WithNetwork([]string{"db"}, nw),
+		tcnetwork.WithNetwork([]string{"db"}, nw),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
 				WithOccurrence(2).
@@ -98,10 +181,9 @@ func getSiteURL() string {
 
 // setupServer initializes a singleton Mattermost instance for use with tests.
 func setupServer(mt *mainT) error {
-	// Ignore any locally defined SiteURL as we intend to host our own.
-	_ = os.Unsetenv("MM_SERVICESETTINGS_SITEURL")
-	_ = os.Unsetenv("MM_SERVICESETTINGS_LISTENADDRESS")
-
+	// Note that TestMain has already cleared every MM_* variable (including
+	// MM_SERVICESETTINGS_SITEURL and MM_SERVICESETTINGS_LISTENADDRESS), so the
+	// configuration assigned below is not overridden by the developer's shell.
 	tmpDir, err := os.MkdirTemp("", "msteams")
 	if err != nil {
 		return err
@@ -213,16 +295,38 @@ func setupReattachEnvironment(mt *mainT) {
 // TestMain is run before any tests within this package and helps setup a mainT for global cleanup
 // if needed.
 func TestMain(m *testing.M) {
-	var status int
-	defer func() {
-		os.Exit(status)
-	}()
+	// Clear any MM_* environment variables inherited from the developer's shell.
+	// The test configuration is a memory store that applies environment overrides
+	// on top of the settings assigned in setupServer, so variables such as
+	// MM_SERVICESETTINGS_SITEURL or MM_SQLSETTINGS_DATASOURCE would otherwise change
+	// how the test server is configured. This is hardening rather than the fix for
+	// the false green below: it makes local runs hermetic and match CI, which runs
+	// with a clean environment.
+	clearMattermostEnv()
 
-	mt := new(mainT)
-	defer mt.Done()
+	// This is the MM-69712 fix. Run the suite inside a helper so deferred cleanup
+	// executes before os.Exit, and so a panic during setup or cleanup propagates and
+	// fails the run. The previous "defer os.Exit(status)" pattern swallowed such
+	// panics: os.Exit running during panic unwinding terminated the process with
+	// status 0, so a setup failure (for example the postgres testcontainer being
+	// unreachable) produced no test output and a green run.
+	os.Exit(func() int {
+		mt := new(mainT)
+		defer mt.Done()
 
-	setupReattachEnvironment(mt)
+		setupReattachEnvironment(mt)
 
-	// This actually runs the tests
-	status = m.Run()
+		// This actually runs the tests.
+		return m.Run()
+	}())
+}
+
+// clearMattermostEnv unsets every MM_* environment variable so a developer's
+// local shell configuration cannot override the hermetic test configuration.
+func clearMattermostEnv() {
+	for _, kv := range os.Environ() {
+		if key, _, ok := strings.Cut(kv, "="); ok && strings.HasPrefix(key, "MM_") {
+			_ = os.Unsetenv(key)
+		}
+	}
 }

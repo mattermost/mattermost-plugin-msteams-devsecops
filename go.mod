@@ -7,6 +7,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
 	github.com/MicahParks/jwkset v0.11.0
 	github.com/MicahParks/keyfunc/v3 v3.8.0
+	github.com/docker/docker v28.5.1+incompatible
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/mattermost/mattermost/server/public v0.4.1-0.20260512201720-8a8a4ac8b14f
 	github.com/mattermost/mattermost/server/v8 v8.0.0-20260512201720-8a8a4ac8b14f
@@ -76,7 +77,6 @@ require (
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/docker v28.5.1+incompatible // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
