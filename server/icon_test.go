@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/assets"
 )
 
 // Embed test PNG files for dimension validation tests
@@ -157,7 +157,7 @@ func TestUploadIcon(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Contains(t, string(body), `"success":true`)
-		assert.Contains(t, string(body), "/plugins/com.mattermost.plugin-msteams-devsecops/icons/color")
+		assert.Contains(t, string(body), "/plugins/com.mattermost.ms-embedded/icons/color")
 
 		// Verify the icon was stored correctly in the KV store
 		storedIconData, err := th.p.pluginStore.GetIcon("color")
@@ -182,7 +182,7 @@ func TestUploadIcon(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Contains(t, string(body), `"success":true`)
-		assert.Contains(t, string(body), "/plugins/com.mattermost.plugin-msteams-devsecops/icons/outline")
+		assert.Contains(t, string(body), "/plugins/com.mattermost.ms-embedded/icons/outline")
 
 		// Verify the icon was stored correctly in the KV store
 		storedIconData, err := th.p.pluginStore.GetIcon("outline")

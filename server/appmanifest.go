@@ -14,11 +14,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/assets"
 )
 
 const (
-	PackageName         = "com.mattermost.msteams.devsecops"
+	PackageName         = "com.mattermost.ms.embedded"
 	ManifestName        = "manifest.json"
 	LogoColorFilename   = "icon-color.png"
 	LogoOutlineFilename = "icon-outline.png"
@@ -26,14 +26,14 @@ const (
 
 type manifestContext struct {
 	AppVersion     string // the app version
-	AppPackageName string // fully qualified package name for the app (e.g. com.mattermost.msteams.devsecops)
+	AppPackageName string // fully qualified package name for the app (e.g. com.mattermost.ms.embedded)
 	AppID          string // the unique app id
 	M365ClientID   string // the app's client ID as defined in Azure portal
 	AppName        string // short and full name of the app
 
 	SiteDomain     string // the domain name extracted from this Mattermost server's site url. No protocol or path.
 	SiteDomainPath string // the domain name and path extracted from this Mattermost server's site url. No protocol.
-	PluginID       string // the plugin ID (e.g. com.mattermost.msteams.devsecops)
+	PluginID       string // the plugin ID (e.g. com.mattermost.ms-embedded)
 }
 
 // makeManifestContext populates a manifestContext with template data

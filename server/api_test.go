@@ -12,7 +12,7 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/store/pluginstore"
 
 	"github.com/stretchr/testify/require"
 )

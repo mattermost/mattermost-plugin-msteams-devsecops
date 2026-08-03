@@ -30,7 +30,7 @@ const ManifestDownload: React.FC<Props> = (props) => {
         }
 
         // Get the plugin settings
-        const pluginSettings = props.config.PluginSettings?.Plugins?.['com.mattermost.plugin-msteams-devsecops'];
+        const pluginSettings = props.config.PluginSettings?.Plugins?.['com.mattermost.ms-embedded'];
         if (!pluginSettings) {
             return;
         }
@@ -52,7 +52,7 @@ const ManifestDownload: React.FC<Props> = (props) => {
             const {id, value} = e.detail;
 
             // Process input change from other components
-            // Extract the setting key from the ID (e.g., app_id from PluginSettings.Plugins.com+mattermost+plugin-msteams-devsecops.app_id)
+            // Extract the setting key from the ID (e.g., app_id from PluginSettings.Plugins.com+mattermost+ms-embedded.app_id)
             const settingKey = id.split('.').pop() || '';
 
             if (['app_id', 'app_name', 'app_version', 'icon_color_path', 'icon_outline_path'].includes(settingKey)) {
@@ -89,7 +89,7 @@ const ManifestDownload: React.FC<Props> = (props) => {
             <div className='help-text'>{props.helpText}</div>
             <div className='col-sm-8'>
                 <a
-                    href={isDownloadEnabled ? '/plugins/com.mattermost.plugin-msteams-devsecops/iframe-manifest' : '#'}
+                    href={isDownloadEnabled ? '/plugins/com.mattermost.ms-embedded/iframe-manifest' : '#'}
                     className={`btn ${isDownloadEnabled ? 'btn-primary' : 'btn-inactive'}`}
                     rel='noreferrer'
                     target='_self'

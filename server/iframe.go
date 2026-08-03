@@ -22,8 +22,8 @@ import (
 	"github.com/mattermost/mattermost/server/v8/channels/utils"
 	"github.com/sirupsen/logrus"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/store/pluginstore"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/assets"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/store/pluginstore"
 )
 
 type iFrameContext struct {

@@ -1,6 +1,6 @@
 {
     "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.22/MicrosoftTeams.schema.json",
-    "version": "1.0.11",
+    "version": "1.1.0",
     "manifestVersion": "1.22",
     "id": "b5f44ca1-af3f-4928-892f-63aa09d3527a",
     "name": {
@@ -27,13 +27,13 @@
         {
             "entityId": "Community",
             "name": "Community",
-            "contentUrl": "https://community.mattermost.com/plugins/com.mattermost.plugin-msteams-devsecops/iframe/mattermostTab",
+            "contentUrl": "https://community.mattermost.com/plugins/com.mattermost.ms-embedded/iframe/mattermostTab",
             "scopes": ["personal"]
         },
         {
             "entityId": "notification_preview",
             "name": "Notification Preview",
-            "contentUrl": "https://community.mattermost.com/plugins/com.mattermost.plugin-msteams-devsecops/iframe/mattermostTab?action=notification_preview",
+            "contentUrl": "https://community.mattermost.com/plugins/com.mattermost.ms-embedded/iframe/mattermostTab?action=notification_preview",
             "scopes": ["personal"]
         },
         {

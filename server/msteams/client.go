@@ -43,8 +43,8 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go/users"
 	"golang.org/x/oauth2"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/msteams/clientmodels"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/msteams/clientmodels"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/assets"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/assets"
 )
 
 // serveSSO configures routes for handling SSO endpoints

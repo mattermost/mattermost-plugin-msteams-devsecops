@@ -8,7 +8,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 
-	"github.com/mattermost/mattermost-plugin-msteams-devsecops/server/cloudenv"
+	"github.com/mattermost/mattermost-plugin-ms-embedded/server/cloudenv"
 )
 
 // Microsoft Graph API Permission IDs and Types
@@ -62,7 +62,7 @@ const (
 // Plugin configuration
 const (
 	// PluginID must match the id field in plugin.json
-	PluginID = "com.mattermost.plugin-msteams-devsecops"
+	PluginID = "com.mattermost.ms-embedded"
 )
 
 // SetupConfig holds the configuration for the Azure setup process
