@@ -47,9 +47,22 @@ const (
 	testSubnetCount      = 10
 )
 
+// Compile-time guard: the candidate range must stay inside a single octet, otherwise
+// the byte conversion in testSubnetCandidates would silently wrap.
+const _ uint8 = 255 - (firstTestSubnetOctet + testSubnetCount - 1)
+
 // testSubnetEnvVar pins the subnet explicitly, bypassing the candidates above. Use it
 // on a host where all of them are unusable.
-const testSubnetEnvVar = "MSTEAMS_TEST_DOCKER_SUBNET"
+//
+// Deliberately not MM_-prefixed, even though the plugin's own variables are (see
+// MM_MS_EMBEDDED_SKIP_TOKEN_VALIDATION in configuration.go): clearMattermostEnv runs at
+// the top of TestMain and this override is read later, during setupDatabase, so an
+// MM_-prefixed name would be wiped before it was ever read.
+const testSubnetEnvVar = "MS_EMBEDDED_TEST_DOCKER_SUBNET"
+
+// networkCreateTimeout bounds a single network creation attempt so an unresponsive
+// Docker daemon fails the suite instead of hanging it.
+const networkCreateTimeout = 30 * time.Second
 
 // testSubnetCandidates returns the subnets to try, in order.
 func testSubnetCandidates() ([]netip.Prefix, error) {
@@ -58,8 +71,12 @@ func testSubnetCandidates() ([]netip.Prefix, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "invalid %s value %q, expected CIDR notation such as 192.168.222.0/24", testSubnetEnvVar, override)
 		}
+		if !prefix.Addr().Is4() {
+			return nil, errors.Errorf("invalid %s value %q, expected an IPv4 CIDR such as 192.168.222.0/24", testSubnetEnvVar, override)
+		}
 
-		return []netip.Prefix{prefix}, nil
+		// Docker wants the network address, not an arbitrary host inside the range.
+		return []netip.Prefix{prefix.Masked()}, nil
 	}
 
 	candidates := make([]netip.Prefix, 0, testSubnetCount)
@@ -78,32 +95,63 @@ func testSubnetCandidates() ([]netip.Prefix, error) {
 // subnet would wedge the suite whenever that range is already taken. That happens for
 // two reasons worth tolerating: the developer's own network may use it, or a previous
 // run may have leaked its network. A leak is possible because Ryuk is disabled (see
-// setupDatabase) and an unrecovered panic in a non-main goroutine skips deferred
-// cleanup. Walking the candidates keeps the suite runnable in both cases.
+// disableRyuk) and an unrecovered panic in a non-main goroutine skips deferred cleanup.
+// Walking the candidates keeps the suite runnable in both cases.
 func createTestNetwork() (*testcontainers.DockerNetwork, error) {
 	candidates, err := testSubnetCandidates()
 	if err != nil {
 		return nil, err
 	}
+	if len(candidates) == 0 {
+		return nil, errors.New("no candidate test subnets")
+	}
 
 	var lastErr error
 	for _, subnet := range candidates {
-		nw, err := tcnetwork.New(context.TODO(), tcnetwork.WithIPAM(&mobynetwork.IPAM{
-			Driver: "default",
-			Config: []mobynetwork.IPAMConfig{{Subnet: subnet}},
-		}))
+		nw, err := createNetworkOnSubnet(subnet)
 		if err == nil {
 			return nw, nil
 		}
-		lastErr = err
+		if !isSubnetConflictErr(err) {
+			// Anything other than a subnet conflict fails the same way on every
+			// candidate, so report it as-is instead of retrying nine more times.
+			return nil, errors.Wrapf(err, "failed to create the test Docker network on %s", subnet)
+		}
+
+		lastErr = errors.Wrapf(err, "subnet %s is already in use", subnet)
 	}
 
-	return nil, errors.Wrapf(lastErr, "no usable subnet among %v, last error on %s (set %s to pin one explicitly, or run `docker network prune` to clear networks leaked by an interrupted run)", candidates, candidates[len(candidates)-1], testSubnetEnvVar)
+	return nil, errors.Wrapf(lastErr, "no usable subnet among %v (set %s to pin one explicitly, or run `docker network prune` to clear networks leaked by an interrupted run)", candidates, testSubnetEnvVar)
+}
+
+// createNetworkOnSubnet attempts to create the test Docker network on the given subnet.
+func createNetworkOnSubnet(subnet netip.Prefix) (*testcontainers.DockerNetwork, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), networkCreateTimeout)
+	defer cancel()
+
+	return tcnetwork.New(ctx, tcnetwork.WithIPAM(&mobynetwork.IPAM{
+		Driver: "default",
+		Config: []mobynetwork.IPAMConfig{{Subnet: subnet}},
+	}))
+}
+
+// isSubnetConflictErr reports whether err is Docker rejecting the requested subnet
+// because it overlaps something that already exists, which is the only error worth
+// retrying on a different candidate. Docker has no typed error for this, so matching
+// the message is all that is available. The two shapes seen in practice are:
+//
+//	invalid pool request: Pool overlaps with other one on this address space
+//	cannot create network <id> (br-xxxx): conflicts with network <id> (br-yyyy): networks have overlapping IPv4
+func isSubnetConflictErr(err error) bool {
+	msg := strings.ToLower(err.Error())
+
+	return strings.Contains(msg, "overlap") || strings.Contains(msg, "conflicts with network")
 }
 
 // mainT is a testing.T-like structure that currently just mimics the t.Cleanup semantics.
 type mainT struct {
 	cleanupFunctions []func()
+	cleanupFailed    bool
 }
 
 // Cleanup adds a function to be called when cleaning up.
@@ -111,39 +159,76 @@ func (mt *mainT) Cleanup(f func()) {
 	mt.cleanupFunctions = append(mt.cleanupFunctions, f)
 }
 
-// Done calls all cleanup functions with defer-like semantics (last function added called first).
+// Done calls all cleanup functions with defer-like semantics (last function added
+// called first).
+//
+// A panic in one cleanup function is reported and does not prevent the rest from
+// running. With Ryuk disabled (see disableRyuk) these functions are the only thing
+// reaping the Postgres container and its Docker network, so one failure must not
+// strand the others.
 func (mt *mainT) Done() {
 	for i := range mt.cleanupFunctions {
 		f := mt.cleanupFunctions[len(mt.cleanupFunctions)-i-1]
-		f()
+		mt.runCleanup(f)
 	}
 }
 
+// runCleanup calls f, recovering and reporting a panic so the remaining cleanup
+// functions still run.
+func (mt *mainT) runCleanup(f func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			mt.cleanupFailed = true
+			fmt.Printf("cleanup failed, Docker resources may have leaked (run `docker container prune` and `docker network prune`): %v\n", r)
+		}
+	}()
+
+	f()
+}
+
 func (mt *mainT) Errorf(format string, args ...any) {
-	fmt.Printf(format, args...)
+	fmt.Printf(format+"\n", args...)
 	mt.FailNow()
 }
 
 // FailNow aborts the run. It panics rather than calling os.Exit so that the cleanup
 // functions registered on mainT still run while the panic unwinds. os.Exit would skip
-// TestMain's deferred mt.Done and leak the Postgres container and its Docker network,
-// and nothing else reaps them because Ryuk is disabled (see setupDatabase). The panic
-// still leaves the process with a non-zero exit status, so a setup failure stays red.
+// run's deferred mt.Done and leak the Postgres container and its Docker network, which
+// nothing else reaps (see disableRyuk). The panic still leaves the process with a
+// non-zero exit status, so a setup failure stays red.
 func (mt *mainT) FailNow() {
 	panic("test setup failed, see the error above")
+}
+
+const ryukDisabledEnvVar = "TESTCONTAINERS_RYUK_DISABLED"
+
+// disableRyuk turns off Ryuk, the testcontainers reaper, unless the environment
+// already makes an explicit choice.
+//
+// Ryuk is pinned to Docker's default bridge network (reaper.go sets
+// hc.NetworkMode = Bridge with no way to override it) and the client handshakes with it
+// from the host, so it cannot be moved onto the network created by createTestNetwork.
+// On a host where the default bridge is unreachable it hangs before Postgres is ever
+// started. With Ryuk off, the cleanup functions registered on mainT are the only thing
+// reaping the container and its network.
+//
+// This must run before any other testcontainers call: testcontainers reads its
+// configuration once and memoizes it (internal/config.Read uses a sync.Once).
+func disableRyuk() {
+	if value, ok := os.LookupEnv(ryukDisabledEnvVar); ok {
+		if value != "true" {
+			fmt.Printf("warning: %s=%q leaves the testcontainers reaper enabled; the suite will hang if the default Docker bridge is unreachable from this host\n", ryukDisabledEnvVar, value)
+		}
+
+		return
+	}
+
+	_ = os.Setenv(ryukDisabledEnvVar, "true")
 }
 
 // setupDatabase initializes a singleton Postgres testcontainer and mattermost_test database for
 // use with tests.
 func setupDatabase(mt *mainT) error {
-	// Ryuk, the testcontainers reaper, is pinned to Docker's default bridge network
-	// (reaper.go sets hc.NetworkMode = Bridge with no way to override it) and the
-	// client handshakes with it from the host. It therefore cannot be moved onto the
-	// network created below, and on a host where the default bridge is unreachable it
-	// would hang before Postgres is ever started. Disable it and rely on the explicit
-	// cleanup functions registered here, which now run even when setup panics.
-	_ = os.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
-
 	nw, err := createTestNetwork()
 	if err != nil {
 		return err
@@ -307,41 +392,61 @@ func setupReattachEnvironment(mt *mainT) {
 	})
 }
 
-// TestMain is run before any tests within this package and helps setup a mainT for global cleanup
-// if needed.
+// TestMain is run before any tests within this package and helps setup a mainT for
+// global cleanup if needed.
 func TestMain(m *testing.M) {
-	// Clear any MM_* environment variables inherited from the developer's shell.
-	// The test configuration is a memory store that applies environment overrides
-	// on top of the settings assigned in setupServer, so variables such as
-	// MM_SERVICESETTINGS_SITEURL or MM_SQLSETTINGS_DATASOURCE would otherwise change
-	// how the test server is configured. This is hardening rather than the fix for
-	// the false green below: it makes local runs hermetic and match CI, which runs
-	// with a clean environment.
+	// Clear any MM_* variables inherited from the developer's shell. The test
+	// configuration is a memory store that applies environment overrides on top of the
+	// settings assigned in setupServer, so MM_SERVICESETTINGS_SITEURL or
+	// MM_SQLSETTINGS_DATASOURCE would otherwise change how the test server is
+	// configured. This keeps local runs hermetic and matching CI.
 	clearMattermostEnv()
 
-	// This is the MM-69712 fix. Run the suite inside a helper so deferred cleanup
-	// executes before os.Exit, and so a panic during setup or cleanup propagates and
-	// fails the run. The previous "defer os.Exit(status)" pattern swallowed such
-	// panics: os.Exit running during panic unwinding terminated the process with
-	// status 0, so a setup failure (for example the postgres testcontainer being
-	// unreachable) produced no test output and a green run.
-	os.Exit(func() int {
-		mt := new(mainT)
-		defer mt.Done()
+	disableRyuk()
 
-		setupReattachEnvironment(mt)
+	os.Exit(run(m))
+}
 
-		// This actually runs the tests.
-		return m.Run()
-	}())
+// run owns the lifetime of the test suite. It exists so that os.Exit is called only
+// after the deferred cleanup has run, and so that a panic in setup or cleanup
+// propagates and fails the run (MM-69712). The previous "defer os.Exit(status)"
+// pattern swallowed such panics: os.Exit running during panic unwinding terminated
+// the process with status 0, so an unreachable Postgres container produced no test
+// output and a green run.
+func run(m *testing.M) (code int) {
+	mt := new(mainT)
+	defer func() {
+		mt.Done()
+
+		// A cleanup failure means a container or network leaked. Surface it rather
+		// than let it hide behind an otherwise green run.
+		if mt.cleanupFailed && code == 0 {
+			code = 1
+		}
+	}()
+
+	setupReattachEnvironment(mt)
+
+	// This actually runs the tests.
+	return m.Run()
+}
+
+// mattermostEnvKeys returns the MM_* keys present in the given environment listing.
+func mattermostEnvKeys(environ []string) []string {
+	var keys []string
+	for _, kv := range environ {
+		if key, _, ok := strings.Cut(kv, "="); ok && strings.HasPrefix(key, "MM_") {
+			keys = append(keys, key)
+		}
+	}
+
+	return keys
 }
 
 // clearMattermostEnv unsets every MM_* environment variable so a developer's
 // local shell configuration cannot override the hermetic test configuration.
 func clearMattermostEnv() {
-	for _, kv := range os.Environ() {
-		if key, _, ok := strings.Cut(kv, "="); ok && strings.HasPrefix(key, "MM_") {
-			_ = os.Unsetenv(key)
-		}
+	for _, key := range mattermostEnvKeys(os.Environ()) {
+		_ = os.Unsetenv(key)
 	}
 }
