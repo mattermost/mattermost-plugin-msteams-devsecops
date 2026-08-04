@@ -5,6 +5,9 @@ MM_DEBUG ?=
 GOPATH ?= $(shell go env GOPATH)
 GO_TEST_FLAGS ?= -race
 GO_BUILD_FLAGS ?=
+# -count=1 defeats Go's test result cache, so a green test run always reflects the
+# current code rather than a previously recorded pass.
+GO_TEST_CACHE_FLAGS ?= -count=1
 MM_UTILITIES_DIR ?= ../mattermost-utilities
 DLV_DEBUG_PORT := 2346
 DEFAULT_GOOS := $(shell go env GOOS)
@@ -354,7 +357,7 @@ detach: setup-attach
 .PHONY: test
 test: apply webapp/node_modules install-go-tools
 ifneq ($(HAS_SERVER),)
-	$(GOBIN)/gotestsum -- -v ./...
+	$(GOBIN)/gotestsum -- -v $(GO_TEST_CACHE_FLAGS) ./...
 endif
 ifneq ($(HAS_WEBAPP),)
 	cd webapp && $(NPM) run test;
@@ -365,7 +368,7 @@ endif
 .PHONY: test-ci
 test-ci: apply webapp/node_modules install-go-tools
 ifneq ($(HAS_SERVER),)
-	$(GOBIN)/gotestsum --format standard-verbose --junitfile report.xml -- ./...
+	$(GOBIN)/gotestsum --format standard-verbose --junitfile report.xml -- $(GO_TEST_CACHE_FLAGS) ./...
 endif
 ifneq ($(HAS_WEBAPP),)
 	cd webapp && $(NPM) run test;
@@ -375,7 +378,7 @@ endif
 .PHONY: coverage
 coverage: apply webapp/node_modules
 ifneq ($(HAS_SERVER),)
-	$(GO) test $(GO_TEST_FLAGS) -coverprofile=server/coverage.txt ./server/...
+	$(GO) test $(GO_TEST_FLAGS) $(GO_TEST_CACHE_FLAGS) -coverprofile=server/coverage.txt ./server/...
 	$(GO) tool cover -html=server/coverage.txt
 endif
 
